@@ -1,9 +1,5 @@
-const path = require('path');
-
 module.exports = {
   mode: "production",
-  entry: {
-  },
   module: {
     rules: [
       {
@@ -16,10 +12,7 @@ module.exports = {
   resolve: {
     extensions: [ '.ts', '.js', '.tsx' ],
   },
-  output: {
-    filename: '[name].js',
-    path: path.resolve(__dirname, 'public/bundle'),
-  },
+  entry: "./src/index.tsx",
   externals: {
     "react": "React",
     "react-dom": "ReactDOM"
