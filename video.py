@@ -1,3 +1,4 @@
+import subprocess
 import re
 import os
 
@@ -10,7 +11,9 @@ class Video(object):
 
     def __init__(self, filename):
         self.filename = video_dir + "/" + filename
-        self.title, self.id = filename.split(".")[0].split("-")
+        title_id = filename.split(".")[0].split("-")
+        self.title = "".join(title_id[:-1])
+        self.id = title_id[-1]
 
     def get_video_range(self, section=None):
         full_size = os.stat(self.filename).st_size
@@ -34,3 +37,6 @@ class Video(object):
             data = f.read(length)
             print(len(data), length)
             return data, start, full_size
+
+def youtube_dl(link):
+    return subprocess.Popen(["youtube-dl", link], cwd=video_dir).wait()

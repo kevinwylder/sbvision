@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Box } from '../model';
 
 interface VideoComponentProps {
     url: string
@@ -6,12 +7,10 @@ interface VideoComponentProps {
     callback: (data: ImageData) => void
 }
 
-type HighlightBox = [ number, number, number, number ];
-
 export function VideoController(props: VideoComponentProps) {
 
     let [ video, setVideoElement ] = React.useState<HTMLVideoElement|null>(null)
-    let [ box, setBox ] = React.useState<HighlightBox>([0, 0, 0, 0]);
+    let [ box, setBox ] = React.useState<Box>([0, 0, 0, 0]);
     let [ isPlaying, setIsPlaying ] = React.useState(true);
     let [ isDragging, setIsDragging ] = React.useState(false);
 
@@ -23,7 +22,6 @@ export function VideoController(props: VideoComponentProps) {
     }, []);
 
     const renderCanvas = () => {
-        console.log('render')
         if (isPlaying) {
             return;
         }
@@ -59,7 +57,6 @@ export function VideoController(props: VideoComponentProps) {
         let { top, left, width, height } = canvas.current.getBoundingClientRect();
         let x = canvas.current.width * (clientX - left) / width;
         let y = canvas.current.height * (clientY - top) / height;
-        console.log(x, y)
         if (starting) {
             setBox([x, y, x, y]);
         } else {
@@ -83,7 +80,6 @@ export function VideoController(props: VideoComponentProps) {
             return;
         }
         video.currentTime += 0.1;
-        setTimeout(renderCanvas, 200);
     }
 
     const back = () => {
@@ -91,17 +87,14 @@ export function VideoController(props: VideoComponentProps) {
             return;
         }
         video.currentTime -= 0.1;
-        setTimeout(renderCanvas, 200);
     }
 
     const clipSection = () => {
         if (!canvas.current) {
-            console.log(0)
             return
         }
         let ctx = canvas.current.getContext("2d");
         if (!ctx) {
-            console.log(1)
             return;
         }
         props.callback(ctx.getImageData(box[0], box[1], box[2] - box[0], box[3] - box[1]));
@@ -111,6 +104,7 @@ export function VideoController(props: VideoComponentProps) {
     return (
         <div className="video-container">
             <video 
+                onTimeUpdate={renderCanvas}
                 ref={videoRef} 
                 controls
                 style={{

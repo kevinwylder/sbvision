@@ -1,14 +1,16 @@
 from flask import Flask, request, Response, send_file
-from video import Video, get_all_videos
 import os
 import path
 import json 
+
+from video import Video, get_all_videos, youtube_dl
+from labels import is_good_label, save_label
 
 app = Flask(__name__)
 
 @app.route("/videos", methods=["GET"])
 def list_videos():
-    return json.dumps({"videos": get_all_videos()})
+    return json.dumps({"videos": list(map(lambda v: {"title": v.title, "id": v.id}, get_all_videos()))})
 
 @app.route("/video", methods=["GET"])
 def stream_video():
@@ -27,11 +29,37 @@ def stream_video():
     response.headers.add('Content-Range', 'bytes {0}-{1}/{2}'.format(start, start + len(data) - 1, size))
     return response
 
-@app.after_request
-def after_request(response):
-    response.headers.add('Accept-Ranges', 'bytes')
-    return response
+@app.route("/video", methods=["POST"])
+def download_video():
+    if "link" not in request.json:
+        return "looking for a {\"link\":\"http://www.youtube.com...\"}"
+    if youtube_dl(request.json["link"]) == 0:
+        return "Success"
+    else:
+        return Response("Failed to download video", status=400)
 
+@app.route("/skateboards", methods=["POST"])
+def add_label():
+    if is_good_label(request.json):
+        try:
+            save_label(request.json)
+            return json.dumps({
+                "success": True
+            })
+        except:
+            return Response(
+                response=json.dumps({
+                    "success": False,
+                    "error": "there was an error storing the label"
+                }), status=400
+            )
+    return Response(
+        response=json.dumps({
+            "success": False,
+            "error": "the label is malformed"
+        }), 
+        status=400
+    )
 
 @app.route("/", methods=["GET"])
 def index():
