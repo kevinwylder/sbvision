@@ -4,7 +4,7 @@ import path
 import json 
 
 from video import Video, get_all_videos, youtube_dl
-from labels import is_good_label, save_label
+from labels import save_label
 
 app = Flask(__name__)
 
@@ -40,26 +40,19 @@ def download_video():
 
 @app.route("/skateboards", methods=["POST"])
 def add_label():
-    if is_good_label(request.json):
-        try:
-            save_label(request.json)
-            return json.dumps({
-                "success": True
-            })
-        except:
-            return Response(
-                response=json.dumps({
-                    "success": False,
-                    "error": "there was an error storing the label"
-                }), status=400
-            )
-    return Response(
-        response=json.dumps({
-            "success": False,
-            "error": "the label is malformed"
-        }), 
-        status=400
-    )
+    try:
+        save_label(request.json)
+        return json.dumps({
+            "success": True
+        })
+    except Exception as e:
+        print(e)
+        return Response(
+            response=json.dumps({
+                "success": False,
+                "error": "there was an error storing the label"
+            }), status=400
+        )
 
 @app.route("/", methods=["GET"])
 def index():

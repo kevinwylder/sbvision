@@ -1,7 +1,14 @@
+import { Quaternion } from './math';
+
+export interface Label{
+    input: ModelInput
+    output: ModelOutput
+}
+
 export interface ModelInput{
     width: number
     height: number
-    data: Uint8ClampedArray
+    data: string
 }
 
 export interface ModelOutput{
@@ -9,39 +16,54 @@ export interface ModelOutput{
     rotation: Quaternion
 }
 
-export type Box = [ number, number, number, number ];
 
-export type Quaternion = [ number, number, number, number ];
+// big shoutout to Egor Nepomnyaschih 
+// https://gist.github.com/enepomnyaschih/72c423f727d395eeaa09697058238727
+const base64abc = (() => {
+	let abc = [],
+		A = "A".charCodeAt(0),
+		a = "a".charCodeAt(0),
+		n = "0".charCodeAt(0);
+	for (let i = 0; i < 26; ++i) {
+		abc.push(String.fromCharCode(A + i));
+	}
+	for (let i = 0; i < 26; ++i) {
+		abc.push(String.fromCharCode(a + i));
+	}
+	for (let i = 0; i < 10; ++i) {
+		abc.push(String.fromCharCode(n + i));
+	}
+	abc.push("+");
+	abc.push("/");
+	return abc;
+})();
 
-export type EulerAngle = [ number, number, number, number ];
+export function encodeImage(bytes: Uint8ClampedArray) {
+    // remove alpha channel
+    for (let i = 0; i < bytes.length; i += 4) {
+        bytes[0 + i * 3 / 4] = bytes[i + 0];
+        bytes[1 + i * 3 / 4] = bytes[i + 1];
+        bytes[2 + i * 3 / 4] = bytes[i + 2];
+    }
+    bytes = bytes.slice(0, bytes.length * 3 / 4);
 
-export type Vector = [ number, number, number ];
-
-function qConjugate(a: Quaternion): Quaternion {
-    return [a[0], -a[1], -a[2], -a[3]];
-}
-
-export function eToQ(angle: EulerAngle): Quaternion {
-    let s = Math.sin(angle[3] / 2);
-    return [
-        Math.cos(angle[3] / 2),
-        angle[0] * s,
-        angle[1] * s,
-        angle[2] * s
-    ]
-}
-
-export function qMultiply(a: Quaternion, b: Quaternion): Quaternion {
-    return [
-        a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3],
-        a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2],
-        a[0] * b[2] - a[1] * b[3] + a[2] * b[0] + a[3] * b[1],
-        a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + a[3] * b[0]
-    ]
-}
-
-export function qRotate(pos: Vector, by: Quaternion): Vector { 
-    let d2 = by.map(t => t * t).reduce((p, n) => p + n, 0)
-    let [ _, i, j, k ] = qMultiply(qMultiply(by, [0, pos[0], pos[1], pos[2]]), qConjugate(by))
-    return [i / d2, j / d2, k / d2];
+	let result = '', i, l = bytes.length;
+	for (i = 2; i < l; i += 3) {
+		result += base64abc[bytes[i - 2] >> 2];
+		result += base64abc[((bytes[i - 2] & 0x03) << 4) | (bytes[i - 1] >> 4)];
+		result += base64abc[((bytes[i - 1] & 0x0F) << 2) | (bytes[i] >> 6)];
+		result += base64abc[bytes[i] & 0x3F];
+	}
+	if (i === l + 1) { // 1 octet missing
+		result += base64abc[bytes[i - 2] >> 2];
+		result += base64abc[(bytes[i - 2] & 0x03) << 4];
+		result += "==";
+	}
+	if (i === l) { // 2 octets missing
+		result += base64abc[bytes[i - 2] >> 2];
+		result += base64abc[((bytes[i - 2] & 0x03) << 4) | (bytes[i - 1] >> 4)];
+		result += base64abc[(bytes[i - 1] & 0x0F) << 2];
+		result += "=";
+	}
+	return result;
 }

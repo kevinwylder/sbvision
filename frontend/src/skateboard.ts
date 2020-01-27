@@ -1,4 +1,4 @@
-import { Vector, Box, Quaternion, qRotate } from './model';
+import { Vector, Quaternion, qRotate, eToQ, qMultiply } from './math';
 
 type Triangle = [ number, number, number ] // these are "pointers" in the points array
 
@@ -26,14 +26,18 @@ const triangles: Triangle[] = [
     [9, 10, 11],
 ]
 
-export function renderSkateboard(ctx: CanvasRenderingContext2D, rotation: Quaternion, box: Box) {
+export function renderSkateboard(ctx: CanvasRenderingContext2D, rotation: Quaternion, box: [number, number, number, number]) {
+
+
     let rotated = points.map(point => qRotate(point, rotation));
     let translated = rotated.map(([x, y, z]) => [x, y, z - 10]);
-    let perspective = translated.map(([x, y, z]) => [-2 * x / z, -2 * y / z, z]);
+    let perspective = translated.map(([x, y, z]) => [-1.5 * x / z, -1.5 * y / z, z]);
     let painters = triangles.map(([a, b, c], i) => [Math.min(perspective[a][2] + perspective[b][2] + perspective[c][2]), i])
     painters = painters.sort(([d1], [d2]) => d1 - d2);
 
-    let scale = Math.abs(box[0] - box[2]) / 2;
+    ctx.fillStyle = "white";
+    ctx.fillRect(box[0], box[1], box[2]-box[0], box[3]-box[1]);
+    let scale = 9 * Math.abs(box[0] - box[2]) / 2;
     let dx = (box[0] + box[2]) / 2;
     let dy = (box[1] + box[3]) / 2;
     painters.forEach(([_, t]) => {
@@ -52,4 +56,33 @@ export function renderSkateboard(ctx: CanvasRenderingContext2D, rotation: Quater
         ctx.stroke();
     })
 
+}
+
+export function rotateSkateboard(dx: number, dy: number, rotation: Quaternion): Quaternion {
+    dy *= 1.5; // dy should be more sensitive
+    let m = Math.sqrt(dx * dx + dy * dy);
+
+    // convert the mouse movement from euler angle to quaternion
+    let delta = eToQ([ dy / m, 0, -dx / m, m / 100]);
+
+    // left multiply the quaternion
+    let newQuaternion = qMultiply(rotation, delta);
+
+    // check if the x coordinate is positive
+    let [ x ] = qRotate([1, 0, 0], newQuaternion);
+    if (x > 0) {
+        return newQuaternion;
+    }
+    return rotation;
+}
+
+export function tiltSkateboard(m: number, rotation: Quaternion): Quaternion {
+    let delta = eToQ([0, 1, 0, m / 100]);
+    let newQuaternion = qMultiply(rotation, delta);
+    // check if the x coordinate is positive
+    let [ x ] = qRotate([1, 0, 0], newQuaternion);
+    if (x > 0) {
+        return newQuaternion;
+    }
+    return rotation;
 }
