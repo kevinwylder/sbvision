@@ -60,29 +60,29 @@ export function chooseDraggingIndexes(box: Box, x: number, y: number): number[] 
     if (!isInsideBox(box, x, y)) {
         return [2, 3];
     }
-    let cx0 = x - box[0] > -BOX_BORDER && x - box[0] < 0;
-    let cy0 = y - box[1] > -BOX_BORDER && y - box[1] < 0;
-    let cx1 = x - box[2] > 0 && x - box[2] < BOX_BORDER;
-    let cy1 = y - box[3] > 0 && y - box[3] < BOX_BORDER;
+    let { top, bottom, left, right } = describeBox(box);
     let collisions: number[] = [];
-    if (cx0) {
-        collisions.push(0);
+
+    if (x + BOX_BORDER > left && x < left) {
+        collisions.push(left == box[0] ? 0 : 2);
     } 
-    if (cy0) {
-        collisions.push(1);
+    if (y + BOX_BORDER > top && y < top) {
+        collisions.push(top == box[1] ? 1 : 3);
     }
-    if (cx1) {
-        collisions.push(2);
+    if (x > right && x - right < BOX_BORDER) {
+        collisions.push(right == box[2] ? 2 : 0);
     }
-    if (cy1) {
-        collisions.push(3);
+    if (y > bottom && y - bottom < BOX_BORDER) {
+        collisions.push(bottom == box[3] ? 3 : 1);
     }
     return collisions;
 }
 
 export function isInsideBox(box: Box, x: number, y: number): boolean { 
-    return x > box[0] - BOX_BORDER && 
-                 y > box[1] - BOX_BORDER &&
-                 x < box[2] + BOX_BORDER &&
-                 y < box[3] + BOX_BORDER;
+    let { top, bottom, left, right } = describeBox(box);
+    return x + BOX_BORDER > left && 
+           y + BOX_BORDER > top &&
+           x - BOX_BORDER < right &&
+           y - BOX_BORDER < bottom;
+
 }
