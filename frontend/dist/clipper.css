@@ -11,3 +11,18 @@
     margin-left: auto;
     margin-right: auto;
 }
+
+.main-layout{
+    display: grid;
+    grid-template-columns: 200px auto;
+}
+
+.title-cell{
+    margin-bottom: 10px;
+}
+
+.clip{
+    margin: 10px;
+    display: grid;
+    grid-template-columns: 1fr 4fr 4fr;
+}

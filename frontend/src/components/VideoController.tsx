@@ -175,6 +175,7 @@ export function VideoController(props: VideoComponentProps) {
             <video 
                 onTimeUpdate={renderCanvas}
                 ref={videoRef} 
+                autoPlay
                 controls
                 style={{
                     display: (isPlaying) ? "block" : "none",

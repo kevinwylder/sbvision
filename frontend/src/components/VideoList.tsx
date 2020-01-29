@@ -16,7 +16,8 @@ export function VideoListing(props: VideoList) {
     let [selectedTitle, setSelectedTitle] = React.useState<string>()
 
     return (<div className="title-container">
-        <input type="url" ref={inputURL}></input>
+        <div className="title-cell">
+        <input type="url" ref={inputURL} placeholder="youtube url"></input>
         <button onClick={event => {
             fetch("/video", {
                 method: "POST",
@@ -31,6 +32,7 @@ export function VideoListing(props: VideoList) {
                 location.reload();
             })
         }}>Download video</button>
+        </div>
         {props.videos.map(({id, title}, i) => 
             <div 
                 key={i}

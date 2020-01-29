@@ -4,7 +4,7 @@ import path
 import json 
 
 from video import Video, get_all_videos, youtube_dl
-from labels import save_label
+from labels import save_label, get_label_ids, get_label, delete_label
 
 app = Flask(__name__)
 
@@ -53,6 +53,22 @@ def add_label():
                 "error": "there was an error storing the label"
             }), status=400
         )
+
+@app.route("/skateboards", methods=["GET"])
+def get_labels():
+    label_id = request.args.get("id")
+    if label_id is None:
+        return json.dumps({
+            "labels": list(get_label_ids())
+        })
+    else: 
+        return get_label(label_id)
+
+@app.route("/skateboards", methods=["DELETE"])
+def label_delete():
+    delete_label(request.args.get("id"))
+    return '{"success": true}'
+    
 
 @app.route("/", methods=["GET"])
 def index():

@@ -3,6 +3,7 @@ import * as ReactDOM from "react-dom";
 
 import { VideoController } from './components/VideoController'
 import { Video, VideoListing } from './components/VideoList';
+import { ClipViewer } from "./components/ClipViewer";
 
 export function PanelLayout() {
 
@@ -15,8 +16,12 @@ export function PanelLayout() {
         .then(res => setVideos(res.videos));
     }, [])
 
-    if (videoId) {
-        return <VideoController 
+    return <div className="main-layout">
+        <VideoListing 
+            callback={setVideoId}
+            videos={videos ? videos : []}
+        />
+        {(videoId) ? <VideoController 
             width={700}
             url={`/video?id=${videoId}`}
             callback={(data) => {
@@ -28,13 +33,9 @@ export function PanelLayout() {
                     body: JSON.stringify(data)
                 })
             }}
-        />
-    } else {
-        return <VideoListing 
-                callback={setVideoId}
-                videos={videos ? videos : []}
-            />
-    }
+        /> : <ClipViewer/>}
+        
+    </div>
 }
 
 ReactDOM.render(
