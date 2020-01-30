@@ -39,7 +39,7 @@ export function renderSkateboard(ctx: CanvasRenderingContext2D, rotation: Quater
 
     ctx.fillStyle = "white";
     ctx.fillRect(box[0], box[1], box[2]-box[0], box[3]-box[1]);
-    let scale = 4 * Math.abs(box[0] - box[2]) / 2;
+    let scale = 2 * Math.abs(box[0] - box[2]) / 2;
     let dx = (box[0] + box[2]) / 2;
     let dy = (box[1] + box[3]) / 2;
 

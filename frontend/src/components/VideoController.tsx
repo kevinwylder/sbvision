@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Label, encodeImage } from '../model';
+import { ClipCell } from './ClipViewer';
+import { Label } from '../model';
 import { Quaternion } from '../math';
 import { renderSkateboard, rotateSkateboard, tiltSkateboard } from '../skateboard';
 import { drawBoundingBox, describeBox, BOX_BORDER, chooseDraggingIndexes, dragBoxBounds, isInsideBox } from '../bounds';
@@ -125,12 +126,12 @@ export function VideoController(props: VideoComponentProps) {
         let tmp = document.createElement("canvas");
         tmp.width = right - left;
         tmp.height = bottom - top;
-        let image = ctx.getImageData(...box);
-        ctx = tmp.getContext("2d");
-        if (!ctx) {
+        let image = ctx.getImageData(left, top, right, bottom);
+        let ctx2 = tmp.getContext("2d");
+        if (!ctx2) {
             return;
         }
-        ctx.putImageData(image, 0, 0);
+        ctx2.putImageData(image, 0, 0);
         props.callback({
             input: {
                 width: Math.round(right - left),

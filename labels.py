@@ -14,6 +14,7 @@ def save_label(label):
     next_id = max(get_label_ids()) + 1
     with open(label_file_name(next_id), "w") as f:
         json.dump(label, f)
+    return next_id
 
 def get_label(label_id):
     with open(label_file_name(label_id), "r") as f:
