@@ -1,0 +1,20 @@
+version: '3'
+services:
+
+  server:
+    build: .
+    ports:
+      - "1080:1080"
+    environment:
+      DATA_DIR: "/data"
+      DB_CREDS: "root:password@database/testing"
+    volumes:
+      - ${PWD}/:/go/src/github.com/kevinwylder/sbvision
+
+  database:
+    image: "mysql:8.0"
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - ${PWD}/schema.sql:/docker-entrypoint-initdb.d/schema.sql
