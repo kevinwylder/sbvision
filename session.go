@@ -9,6 +9,11 @@ type Session struct {
 
 // SessionManager can create and validate sessions
 type SessionManager interface {
-	NewSession() (*Session, error)
-	ValidateSession(*Session) error
+	SignSession(*Session) (string, error)
+	ValidateSession(header string) (*Session, error)
+}
+
+// SessionStorage sets the session's auto-increment id
+type SessionStorage interface {
+	TrackSession(*Session) error
 }

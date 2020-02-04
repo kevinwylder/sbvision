@@ -1,5 +1,13 @@
 package sbvision
 
+// Frame is a frame of a video
+type Frame struct {
+	ID    int64
+	Image *Image `json:"image"`
+	Video *Video `json:"video"`
+	Time  int64  `json:"time"`
+}
+
 // Clip is the image that the user clipped
 type Clip struct {
 	ID      int64
