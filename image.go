@@ -9,12 +9,12 @@ type Image string
 
 // ImageUploader is an interface to upload images
 type ImageUploader interface {
-	UploadImage(io.Reader, string) (Image, error)
+	PutImage(io.Reader, Image) error
 }
 
 // ImageDownloader is an interface to download images
 type ImageDownloader interface {
-	DownloadImage(Image) (io.ReadCloser, error)
+	GetImage(Image) (io.ReadCloser, error)
 }
 
 // ImageTracker adds images to the database

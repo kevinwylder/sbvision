@@ -25,7 +25,7 @@ func (ctx *serverContext) getSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jwt, err := ctx.session.SignSession(session)
+	jwt, err := ctx.session.CreateSession(session)
 	if err != nil {
 		fmt.Println("Sign session error: ", err)
 		http.Error(w, "Could not create session", 500)

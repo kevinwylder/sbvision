@@ -7,7 +7,14 @@ import (
 )
 
 // GetVideos is a paged listing of videos
-func (db *SBVisionDatabase) GetVideos(offset, count int) ([]sbvision.Video, error) {
+func (db *SBDatabase) GetVideos(offset, count int) ([]sbvision.Video, error) {
+	return db.getVideos("", `
+ORDER BY videos.discovery_time DESC
+LIMIT ? OFFSET ?
+	`, offset, count)
+}
+
+func (db *SBDatabase) getVideos(where string, order string, args ...interface{}) ([]sbvision.Video, error) {
 	results, err := db.Query(`
 SELECT	
 	videos.id,
@@ -25,13 +32,13 @@ LEFT JOIN frames
 		ON frames.video_id = videos.id
 LEFT JOIN clips
 		ON clips.frame_id = frames.id
+`+where+`
 GROUP BY videos.id
-ORDER BY videos.discovery_time DESC
-LIMIT ? OFFSET ?
-	`, count, offset)
+`+order, args...)
 	if err != nil {
 		return nil, err
 	}
+	defer results.Close()
 	var videos []sbvision.Video
 	for results.Next() {
 		var videoID, videoType, videoDuration, clipCount int64
@@ -70,7 +77,7 @@ LIMIT ? OFFSET ?
 }
 
 // AddVideo adds the video to the database
-func (db *SBVisionDatabase) AddVideo(video *sbvision.Video) error {
+func (db *SBDatabase) AddVideo(video *sbvision.Video) error {
 	result, err := db.Exec(`
 INSERT INTO videos (title, type, duration, fps, thumbnail_id) 
 SELECT 

@@ -14,13 +14,13 @@ func (ctx *serverContext) videos(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		// Route to index a video
 		// Requires session
-		session, err := ctx.session.ValidateSession(r.Header.Get("Session"))
+		_, err := ctx.session.ValidateSession(sbvision.SessionJWT(r.Header.Get("Session")))
 		if err != nil {
 			http.Error(w, "unauthorized", 401)
 			return
 		}
 
-		var video sbvision.VideoDownloadRequest
+		var video sbvision.VideoDiscoverRequest
 		decoder := json.NewDecoder(r.Body)
 		err = decoder.Decode(&video)
 		if err != nil {
@@ -32,7 +32,7 @@ func (ctx *serverContext) videos(w http.ResponseWriter, r *http.Request) {
 		// Only youtube is supported at this time, here is the "polymorphic dispatch"
 		switch video.Type {
 		case sbvision.YoutubeVideo:
-			v, err := ctx.youtube.HandleDownload(&video)
+			v, err := ctx.youtube.HandleDiscover(&video)
 			if err != nil {
 				fmt.Println("YoutubeHandler download error", err.Error())
 				http.Error(w, "Could not download video", 400)

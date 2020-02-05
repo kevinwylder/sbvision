@@ -17,7 +17,7 @@ type sessionManager struct {
 }
 
 // NewRSASessionManager generates an rsa key to sign session tokens with
-func NewRSASessionManager(db sbvision.SessionTracker) (sbvision.SessionManager, error) {
+func NewRSASessionManager() (sbvision.SessionManager, error) {
 	key, err := rsa.GenerateKey(rand.Reader, 1024)
 	if err != nil {
 		return nil, err

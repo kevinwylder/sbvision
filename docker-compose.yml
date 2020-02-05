@@ -7,8 +7,13 @@ services:
       - "1080:1080"
     environment:
       DB_CREDS: "root:password@database/testing"
+      IMAGE_DIR: "/data"
+      PORT: ":1080"
+      FRONTEND_DIR: "/go/src/github.com/kevinwylder/sbvision/frontend/dist"
+
     volumes:
       - ${PWD}/:/go/src/github.com/kevinwylder/sbvision
+      - ${PWD}/data:/data
 
   database:
     image: "mysql:8.0"

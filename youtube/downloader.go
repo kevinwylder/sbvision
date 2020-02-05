@@ -83,7 +83,8 @@ func (dl *youtubeHandler) getYoutubeVideo(url string) (*sbvision.YoutubeVideoInf
 		return nil, fmt.Errorf("\n\tCannot open image file: %s", err.Error())
 	}
 	defer thumbnailFile.Close()
-	video.Video.Thumbnail, err = dl.images.UploadImage(thumbnailFile, "thumbnail-"+video.YoutubeID+".jpg")
+	video.Video.Thumbnail = sbvision.Image("thumbnail/" + video.YoutubeID + ".jpg")
+	err = dl.images.PutImage(thumbnailFile, video.Video.Thumbnail)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCannot upload image: %s", err.Error())
 	}

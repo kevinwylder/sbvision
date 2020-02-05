@@ -12,9 +12,5 @@ module.exports = {
   resolve: {
     extensions: [ '.ts', '.js', '.tsx' ],
   },
-  entry: "./src/index.tsx",
-  externals: {
-    "react": "React",
-    "react-dom": "ReactDOM"
-  }
+  entry: "./src/index.tsx"
 };
