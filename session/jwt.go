@@ -17,7 +17,7 @@ type sessionManager struct {
 }
 
 // NewRSASessionManager generates an rsa key to sign session tokens with
-func NewRSASessionManager() (sbvision.SessionManager, error) {
+func NewRSASessionManager(db sbvision.SessionTracker) (sbvision.SessionManager, error) {
 	key, err := rsa.GenerateKey(rand.Reader, 1024)
 	if err != nil {
 		return nil, err
@@ -26,7 +26,7 @@ func NewRSASessionManager() (sbvision.SessionManager, error) {
 }
 
 // SignSession uses the RSA key to generate a JWT
-func (s *sessionManager) SignSession(session *sbvision.Session) (string, error) {
+func (s *sessionManager) CreateSession(session *sbvision.Session) (sbvision.SessionJWT, error) {
 	data, err := json.Marshal(session)
 	if err != nil {
 		return "", err
@@ -36,11 +36,11 @@ func (s *sessionManager) SignSession(session *sbvision.Session) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	return base64.URLEncoding.EncodeToString(append(signature, data...)), nil
+	return sbvision.SessionJWT(base64.URLEncoding.EncodeToString(append(signature, data...))), nil
 }
 
-func (s *sessionManager) ValidateSession(header string) (*sbvision.Session, error) {
-	data, err := base64.URLEncoding.DecodeString(header)
+func (s *sessionManager) ValidateSession(header sbvision.SessionJWT) (*sbvision.Session, error) {
+	data, err := base64.URLEncoding.DecodeString(string(header))
 	if err != nil {
 		return nil, err
 	}

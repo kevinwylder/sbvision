@@ -7,13 +7,16 @@ type Session struct {
 	IP   string `json:"ip"`
 }
 
+// SessionJWT is a base64encoded payload and signature of the session record
+type SessionJWT string
+
 // SessionManager can create and validate sessions
 type SessionManager interface {
-	SignSession(*Session) (string, error)
-	ValidateSession(header string) (*Session, error)
+	CreateSession(*Session) (SessionJWT, error)
+	ValidateSession(SessionJWT) (*Session, error)
 }
 
-// SessionStorage sets the session's auto-increment id
-type SessionStorage interface {
-	TrackSession(*Session) error
+// SessionTracker sets the session's auto-increment id
+type SessionTracker interface {
+	AddSession(*Session) error
 }

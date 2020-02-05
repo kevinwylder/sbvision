@@ -25,10 +25,12 @@ type dlInfo struct {
 		Filesize int64   `json:"filesize"`
 		URL      string  `json:"url"`
 		FPS      float64 `json:"fps"`
-	} `json:"fommats"`
+	} `json:"formats"`
 }
 
-func getYoutubeVideo(url string, manager sbvision.ImageManager) (*sbvision.YoutubeVideoInfo, error) {
+// calls youtube-dl to collect a thumbnail and .info.json file. The thumbnail is uploaded, and the .info.json is used to create
+// a new YoutubeVideoInfo object to be tracked in the database
+func (dl *youtubeHandler) getYoutubeVideo(url string) (*sbvision.YoutubeVideoInfo, error) {
 	// create a temp dir to download the json and thumbnail
 	directory, err := ioutil.TempDir("", "")
 	if err != nil {
@@ -41,7 +43,8 @@ func getYoutubeVideo(url string, manager sbvision.ImageManager) (*sbvision.Youtu
 	cmd.Dir = directory
 	err = cmd.Run()
 	if err != nil {
-		return nil, fmt.Errorf("\n\tError running youtube-dl %s", err.Error())
+		data, _ := cmd.CombinedOutput()
+		return nil, fmt.Errorf("\n\tError running youtube-dl for %s %s.\nyoutube-dl Output: %s", url, err.Error(), string(data))
 	}
 
 	// look for the files in the tmp directory
@@ -60,7 +63,7 @@ func getYoutubeVideo(url string, manager sbvision.ImageManager) (*sbvision.Youtu
 		return nil, fmt.Errorf("\n\tCould not find thumbnail (%v) or info.json (%v)", thumbnail, infoJSON)
 	}
 
-	// parse video info into the
+	// parse video info json file
 	video := sbvision.YoutubeVideoInfo{
 		Video: &sbvision.Video{},
 	}
@@ -80,12 +83,54 @@ func getYoutubeVideo(url string, manager sbvision.ImageManager) (*sbvision.Youtu
 		return nil, fmt.Errorf("\n\tCannot open image file: %s", err.Error())
 	}
 	defer thumbnailFile.Close()
-	video.Video.Thumbnail, err = manager.UploadImage(thumbnailFile, "thumbnail-"+video.YoutubeID+".jpg")
+	video.Video.Thumbnail, err = dl.images.UploadImage(thumbnailFile, "thumbnail-"+video.YoutubeID+".jpg")
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCannot upload image: %s", err.Error())
 	}
 
 	return &video, nil
+}
+
+// updateVideoLink uses youtube-dl to acquire a new .info.json struct for the purposes of refreshing the
+// video stream link.
+func (dl *youtubeHandler) updateVideoLink(info *sbvision.YoutubeVideoInfo) error {
+	// create a temp dir to download the json and thumbnail
+	directory, err := ioutil.TempDir("", "")
+	if err != nil {
+		return fmt.Errorf("\n\tCannot create tmp dir: %s", err.Error())
+	}
+	defer os.RemoveAll(directory)
+
+	// run the youtube-dl command to get the info
+	cmd := exec.Command("youtube-dl", "https://www.youtube.com/watch?v="+info.YoutubeID, "--write-info-json", "--skip-download")
+	cmd.Dir = directory
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("\n\tError running youtube-dl %s", err.Error())
+	}
+
+	// look for the file in the tmp directory
+	files, err := ioutil.ReadDir(directory)
+	var infoJSON os.FileInfo
+	for i, f := range files {
+		if strings.HasSuffix(f.Name(), ".json") {
+			infoJSON = files[i]
+		}
+	}
+	if infoJSON == nil {
+		return fmt.Errorf("\n\tCould not find info.json (%v)", infoJSON)
+	}
+
+	infoFile, err := os.Open(path.Join(directory, infoJSON.Name()))
+	if err != nil {
+		return fmt.Errorf("\n\tCannot open .info.json file: %s", err.Error())
+	}
+	defer infoFile.Close()
+	err = parseInfo(infoFile, info)
+	if err != nil {
+		return fmt.Errorf("\n\tCannot parse .info.json file: %s", err.Error())
+	}
+	return nil
 }
 
 func parseInfo(data io.Reader, dst *sbvision.YoutubeVideoInfo) error {

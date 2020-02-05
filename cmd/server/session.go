@@ -8,7 +8,7 @@ import (
 	"github.com/kevinwylder/sbvision"
 )
 
-func (ctx *serverContext) session(w http.ResponseWriter, r *http.Request) {
+func (ctx *serverContext) getSession(w http.ResponseWriter, r *http.Request) {
 	session := &sbvision.Session{
 		Time: time.Now().Unix(),
 	}
@@ -18,16 +18,16 @@ func (ctx *serverContext) session(w http.ResponseWriter, r *http.Request) {
 	} else {
 		session.IP = r.RemoteAddr
 	}
-	err := ctx.sessionStorage.TrackSession(session)
+	err := ctx.db.AddSession(session)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Create session error: ", err.Error())
 		http.Error(w, "Could not create session", 500)
 		return
 	}
 
-	jwt, err := ctx.sessionManager.SignSession(session)
+	jwt, err := ctx.session.SignSession(session)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Sign session error: ", err)
 		http.Error(w, "Could not create session", 500)
 		return
 	}

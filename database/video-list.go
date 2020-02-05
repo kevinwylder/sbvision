@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/kevinwylder/sbvision"
 )
@@ -13,7 +12,7 @@ func (db *SBVisionDatabase) GetVideos(offset, count int) ([]sbvision.Video, erro
 SELECT	
 	videos.id,
 	videos.title,
-	images.s3_key,
+	images.key,
 	videos.type,
 	videos.duration,
 	videos.fps,
@@ -21,7 +20,7 @@ SELECT
 	MAX(clips.id)
 FROM videos
 INNER JOIN images 
-		ON images.id = videos.thumbnail
+		ON images.id = videos.thumbnail_id
 LEFT JOIN frames
 		ON frames.video_id = videos.id
 LEFT JOIN clips
@@ -59,11 +58,9 @@ LIMIT ? OFFSET ?
 		}
 
 		videos = append(videos, sbvision.Video{
-			ID:    videoID,
-			Title: title,
-			Thumbnail: &sbvision.Image{
-				Key: s3Key,
-			},
+			ID:        videoID,
+			Title:     title,
+			Thumbnail: sbvision.Image(s3Key),
 			Duration:  videoDuration,
 			FPS:       fps,
 			ClipCount: clipCount,
@@ -73,14 +70,14 @@ LIMIT ? OFFSET ?
 }
 
 // AddVideo adds the video to the database
-func (db *SBVisionDatabase) AddVideo(video *sbvision.Video, session *sbvision.Session) error {
-	if video.Thumbnail == nil {
-		return fmt.Errorf("Missing thumbnail")
-	}
+func (db *SBVisionDatabase) AddVideo(video *sbvision.Video) error {
 	result, err := db.Exec(`
-INSERT INTO videos (title, type, duration, fps, thumbnail, discoverer_session) VALUES
-(?, ?, ?, ?, ?, ?);
-	`, video.Title, video.Type, video.Duration, video.FPS, video.Thumbnail.ID, session.ID)
+INSERT INTO videos (title, type, duration, fps, thumbnail_id) 
+SELECT 
+	?, ?, ?, ?, id
+FROM images
+WHERE images.key = ?
+	`, video.Title, video.Type, video.Duration, video.FPS, video.Thumbnail)
 	if err != nil {
 		return err
 	}

@@ -10,9 +10,12 @@ type YoutubeVideoInfo struct {
 	MirrorExp time.Time
 }
 
-// YoutubeVideoInfoStorage keeps track of indexed youtube links
-type YoutubeVideoInfoStorage interface {
+// YoutubeVideoTracker keeps track of indexed youtube links
+type YoutubeVideoTracker interface {
+	AddYoutubeRecord(*YoutubeVideoInfo) error
+}
+
+// YoutubeSearch is for finding videos that have already been discovered
+type YoutubeSearch interface {
 	GetYoutubeRecord(videoID int64) (*YoutubeVideoInfo, error)
-	HasYoutubeRecord(youtubeID string) (*YoutubeVideoInfo, error)
-	PutYoutubeRecord(*YoutubeVideoInfo) error
 }

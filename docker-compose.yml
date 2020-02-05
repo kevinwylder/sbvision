@@ -6,7 +6,6 @@ services:
     ports:
       - "1080:1080"
     environment:
-      DATA_DIR: "/data"
       DB_CREDS: "root:password@database/testing"
     volumes:
       - ${PWD}/:/go/src/github.com/kevinwylder/sbvision

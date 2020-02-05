@@ -8,7 +8,7 @@ import (
 type Video struct {
 	ID        int64   `json:"id"`
 	Title     string  `json:"title"`
-	Thumbnail *Image  `json:"thumbnail"`
+	Thumbnail Image   `json:"thumbnail"`
 	Type      int64   `json:"type"`
 	Duration  int64   `json:"duration"`
 	FPS       float64 `json:"fps"`
@@ -18,18 +18,23 @@ type Video struct {
 // VideoList is a pagenated video lister interface
 type VideoList interface {
 	GetVideos(offset, count int) ([]Video, error)
-	AddVideo(*Video, *Session) error
 }
 
-// VideoDownloadRequest is an incoming request to get the given video
-type VideoDownloadRequest struct {
-	Type int64  `json:"type"`
-	URL  string `json:"url"`
+// VideoTracker keeps track of videos
+type VideoTracker interface {
+	AddVideo(*Video) error
+}
+
+// VideoDiscoverRequest is an incoming request to get the given video
+type VideoDiscoverRequest struct {
+	Session *Session
+	Type    int64  `json:"type"`
+	URL     string `json:"url"`
 }
 
 // VideoHandler is able to "acquire" videos
 type VideoHandler interface {
-	HandleDownload(*VideoDownloadRequest) error
+	HandleDiscover(*VideoDiscoverRequest) (*Video, error)
 	HandleStream(http.ResponseWriter, *http.Request)
 }
 
