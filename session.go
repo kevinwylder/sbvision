@@ -2,9 +2,9 @@ package sbvision
 
 // Session is a visit to the website
 type Session struct {
-	ID   int64  `json:"id"`
-	Time int64  `json:"time"`
-	IP   string `json:"ip"`
+	ID   int64 `json:"id"`
+	Time int64 `json:"time"`
+	IP   string
 }
 
 // SessionJWT is a base64encoded payload and signature of the session record

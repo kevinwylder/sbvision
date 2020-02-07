@@ -8,6 +8,7 @@ import (
 type Video struct {
 	ID        int64   `json:"id"`
 	Title     string  `json:"title"`
+	Format    string  `json:"format"`
 	Thumbnail Image   `json:"thumbnail"`
 	Type      int64   `json:"type"`
 	Duration  int64   `json:"duration"`

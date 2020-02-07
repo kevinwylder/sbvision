@@ -14,10 +14,6 @@ CREATE TABLE `video_types` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-REPLACE INTO `video_types` (`id`, `description`) VALUES 
-	(1,'Youtube'),
-	(2,'Reddit Gif');
-
 CREATE TABLE `sessions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `start` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -92,3 +88,9 @@ CREATE TABLE `clips` (
   CONSTRAINT `clips_ibfk_2` FOREIGN KEY (`frame_id`) REFERENCES `frames` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+REPLACE INTO `video_types` (`id`, `description`) VALUES 
+	(1,'Youtube'),
+	(2,'Reddit Gif'),
+    (3,'Local Video');
+
+ALTER TABLE `videos` ADD COLUMN `format` VARCHAR(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'video/mp4' AFTER `type`;

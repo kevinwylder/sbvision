@@ -166,6 +166,7 @@ func parseInfo(data io.Reader, dst *sbvision.YoutubeVideoInfo) error {
 		return fmt.Errorf("\n\tCannot parse expiration timestamp (%v)", expires)
 	}
 	dst.MirrorExp = time.Unix(unix, 0)
+	dst.Video.Format = "video/mp4"
 
 	return nil
 }

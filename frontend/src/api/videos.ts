@@ -5,6 +5,7 @@ export interface Video {
     title: string
     thumbnail: string
     type: number
+    format: string
     duration: number
     fps: number
     clips: number

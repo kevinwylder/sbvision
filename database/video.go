@@ -9,9 +9,9 @@ import (
 
 func (sb *SBDatabase) prepareAddVideo() (err error) {
 	sb.addVideo, err = sb.db.Prepare(`
-INSERT INTO videos (title, type, duration, fps, thumbnail_id) 
+INSERT INTO videos (title, type, format, duration, fps, thumbnail_id) 
 SELECT 
-	?, ?, ?, ?, id
+	?, ?, ?, ?, ?, id
 FROM images
 WHERE images.key = ?
 	`)
@@ -20,7 +20,7 @@ WHERE images.key = ?
 
 // AddVideo adds the video to the database
 func (sb *SBDatabase) AddVideo(video *sbvision.Video) error {
-	result, err := sb.addVideo.Exec(video.Title, video.Type, video.Duration, video.FPS, video.Thumbnail)
+	result, err := sb.addVideo.Exec(video.Title, video.Type, video.Format, video.Duration, video.FPS, video.Thumbnail)
 	if err != nil {
 		return fmt.Errorf("\n\tError adding video: %s", err.Error())
 	}
@@ -56,6 +56,7 @@ SELECT
 	videos.title,
 	images.key,
 	videos.type,
+	videos.format,
 	videos.duration,
 	videos.fps,
 	COUNT(*),
@@ -104,6 +105,7 @@ func (sb *SBDatabase) parseVideoRow(src scannable, dst *sbvision.Video) error {
 		&dst.Title,
 		&dst.Thumbnail,
 		&dst.Type,
+		&dst.Format,
 		&dst.Duration,
 		&dst.FPS,
 		&clipCount,

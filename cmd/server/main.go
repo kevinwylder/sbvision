@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -20,11 +21,12 @@ import (
 )
 
 type serverContext struct {
-	session  sbvision.SessionManager
-	images   ImageManager
-	youtube  sbvision.VideoHandler
-	frontend http.Handler
-	db       *database.SBDatabase
+	session   sbvision.SessionManager
+	images    ImageManager
+	youtube   sbvision.VideoHandler
+	frontend  http.Handler
+	testVideo []byte
+	db        *database.SBDatabase
 }
 
 func main() {
@@ -77,6 +79,10 @@ func main() {
 		}
 	}
 
+	server.testVideo, err = ioutil.ReadFile(path.Join(os.Getenv("IMAGE_DIR"), "test.mp4"))
+	if err != nil {
+		log.Fatal(err)
+	}
 	server.youtube = youtube.NewYoutubeHandler(db, server.images)
 
 	fmt.Println("Starting server")

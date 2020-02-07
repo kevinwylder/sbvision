@@ -30,6 +30,7 @@ SELECT
 	videos.title,
 	images.key,
 	videos.type,
+	videos.format,
 	videos.duration,
 	videos.fps,
 	COUNT(*),
