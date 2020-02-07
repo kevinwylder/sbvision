@@ -7,10 +7,21 @@ module.exports = {
         use: 'ts-loader',
         exclude: /node_modules/,
       },
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          'css-loader'
+        ]
+      }
     ],
   },
   resolve: {
     extensions: [ '.ts', '.js', '.tsx' ],
   },
-  entry: "./src/index.tsx"
+  entry: "./src/index.tsx",
+  externals: {
+    "react": "React",
+    "react-dom": "ReactDOM"
+  }
 };

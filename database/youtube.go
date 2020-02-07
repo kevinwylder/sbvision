@@ -6,31 +6,58 @@ import (
 	"github.com/kevinwylder/sbvision"
 )
 
-// AddYoutubeRecord adds the record to the database. it is expected that the video is already added
-func (db *SBDatabase) AddYoutubeRecord(yt *sbvision.YoutubeVideoInfo) error {
-	_, err := db.Exec(`
+func (sb *SBDatabase) prepareAddYoutubeRecord() (err error) {
+	sb.addYoutubeRecord, err = sb.db.Prepare(`
 INSERT INTO youtube_videos (youtube_id, video_id, mirror_url, mirror_expire) 
 VALUES (?, ?, ?, FROM_UNIXTIME(?));
-	`, yt.YoutubeID, yt.Video.ID, yt.MirrorURL, yt.MirrorExp)
+	`)
+	return
+}
+
+// AddYoutubeRecord adds the record to the database. it is expected that the video is already added
+func (sb *SBDatabase) AddYoutubeRecord(yt *sbvision.YoutubeVideoInfo) error {
+	_, err := sb.addYoutubeRecord.Exec(yt.YoutubeID, yt.Video.ID, yt.MirrorURL, yt.MirrorExp)
 	if err != nil {
 		return fmt.Errorf("\n\tCould not insert youtube Record: %s", err.Error())
 	}
 	return nil
 }
 
+func (sb *SBDatabase) prepareGetYoutubeRecord() (err error) {
+	sb.getYoutubeRecord, err = sb.db.Prepare(`
+SELECT	
+	videos.id,
+	videos.title,
+	images.key,
+	videos.type,
+	videos.duration,
+	videos.fps,
+	COUNT(*),
+	MAX(clips.id)
+FROM videos
+INNER JOIN images 
+		ON images.id = videos.thumbnail_id
+LEFT JOIN frames
+		ON frames.video_id = videos.id
+LEFT JOIN clips
+		ON clips.frame_id = frames.id
+WHERE videos.id = ?
+GROUP BY videos.id
+	`)
+	return
+}
+
 // GetYoutubeRecord gets the youtube contextual information about a video given it's generic videoid
-func (db *SBDatabase) GetYoutubeRecord(videoID int64) (*sbvision.YoutubeVideoInfo, error) {
-	videos, err := db.getVideos(`WHERE videos.id = ?`, "", videoID)
-	if err != nil {
-		return nil, fmt.Errorf("\n\tError getting videos with id %d: %s", videoID, err.Error())
-	}
-	if len(videos) == 0 {
-		return nil, fmt.Errorf("\n\tNo results for video %d", videoID)
-	}
+func (sb *SBDatabase) GetYoutubeRecord(videoID int64) (*sbvision.YoutubeVideoInfo, error) {
+	video := sb.getYoutubeRecord.QueryRow(videoID)
 	yt := &sbvision.YoutubeVideoInfo{
-		Video: &videos[0],
+		Video: &sbvision.Video{},
 	}
-	result := db.QueryRow(`
+	err := sb.parseVideoRow(video, yt.Video)
+	if err != nil {
+		return nil, fmt.Errorf("\n\tError scanning youtube record: %s", err.Error())
+	}
+	result := sb.db.QueryRow(`
 SELECT
 	youtube_id,
 	mirror_url,

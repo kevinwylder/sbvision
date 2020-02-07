@@ -18,10 +18,23 @@ func (ctx *serverContext) image(w http.ResponseWriter, r *http.Request) {
 	image := sbvision.Image(r.URL.Path[7:])
 	switch r.Method {
 	case http.MethodPost:
-		err := ctx.images.PutImage(r.Body, image)
+		session, err := ctx.session.ValidateSession(sbvision.SessionJWT(r.Header.Get("Session")))
+		if err != nil {
+			http.Error(w, "Unauthorized", 401)
+			return
+		}
+
+		err = ctx.images.PutImage(r.Body, image)
 		if err != nil {
 			fmt.Println("Error saving image", err)
 			http.Error(w, "Could not save image", 500)
+			return
+		}
+
+		err = ctx.db.AddImage(image, session)
+		if err != nil {
+			fmt.Println("Error storing image", err)
+			http.Error(w, "Could not store image in db", 500)
 			return
 		}
 

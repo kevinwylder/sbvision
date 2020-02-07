@@ -1,0 +1,128 @@
+
+* {
+    box-sizing: border-box;
+}
+  
+html {
+    font-size: 62.5%;
+}
+
+.list-row{
+    border: 1px solid #DDD;
+    border-radius: 10px;
+    margin: 5px;
+    height: 90px;
+    vertical-align: top;
+    margin: 5px;
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.05);
+}
+
+.list-row-image{
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+}
+
+.list-row-text{
+    font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+    padding: 15px;
+}
+
+.list-row-tile{
+    font-size: 2rem;
+    margin: 0;
+}
+
+.list-row-stats{
+    display: flex;
+    justify-content: space-between;
+    font-size: .6rem;
+    line-height: 2rem;
+}
+
+.listing{
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.list-add{
+    font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+    top: 0px;
+    width: 200px;
+    z-index: 10;
+    background-color: white;
+    position: fixed;
+}
+
+.list-add-space{
+    width: 200px;
+    height: 85px;
+}
+
+.list-add-always{
+    margin: auto;
+}
+
+.list-add-always input {
+    height: 30px;
+    width: 160px;
+    border: 1px solid #cdcdcd;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+    margin: 0px;
+    vertical-align: middle;
+    font-size: 16px;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.05);
+}
+
+.list-add-always button {
+    height: 30px;
+    width: 40px;
+    border: 1px solid #cdcdcd;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    margin: 0px;
+    vertical-align: middle;
+    font-size: 16px;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.05);
+}
+
+.list-add-error {
+    color: red;
+}
+
+.list-pagenation {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    font-size: larger;
+}
+
+@media screen and (max-width: 499px) {
+    .list-add {
+        text-align: center;
+        width: 100%;
+        height: 85px;
+        box-shadow: 1px 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .list-add-extra {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 750px) {
+    .list-container{
+        max-width: 350px;
+        margin: auto;
+    }
+}
+
+@media screen and (min-width: 751px) {
+    .list-container{
+        width: 470px;
+        margin: auto;
+    }
+}

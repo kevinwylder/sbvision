@@ -36,7 +36,9 @@ func NewImageDirectory(dir string) (*ImageDirectory, error) {
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCannot create clip directory: %s", err.Error())
 	}
-	return nil, nil
+	return &ImageDirectory{
+		path: dir,
+	}, nil
 }
 
 // PutImage reads the given source and writes it to the file
