@@ -16,6 +16,7 @@ export function PanelLayout() {
             callback={() => {}}
             /> */}
         <VideoDisplay
+            topBarSize={40}
             video={{
                 clips: 0,
                 duration: 90,

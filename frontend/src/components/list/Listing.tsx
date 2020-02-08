@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import '../../styles/video.css';
+import '../../styles/list.css';
 
 import { ListRow } from './ListRow'
 import { Video, addVideo, getVideos } from '../../api';

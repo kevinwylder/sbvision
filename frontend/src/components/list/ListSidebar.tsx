@@ -1,5 +1,4 @@
 import * as React from 'react';
-import '../../styles/video.css';
 
 import { Video, addVideo } from '../../api';
 
