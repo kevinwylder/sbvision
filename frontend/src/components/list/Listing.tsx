@@ -3,12 +3,12 @@ import * as React from 'react';
 import '../../styles/list.css';
 
 import { ListRow } from './ListRow'
-import { Video, addVideo, getVideos } from '../../api';
+import { Video, getVideos } from '../../api';
 import { ListSidebar } from './ListSidebar';
 import { ListPagenation } from './ListPagenation';
 
 interface VideoList {
-    callback: (video: Video) => void
+    onVideoSelected: (video: Video) => void
 }
 
 export function Listing(props: VideoList) {
@@ -32,7 +32,7 @@ export function Listing(props: VideoList) {
     }, [offset])
 
     // Pass selected video up the tree
-    React.useEffect(() => selectedVideo && props.callback(selectedVideo), [selectedVideo]);
+    React.useEffect(() => selectedVideo && props.onVideoSelected(selectedVideo), [selectedVideo]);
 
     return (
     <div className="listing">

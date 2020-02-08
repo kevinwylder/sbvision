@@ -17,14 +17,27 @@ interface GetVideosResponse {
 }
 
 export function getVideos(offset: number, limit: number): Promise<GetVideosResponse> {
-    return fetch(`/videos?offset=${offset}&count=${limit}`)
+    return Promise.resolve({
+        videos: [{
+            clips: 0,
+            duration: 90,
+            format: "video/mp4",
+            fps: 22,
+            id: 2,
+            thumbnail: "thumbnail/1U-cgn3cEGA.jpg",
+            title: "This is a test video so I can code without the Internet!",
+            type: 3,
+        }],
+        total: 1
+    })
+    /*return fetch(`/videos?offset=${offset}&count=${limit}`)
     .then(res => {
         if (res.status != 200) {
             return res.text()
             .then(reason => Promise.reject(reason))
         } 
         return res.json()
-    }) 
+    }) */
 }
 
 export function addVideo(url: string, type: number) : Promise<Video> {

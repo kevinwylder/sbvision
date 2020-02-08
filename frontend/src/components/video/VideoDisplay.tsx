@@ -2,73 +2,76 @@ import * as React from 'react';
 
 import "../../styles/video.css";
 
-import { Box } from '../../box';
+import { Box } from './box';
 import { Video } from '../../api';
+import { VideoBox } from './VideoBox';
+import { VideoScrubber } from './VideoScrubber';
 
 interface VideoDisplayProps {
     video: Video
-    topBarSize: number
 }
 
 export function VideoDisplay(props: VideoDisplayProps) {
 
-    // then attach the canvas size to respond to the video size and resolution
+    let canvas = React.createRef<HTMLCanvasElement>();
     let video = React.createRef<HTMLVideoElement>();
-    let [ aspectRatio, setAspectRatio ] = React.useState(1);
+
+    // get state callbacks from video events 
+    let [ videoSize, setVideoSize ] = React.useState([100, 100]);
     React.useEffect(() => {
         if (!video.current) {
             return;
         }
         video.current.onresize = ({target}) => {
             let v = target as HTMLVideoElement;
-            setAspectRatio(v.videoWidth / v.videoHeight);
+            setVideoSize([v.videoWidth, v.videoHeight]);
         }
         video.current.load();
-    }, [ video.current ]);
+    }, [ video.current, canvas.current ]);
 
-    let canvas = React.createRef<HTMLCanvasElement>();
-
-    // create a ref to set the pixel dimensions we are allocated for video
+    // use aspect ratio and container bounds to place the video
     let container = React.createRef<HTMLDivElement>();
-    let [ bounds, setDisplayBounds ] = React.useState({
-        top: 0,
-        left: 0,
-        width: 0,
-        height: 0
-    })
-    React.useLayoutEffect(() => {
-        console.log("Render");
+    let [ bounds, setDisplayBounds ] = React.useState({ top: 0, left: 0, width: 0, height: 0 });
+    React.useEffect(() => {
         if (!container.current) return;
+        let [ vWidth, vHeight ] = videoSize;
+        let aspectRatio = vWidth / vHeight;
         let { width, height } = container.current.getBoundingClientRect();
-        console.log(height, width / height, aspectRatio);
-        let displayLeft = Math.max((width - aspectRatio * (height - 2 * props.topBarSize)), 0) / 2;
+        let displayLeft = Math.max((width - aspectRatio * height), 0) / 2;
         let displayWidth = width - 2 * displayLeft;
         let displayHeight = displayWidth / aspectRatio;
-        let displayTop = Math.max((height - displayHeight) / 2, props.topBarSize);
+        let displayTop = Math.max((height - displayHeight) / 2, 0);
         setDisplayBounds({
             top: displayTop,
             left: displayLeft,
             width: displayWidth,
             height: displayHeight,
         });
-    }, [container.current, aspectRatio]);
+    }, [container.current, videoSize]);
+
+    let [ hasPlayed, setHasPlayed ] = React.useState(false);
+    let [ frame, setFrame ] = React.useState(0);
+
+    // oh god this is where it starts to fall apart
+    let [ advanceFrame, setAdvanceFrame ] = React.useState(0);
+    let [ playFlag, setPlayFlag ] = React.useState(false)
+    React.useEffect(() => {
+        if (advanceFrame && video.current) {
+            video.current.currentTime += advanceFrame / props.video.fps;
+            setAdvanceFrame(0);
+        }
+        if (playFlag && video.current) {
+            video.current.play();
+            setPlayFlag(false);
+        }
+    }, [advanceFrame, playFlag, video.current])
 
     return <div 
         ref={container}
         className="video-container">
-        <div 
-            className="video-control-bar"
-            style={{
-                top: bounds.top - props.topBarSize,
-                left: bounds.left,
-                width: bounds.width,
-                height: props.topBarSize
-            }}>
-                Back button!
-        </div>
         <video
             ref={video} 
-            autoPlay
+            onClick={_ => video.current?.pause()}
             style={{
                 position: "absolute",
                 ...bounds
@@ -78,67 +81,41 @@ export function VideoDisplay(props: VideoDisplayProps) {
                 type={props.video.format}
             />
         </video>
-        <canvas 
-            ref={canvas}
-            style={{
-                position: "absolute",
-                ...bounds
+        <VideoBox 
+            layout={bounds}
+            video={video}
+            setHasPlayed={setHasPlayed}
+            videoWidth={videoSize[0]}
+            videoHeight={videoSize[1]}
+            onPause={(data) => {
+
             }}
-        >
-        </canvas>
-        <div
-            className="video-control-bar"
-            style={{
-                top: bounds.top + bounds.height,
+            onSubmit={(bounds) => {
+                setAdvanceFrame(1);
+            }}
+            onRefuse={() => {
+                setPlayFlag(true);
+            }}
+        />
+        <VideoScrubber
+            video={video}
+            fps={props.video.fps}
+            onFrame={setFrame}
+            bounds={{
+                top: bounds.top + bounds.height - 15,
                 left: bounds.left,
-                width: bounds.width,
-                height: props.topBarSize
-            }}> Is there a skateboard in this video? Pause and let us know </div>
-
+                width: bounds.width
+            }}
+            ></VideoScrubber>
+        <img
+            style={{
+                ...bounds,
+                position: "absolute",
+                objectFit: "contain",
+                display: hasPlayed ? "none" : "block"
+            }}
+            src={`/images/${props.video.thumbnail}`}
+            onClick={() => video.current && video.current.play() }
+        />
     </div> 
-}
-
-class VideoControls {
-
-    public width = 0;
-    public height = 0;
-    public aspect = 0;
-    public isFirstPlay = true;
-
-    constructor(
-        private video: HTMLVideoElement,
-        private ctx: CanvasRenderingContext2D,
-    ) {
-    }
-
-    public draw() { 
-        this.ctx.clearRect(0, 0, this.width, this.height);
-        if (this.video.paused) {
-            if (this.isFirstPlay) {
-                this.drawPlayArrow();
-            }
-        } else {
-            this.isFirstPlay = false;
-        }
-    }
-
-    private drawPlayArrow() {
-        let size = this.width * .1;
-        let top = (this.height - size) / 2;
-        let bottom = (this.height + size) / 2;
-        let left = this.width / 2 - size;
-        let right = this.width / 2 + size;
-        this.ctx.beginPath();
-        this.ctx.moveTo(left, top);
-        this.ctx.lineTo(right, this.height / 2);
-        this.ctx.lineTo(left, bottom);
-        this.ctx.closePath();
-        this.ctx.fillStyle = "white";
-        this.ctx.strokeStyle = "black";
-        this.ctx.lineWidth = 6;
-        this.ctx.lineCap = "round";
-        this.ctx.fill();
-        this.ctx.stroke();
-    } 
-
 }

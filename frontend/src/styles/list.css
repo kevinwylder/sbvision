@@ -43,6 +43,7 @@ html {
 }
 
 .listing{
+    margin: 14px;
     display: flex;
     flex-wrap: wrap;
 }
