@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/kevinwylder/sbvision"
 )
@@ -9,7 +10,7 @@ import (
 func (sb *SBDatabase) prepareAddYoutubeRecord() (err error) {
 	sb.addYoutubeRecord, err = sb.db.Prepare(`
 INSERT INTO youtube_videos (youtube_id, video_id, mirror_url, mirror_expire) 
-VALUES (?, ?, ?, FROM_UNIXTIME(?));
+VALUES (?, ?, ?, ?);
 	`)
 	return
 }
@@ -28,7 +29,7 @@ func (sb *SBDatabase) prepareGetYoutubeRecord() (err error) {
 SELECT	
 	youtube_id, 
 	mirror_url,
-	mirror_expire
+	UNIX_TIMESTAMP(mirror_expire)
 FROM youtube_videos
 WHERE video_id = ?
 	`)
@@ -41,9 +42,11 @@ func (sb *SBDatabase) GetYoutubeRecord(videoID int64) (*sbvision.YoutubeVideoInf
 	yt := &sbvision.YoutubeVideoInfo{
 		VideoID: videoID,
 	}
-	err := video.Scan(&yt.YoutubeID, &yt.MirrorURL, &yt.MirrorExp)
+	var unixExpire int64
+	err := video.Scan(&yt.YoutubeID, &yt.MirrorURL, &unixExpire)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tError scanning youtube record: %s", err.Error())
 	}
+	yt.MirrorExp = time.Unix(unixExpire, 0)
 	return yt, nil
 }

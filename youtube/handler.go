@@ -113,5 +113,9 @@ func (dl *youtubeHandler) director(r *http.Request) {
 		fmt.Println("youtube proxy director couldn't parse mirror url", url)
 		return
 	}
+
+	r.Header.Set("Host", r.Host)
+	r.Header.Set("X-Forwarded-For", r.RemoteAddr)
+	r.Host = url.Host
 	r.URL = url
 }
