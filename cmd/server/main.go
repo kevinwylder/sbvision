@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -81,10 +80,6 @@ func main() {
 		server.assets = cache
 	}
 
-	server.testVideo, err = ioutil.ReadFile(path.Join(os.Getenv("ASSET_DIR"), "test.mp4"))
-	if err != nil {
-		log.Fatal(err)
-	}
 	server.youtube = youtube.NewYoutubeHandler(db, server.assets)
 
 	fmt.Println("Starting server")
