@@ -39,4 +39,10 @@ to run the development environment, use
 docker-compose up
 ```
 
-The server is a golang server connected to a mysql database
+The server is a golang server connected to a mysql database. It hosts the frontend, and has various queries 
+
+
+### Frontend
+
+The frontend is a react application. If you used docker-compose to start the server, then it is statically served at the website root, and running `yarn dev` will update your changes as you save files
+

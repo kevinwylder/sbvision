@@ -42,8 +42,10 @@ export function VideoDisplay(props: VideoDisplayProps) {
         }
         let frameManager = new FrameManager(videoInfo, video.current)
         setFrameManager(frameManager);
-        function onPaused() {
-            frameManager?.uploadFrame();
+        function onTimeUpdate(this: HTMLVideoElement) {
+            if (this.paused) {
+                frameManager.uploadFrame();
+            }
         }
         function onPlay() {
             setHasPlayed(true);
@@ -54,12 +56,12 @@ export function VideoDisplay(props: VideoDisplayProps) {
         }
         video.current.addEventListener("resize", onResize);
         video.current.addEventListener("play", onPlay);
-        video.current.addEventListener("pause", onPaused);
+        video.current.addEventListener("timeupdate", onTimeUpdate);
         video.current.load();
         return () => {
             video.current?.removeEventListener("resize", onResize)
             video.current?.removeEventListener("play", onPlay);
-            video.current?.removeEventListener("pause", onPaused);
+            video.current?.removeEventListener("timeupdate", onTimeUpdate);
         };
     }, [ video.current, videoInfo ]);
 
@@ -106,6 +108,9 @@ export function VideoDisplay(props: VideoDisplayProps) {
             videoHeight={videoSize[1]}
             onSubmit={(bounds) => {
                 frameManager?.giveBounds(bounds);
+                if (video.current) {
+                    video.current.currentTime += (1 / 30);
+                }
             }}
         />
         <VideoScrubber

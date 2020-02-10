@@ -2,6 +2,7 @@ import { Bounds } from '../../api';
 
 export class Box {
 
+    private empty: boolean = true;
     private helpTextDelay: number = 1000;
     private dragStartTime: number = 0;
     private helpTextInterval: number = 0;
@@ -18,7 +19,9 @@ export class Box {
         private areaHeight: number,
         private border: number, 
         private ctx: CanvasRenderingContext2D
-    ) { }
+    ) {
+        this.reset();
+     }
 
     // describe puts semantic meaning behind coordinates
     private describe() {
@@ -41,10 +44,23 @@ export class Box {
         }
     }
 
+    private reset() {
+        this.empty = true;
+        this.coordinates = [0, 0, 0, 0];
+        this.draw();
+    }
+
     private draw() {
         this.ctx.clearRect(0,  0, this.areaWidth, this.areaHeight);
-        let { top, bottom, left, right } = this.describe();
         this.ctx.fillStyle = "rgba(0, 0, 0, .7)";
+        if (this.empty) {
+            this.ctx.fillRect(0, 0, this.areaWidth, this.areaHeight);
+            this.ctx.font = "12px Arial";
+            this.ctx.fillStyle = "white";
+            this.ctx.fillText("Draw a box around the skateboard", 100, 50);
+            return;
+        }
+        let { top, bottom, left, right } = this.describe();
         this.ctx.fillRect(0, 0, left, bottom);
         this.ctx.fillRect(left, 0, this.areaWidth, top);
         this.ctx.fillRect(right, top, this.areaWidth, this.areaHeight);
@@ -68,6 +84,7 @@ export class Box {
         if (this.helpTextInterval) {
             window.clearInterval(this.helpTextInterval);
         }
+        this.empty = false;
         this.type = type;
         this.dragging = true;
         this.lastCoordinates = this.coordinates;
@@ -153,7 +170,7 @@ export class Box {
             } else {
                 onRefuse();
             }
-            this.draw();
+            this.reset();
         } else {
             let text = this.type + " to submit";
             this.helpTextInterval = window.setTimeout(() => {

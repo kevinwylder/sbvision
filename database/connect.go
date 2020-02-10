@@ -13,6 +13,8 @@ type SBDatabase struct {
 	addVideo         *sql.Stmt
 	addYoutubeRecord *sql.Stmt
 	addFrame         *sql.Stmt
+	addBounds        *sql.Stmt
+
 	getVideoPage     *sql.Stmt
 	getVideoCount    *sql.Stmt
 	getVideoByID     *sql.Stmt
@@ -73,6 +75,10 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 	err = sb.prepareAddFrame()
 	if err != nil {
 		return nil, fmt.Errorf("\n\tError prepareing AddFrame: %s", err)
+	}
+	err = sb.prepareAddBounds()
+	if err != nil {
+		return nil, fmt.Errorf("\n\tError preparing AddBounds: %s", err)
 	}
 	return sb, nil
 }

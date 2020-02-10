@@ -52,6 +52,13 @@ func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+	case "/bounds":
+		switch r.Method {
+		case http.MethodPost:
+			ctx.handleBoundsUpload(w, r)
+			return
+		}
+
 	}
 
 	// redirect /video/:id requests to index

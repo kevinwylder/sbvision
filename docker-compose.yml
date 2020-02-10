@@ -7,7 +7,7 @@ services:
       - "1080:1080"
     environment:
       DB_CREDS: "root:password@tcp(database)/sbvision"
-      IMAGE_DIR: "/data"
+      ASSET_DIR: "/data"
       PORT: ":1080"
       FRONTEND_DIR: "/go/src/github.com/kevinwylder/sbvision/frontend"
 

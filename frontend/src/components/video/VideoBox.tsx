@@ -35,14 +35,6 @@ export function VideoBox(props: VideoBoxProps) {
         }
     }, [props.video.current, canvas.current])
 
-    // apply our state to the canvas
-    React.useEffect(() => {
-        if (!canvas.current) {
-            return;
-        }
-        canvas.current.style.display = isPlaying ? "none" : "block";
-    }, [canvas.current, isPlaying])
-
     // bind canvas events to canvas box
     React.useEffect(() => {
         if (!canvas.current) {
@@ -72,14 +64,6 @@ export function VideoBox(props: VideoBoxProps) {
             e.preventDefault();
             box.release(props.onSubmit, () => props.video.current?.play());
         }
-        canvas.current.onmouseleave = (e) => {
-            e.preventDefault();
-            box.release(() => {}, () => {});
-        }
-        canvas.current.onmouseout = (e) => {
-            e.preventDefault();
-            box.release(() => {}, () => {});
-        }
         canvas.current.ontouchstart = (e) => {
             e.preventDefault();
             box.grab(convertCoordinates(e.targetTouches[0]), "tap");
@@ -101,7 +85,7 @@ export function VideoBox(props: VideoBoxProps) {
         style={{
             ...props.layout,
             position: "absolute",
-            display: "none"
+            display: isPlaying ? "none" : "block"
         }}
     > </canvas>
 }
