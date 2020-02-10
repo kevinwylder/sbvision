@@ -21,14 +21,14 @@ type YTDatabase interface {
 
 type youtubeHandler struct {
 	db     YTDatabase
-	images sbvision.ImageUploader
+	images sbvision.KeyValueStore
 	proxy  *httputil.ReverseProxy
 	// cache maps the video id to it's youtube info
 	cache map[int64]*sbvision.YoutubeVideoInfo
 }
 
 // NewYoutubeHandler constructs a namespace for downloading youtube video info
-func NewYoutubeHandler(storage YTDatabase, images sbvision.ImageUploader) sbvision.VideoHandler {
+func NewYoutubeHandler(storage YTDatabase, images sbvision.KeyValueStore) sbvision.VideoHandler {
 	handler := &youtubeHandler{
 		db:     storage,
 		images: images,
@@ -47,25 +47,25 @@ func (dl *youtubeHandler) HandleDiscover(req *sbvision.VideoDiscoverRequest) (*s
 	if req.Session == nil {
 		return nil, fmt.Errorf("\n\tMissing Session from videodownloadrequest")
 	}
-	yt, err := dl.getYoutubeVideo(req.URL)
+	yt, video, err := dl.getYoutubeVideo(req.URL)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCould not get video: %s", err.Error())
 	}
 	// add video and thumbnail image to database
-	err = dl.db.AddImage(yt.Video.Thumbnail, req.Session)
+	err = dl.db.AddImage(video.Thumbnail, req.Session)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCannot add video thumbnail: %s", err.Error())
 	}
-	err = dl.db.AddVideo(yt.Video)
+	err = dl.db.AddVideo(video)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCannot add video: %s", err.Error())
 	}
+	yt.VideoID = video.ID
 	err = dl.db.AddYoutubeRecord(yt)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCannot add youtube video: %s", err.Error())
 	}
-
-	return yt.Video, nil
+	return video, nil
 }
 
 func (dl *youtubeHandler) HandleStream(w http.ResponseWriter, r *http.Request) {

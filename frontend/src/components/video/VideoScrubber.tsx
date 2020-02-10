@@ -2,8 +2,6 @@ import * as React from 'react';
 
 interface VideoControlProps {
     video: React.RefObject<HTMLVideoElement>
-    fps: number
-    onFrame: (frame: number) => void
     bounds: {
         top: number,
         left: number,
@@ -11,7 +9,7 @@ interface VideoControlProps {
     }
 }
 
-export function VideoScrubber({ bounds, video, fps, onFrame }: VideoControlProps) {
+export function VideoScrubber({ bounds, video }: VideoControlProps) {
 
     const WIDE_SCRUBBER_DURATION = 2000;
 
@@ -35,13 +33,13 @@ export function VideoScrubber({ bounds, video, fps, onFrame }: VideoControlProps
         if (!video.current) {
             return;
         }
-        video.current.ontimeupdate = ({target}) => {
-            let v = target as HTMLVideoElement;
-            setTime(v.currentTime);
-            setBuffer(v.buffered);
-            setDuration(v.duration);
-            onFrame(Math.round(v.currentTime * fps));
+        function onTimeUpdate(this: HTMLVideoElement) {
+            setTime(this.currentTime);
+            setBuffer(this.buffered);
+            setDuration(this.duration);
         }
+        video.current.addEventListener("timeupdate", onTimeUpdate);
+        return () => video.current?.removeEventListener("timeupdate", onTimeUpdate);
     }, [video.current])
 
     const scrub = (e: {clientX: number}) => {

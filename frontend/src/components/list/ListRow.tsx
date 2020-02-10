@@ -2,6 +2,8 @@ import * as React from 'react';
 
 import { Video } from '../../api';
 
+import { Redirect } from 'react-router-dom';
+
 interface VideoRowProps {
     video: Video
     selected: boolean
@@ -16,6 +18,9 @@ function timeString(duration: number): string {
 }
 
 export function ListRow({video, selected, onSelect}: VideoRowProps) {
+    if (selected) {
+        return <Redirect push to={`/video/${video.id}`}/>
+    }
     return (
         <div className="list-row" onClick={() => onSelect(video)}>
             <img className="list-row-image"

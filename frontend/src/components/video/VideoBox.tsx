@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { Box, Bounds } from './box';
+import { Box } from './box';
+import { Bounds } from '../../api';
 
 interface VideoBoxProps {
     video: React.RefObject<HTMLVideoElement>
@@ -8,10 +9,7 @@ interface VideoBoxProps {
     videoWidth: number
     videoHeight: number
 
-    setHasPlayed: (hasPlayed: boolean) => void
-    onPause: (data: string) => void
     onSubmit: (bounds: Bounds) => void
-    onRefuse: () => void
 }
 
 export function VideoBox(props: VideoBoxProps) {
@@ -23,19 +21,17 @@ export function VideoBox(props: VideoBoxProps) {
         if (!props.video.current) {
             return;
         }
-        props.video.current.onpause = ({target}) => {
-            let v = target as HTMLVideoElement;
-            let data = getVideoData(v);
-            if (data) {
-                props.onPause(data);
-            } else {
-                props.onRefuse();
-            }
+        function onPause() {
             setIsPlaying(false);
         }
-        props.video.current.onplay = () => {
-            props.setHasPlayed(true);
+        function onPlay() {
             setIsPlaying(true);
+        }
+        props.video.current.addEventListener("play", onPlay);
+        props.video.current.addEventListener("pause", onPause);
+        return () => {
+            props.video.current?.removeEventListener("play", onPlay);
+            props.video.current?.removeEventListener("pause", onPause);
         }
     }, [props.video.current, canvas.current])
 
@@ -74,7 +70,7 @@ export function VideoBox(props: VideoBoxProps) {
         }
         canvas.current.onmouseup = (e) => {
             e.preventDefault();
-            box.release(props.onSubmit, props.onRefuse);
+            box.release(props.onSubmit, () => props.video.current?.play());
         }
         canvas.current.onmouseleave = (e) => {
             e.preventDefault();
@@ -94,9 +90,9 @@ export function VideoBox(props: VideoBoxProps) {
         }
         canvas.current.ontouchend = (e) => {
             e.preventDefault();
-            box.release(props.onSubmit, props.onRefuse);
+            box.release(props.onSubmit, () => props.video.current?.play());
         }
-    }, [canvas.current, props.layout])
+    }, [canvas.current, props.layout, props.video.current])
 
     return <canvas
         ref={canvas}
@@ -108,16 +104,4 @@ export function VideoBox(props: VideoBoxProps) {
             display: "none"
         }}
     > </canvas>
-}
-
-function getVideoData(v: HTMLVideoElement) {
-    let canvas = document.createElement("canvas");
-    canvas.width = v.videoWidth;
-    canvas.height = v.videoHeight;
-    let ctx = canvas.getContext("2d");
-    if (!ctx) {
-        return;
-    }
-    ctx.drawImage(v, 0, 0);
-    return canvas.toDataURL();
 }

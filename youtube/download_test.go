@@ -36,13 +36,18 @@ func TestYoutubeDownload(t *testing.T) {
 	}
 }
 
-func (r *mockResults) PutImage(data io.Reader, key sbvision.Image) error {
+func (r *mockResults) PutAsset(key string, data io.Reader) error {
 	if r.uploadedThumbnail {
 		r.test.Fail()
 	}
 	r.uploadedThumbnail = true
 	fmt.Println("upload image")
 	return nil
+}
+
+func (r *mockResults) GetAsset(key string) (io.ReadCloser, error) {
+	r.test.Fail()
+	return nil, nil
 }
 
 func (r *mockResults) AddImage(image sbvision.Image, session *sbvision.Session) error {

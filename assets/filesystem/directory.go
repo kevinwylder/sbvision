@@ -1,4 +1,4 @@
-package images
+package filesystem
 
 import (
 	"fmt"
@@ -6,17 +6,15 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-
-	"github.com/kevinwylder/sbvision"
 )
 
-// ImageDirectory is a folder that holds images
-type ImageDirectory struct {
+// AssetDirectory is a folder that holds images
+type AssetDirectory struct {
 	path string
 }
 
-// NewImageDirectory creates an image storage directory that fulfils the sbvision.Image interfaces
-func NewImageDirectory(dir string) (*ImageDirectory, error) {
+// NewAssetDirectory creates an image storage directory that fulfils the sbvision.Image interfaces
+func NewAssetDirectory(dir string) (*AssetDirectory, error) {
 	stat, err := os.Stat(dir)
 	if os.IsNotExist(err) {
 		err = os.MkdirAll(dir, 0755)
@@ -32,17 +30,21 @@ func NewImageDirectory(dir string) (*ImageDirectory, error) {
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCannot create thumbnail directory: %s", err.Error())
 	}
-	err = os.MkdirAll(path.Join(dir, "clip"), 0755)
+	err = os.MkdirAll(path.Join(dir, "frame"), 0755)
 	if err != nil {
-		return nil, fmt.Errorf("\n\tCannot create clip directory: %s", err.Error())
+		return nil, fmt.Errorf("\n\tCannot create frame directory: %s", err.Error())
 	}
-	return &ImageDirectory{
+	err = os.MkdirAll(path.Join(dir, "videos"), 0755)
+	if err != nil {
+		return nil, fmt.Errorf("\n\tCannot create videos directory: %s", err.Error())
+	}
+	return &AssetDirectory{
 		path: dir,
 	}, nil
 }
 
-// PutImage reads the given source and writes it to the file
-func (sd *ImageDirectory) PutImage(data io.Reader, key sbvision.Image) error {
+// PutAsset reads the given source and writes it to the file
+func (sd *AssetDirectory) PutAsset(key string, data io.Reader) error {
 	bytes, err := ioutil.ReadAll(data)
 	if err != nil {
 		return fmt.Errorf("\n\tCannot read image (%s) from reader: %s", key, err)
@@ -54,8 +56,8 @@ func (sd *ImageDirectory) PutImage(data io.Reader, key sbvision.Image) error {
 	return nil
 }
 
-// GetImage returns the open file
-func (sd *ImageDirectory) GetImage(image sbvision.Image) (io.ReadCloser, error) {
+// GetAsset returns the open file
+func (sd *AssetDirectory) GetAsset(image string) (io.ReadCloser, error) {
 	file, err := os.Open(path.Join(sd.path, string(image)))
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCannot open image (%s): %s", image, err)

@@ -11,7 +11,7 @@ export function ListSidebar(props: ListAddProps) {
     let inputURL = React.createRef<HTMLInputElement>()
     let [ errorText, setErrorText ] = React.useState("");
 
-    const AddVideo = () => {
+    const onVideoDiscoveryRequest = () => {
         if (!inputURL.current) {
             return;
         }
@@ -44,7 +44,7 @@ export function ListSidebar(props: ListAddProps) {
                 placeholder="https://www.youtube.com/watch?v="
                 className="list-url-textbox"
             />
-            <button onClick={AddVideo}> Go</button>
+            <button onClick={onVideoDiscoveryRequest}> Go</button>
             <div className="list-add-error">
                 {errorText}
             </div>

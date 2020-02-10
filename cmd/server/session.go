@@ -8,7 +8,7 @@ import (
 	"github.com/kevinwylder/sbvision"
 )
 
-func (ctx *serverContext) getSession(w http.ResponseWriter, r *http.Request) {
+func (ctx *serverContext) handleNewSession(w http.ResponseWriter, r *http.Request) {
 	session := &sbvision.Session{
 		Time: time.Now().Unix(),
 	}

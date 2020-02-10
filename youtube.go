@@ -4,7 +4,7 @@ import "time"
 
 // YoutubeVideoInfo is the information required to serve a youtube video
 type YoutubeVideoInfo struct {
-	Video     *Video
+	VideoID   int64
 	YoutubeID string
 	MirrorURL string
 	MirrorExp time.Time

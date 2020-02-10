@@ -1,12 +1,16 @@
 
-export let session: string;
+export let session: {
+    Session: string
+};
 
 function getSession() {
     console.log("Getting session header")
     fetch("/session")
     .then(res => res.status == 200 ? res.text() : Promise.reject(res.text())) 
     .then(s => {
-        session = s;
+        session = {
+            Session: s,
+        };
     })
     .catch(err => {
         console.log("Could not get session header:", err)

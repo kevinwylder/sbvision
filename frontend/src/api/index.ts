@@ -1,2 +1,3 @@
 
-export { Video, addVideo, getVideos } from './videos'
+export { Video, addVideo, getVideos, getVideoById } from './videos'
+export { FrameManager, Bounds } from './frame';

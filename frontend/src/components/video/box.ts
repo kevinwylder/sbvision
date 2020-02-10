@@ -1,12 +1,8 @@
-export interface Bounds {
-    left: number
-    top: number
-    width: number
-    height: number
-}
+import { Bounds } from '../../api';
 
 export class Box {
 
+    private helpTextDelay: number = 1000;
     private dragStartTime: number = 0;
     private helpTextInterval: number = 0;
     private dragDistance: number = 0;
@@ -140,7 +136,7 @@ export class Box {
         this.draw();
     }
 
-    // release returns true if the overall stroke was a tap
+    // release calls onSubmit if the stroke was an 
     public release(onSubmit: (b: Bounds) => void, onRefuse: () => void) {
         this.dragging = false;
 
@@ -159,12 +155,22 @@ export class Box {
             }
             this.draw();
         } else {
+            let text = this.type + " to submit";
             this.helpTextInterval = window.setTimeout(() => {
-            })
+                this.ctx.font = "12px Arial";
+                let { width, actualBoundingBoxDescent, actualBoundingBoxAscent } = this.ctx.measureText(text);
+                let height = actualBoundingBoxAscent + actualBoundingBoxDescent;
+                let { left, top, bottom, right } = this.describe();
+                let fontSize = 12 * Math.min((bottom - top - 10) / height, (right - left - 10) / width);
+                this.ctx.font = fontSize + "px Arial";
+                this.ctx.strokeStyle = "black"
+                this.ctx.lineWidth = 5;
+                this.ctx.strokeText(text, left, (top + bottom + fontSize) / 2);
+                this.ctx.fillStyle = "white"
+                this.ctx.fillText(text, left, (top + bottom + fontSize) / 2);
+                this.helpTextDelay = Math.min(this.helpTextDelay + 300, 5000);
+            }, this.helpTextDelay);
         }
     }
-
-    public wasInside() {
-    } 
 
 }

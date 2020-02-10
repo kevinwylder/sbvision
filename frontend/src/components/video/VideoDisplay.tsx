@@ -2,32 +2,66 @@ import * as React from 'react';
 
 import "../../styles/video.css";
 
-import { Box } from './box';
-import { Video } from '../../api';
+import { Video, FrameManager, getVideoById } from '../../api';
 import { VideoBox } from './VideoBox';
 import { VideoScrubber } from './VideoScrubber';
+import { useParams } from 'react-router-dom';
 
 interface VideoDisplayProps {
-    video: Video
+    video?: Video
+}
+
+interface RouteParams {
+    id?: string
 }
 
 export function VideoDisplay(props: VideoDisplayProps) {
 
-    let canvas = React.createRef<HTMLCanvasElement>();
+    // allow for route based video loading
+    let [ videoInfo, setVideoInfo ] = React.useState<Video>()
+    let params: RouteParams = useParams();
+
+    React.useEffect(() => {
+        if (props.video) {
+            setVideoInfo({...props.video});
+            return;
+        }
+        getVideoById(parseInt(params.id as string))
+        .then(v => setVideoInfo(v.videos[0]));
+    }, [props.video])
+
     let video = React.createRef<HTMLVideoElement>();
 
     // get state callbacks from video events 
+    let [ hasPlayed, setHasPlayed ] = React.useState(false);
     let [ videoSize, setVideoSize ] = React.useState([100, 100]);
+    let [ frameManager, setFrameManager ] = React.useState<FrameManager>();
     React.useEffect(() => {
-        if (!video.current) {
+        if (!video.current || !videoInfo) {
             return;
         }
-        video.current.onresize = ({target}) => {
+        let frameManager = new FrameManager(videoInfo, video.current)
+        setFrameManager(frameManager);
+        function onPaused() {
+            frameManager?.uploadFrame();
+        }
+        function onPlay() {
+            setHasPlayed(true);
+        }
+        function onResize({target}: UIEvent) {
             let v = target as HTMLVideoElement;
             setVideoSize([v.videoWidth, v.videoHeight]);
         }
+        video.current.addEventListener("resize", onResize);
+        video.current.addEventListener("play", onPlay);
+        video.current.addEventListener("pause", onPaused);
         video.current.load();
-    }, [ video.current, canvas.current ]);
+        return () => {
+            video.current?.removeEventListener("resize", onResize)
+            video.current?.removeEventListener("play", onPlay);
+            video.current?.removeEventListener("pause", onPaused);
+        };
+    }, [ video.current, videoInfo ]);
 
     // use aspect ratio and container bounds to place the video
     let container = React.createRef<HTMLDivElement>();
@@ -49,26 +83,10 @@ export function VideoDisplay(props: VideoDisplayProps) {
         });
     }, [container.current, videoSize]);
 
-    let [ hasPlayed, setHasPlayed ] = React.useState(false);
-    let [ frame, setFrame ] = React.useState(0);
-
-    // oh god this is where it starts to fall apart
-    let [ advanceFrame, setAdvanceFrame ] = React.useState(0);
-    let [ playFlag, setPlayFlag ] = React.useState(false)
-    React.useEffect(() => {
-        if (advanceFrame && video.current) {
-            video.current.currentTime += advanceFrame / props.video.fps;
-            setAdvanceFrame(0);
-        }
-        if (playFlag && video.current) {
-            video.current.play();
-            setPlayFlag(false);
-        }
-    }, [advanceFrame, playFlag, video.current])
-
     return <div 
         ref={container}
         className="video-container">
+{videoInfo ? <>
         <video
             ref={video} 
             onClick={_ => video.current?.pause()}
@@ -77,30 +95,21 @@ export function VideoDisplay(props: VideoDisplayProps) {
                 ...bounds
             }}>
             <source
-                src={`/video?type=${props.video.type}&id=${props.video.id}`}
-                type={props.video.format}
+                src={`/stream?type=${videoInfo.type}&id=${videoInfo.id}`}
+                type={videoInfo.format}
             />
         </video>
         <VideoBox 
             layout={bounds}
             video={video}
-            setHasPlayed={setHasPlayed}
             videoWidth={videoSize[0]}
             videoHeight={videoSize[1]}
-            onPause={(data) => {
-
-            }}
             onSubmit={(bounds) => {
-                setAdvanceFrame(1);
-            }}
-            onRefuse={() => {
-                setPlayFlag(true);
+                frameManager?.giveBounds(bounds);
             }}
         />
         <VideoScrubber
             video={video}
-            fps={props.video.fps}
-            onFrame={setFrame}
             bounds={{
                 top: bounds.top + bounds.height - 15,
                 left: bounds.left,
@@ -114,8 +123,9 @@ export function VideoDisplay(props: VideoDisplayProps) {
                 objectFit: "contain",
                 display: hasPlayed ? "none" : "block"
             }}
-            src={`/images/${props.video.thumbnail}`}
+            src={`/images/${videoInfo.thumbnail}`}
             onClick={() => video.current && video.current.play() }
         />
+</> : <div>Loading Video Info....</div>}
     </div> 
 }

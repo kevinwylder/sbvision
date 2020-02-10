@@ -1,5 +1,6 @@
 __pycache__
 data
 node_modules
+frontent/dist
 *.swp
 *.swo

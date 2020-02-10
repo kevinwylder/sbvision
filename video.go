@@ -6,14 +6,13 @@ import (
 
 // Video is a generic video source
 type Video struct {
-	ID        int64   `json:"id"`
-	Title     string  `json:"title"`
-	Format    string  `json:"format"`
-	Thumbnail Image   `json:"thumbnail"`
-	Type      int64   `json:"type"`
-	Duration  int64   `json:"duration"`
-	FPS       float64 `json:"fps"`
-	ClipCount int64   `json:"clips"`
+	ID        int64  `json:"id"`
+	Title     string `json:"title"`
+	Format    string `json:"format"`
+	Thumbnail Image  `json:"thumbnail"`
+	Type      int64  `json:"type"`
+	Duration  int64  `json:"duration"`
+	ClipCount int64  `json:"clips"`
 }
 
 // VideoList is a pagenated video lister interface

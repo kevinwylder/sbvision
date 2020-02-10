@@ -7,22 +7,22 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/kevinwylder/sbvision"
+	"github.com/kevinwylder/sbvision/assets/amazon"
+	"github.com/kevinwylder/sbvision/assets/filesystem"
 	"github.com/kevinwylder/sbvision/database"
 	"github.com/kevinwylder/sbvision/frontend"
-	"github.com/kevinwylder/sbvision/images"
 	"github.com/kevinwylder/sbvision/session"
 	"github.com/kevinwylder/sbvision/youtube"
 )
 
 type serverContext struct {
 	session   sbvision.SessionManager
-	images    ImageManager
+	assets    sbvision.KeyValueStore
 	youtube   sbvision.VideoHandler
 	frontend  http.Handler
 	testVideo []byte
@@ -60,53 +60,33 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if bucket, exists := os.LookupEnv("S3_BUCKET"); exists {
-		server.images, err = images.NewImageBucket(bucket)
+	assetDir, exists := os.LookupEnv("ASSET_DIR")
+	if !exists {
+		assetDir, err = ioutil.TempDir("", "")
 		if err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		imageDir, exists := os.LookupEnv("IMAGE_DIR")
-		if !exists {
-			imageDir, err = ioutil.TempDir("", "")
-			if err != nil {
-				log.Fatal("Could not create tmp dir for image storage", err)
-			}
-		}
-		server.images, err = images.NewImageDirectory(imageDir)
-		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Could not create tmp dir for image storage", err)
 		}
 	}
-
-	server.testVideo, err = ioutil.ReadFile(path.Join(os.Getenv("IMAGE_DIR"), "test.mp4"))
+	cache, err := filesystem.NewAssetDirectory(assetDir)
 	if err != nil {
 		log.Fatal(err)
 	}
-	server.youtube = youtube.NewYoutubeHandler(db, server.images)
+	if bucket, exists := os.LookupEnv("S3_BUCKET"); exists {
+		server.assets, err = amazon.NewS3BucketManager(bucket, cache)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	if server.assets == nil {
+		server.assets = cache
+	}
+
+	server.testVideo, err = ioutil.ReadFile(path.Join(os.Getenv("ASSET_DIR"), "test.mp4"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	server.youtube = youtube.NewYoutubeHandler(db, server.assets)
 
 	fmt.Println("Starting server")
 	log.Fatal(http.ListenAndServe(os.Getenv("PORT"), server))
-}
-
-func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.URL.Path)
-
-	if strings.HasPrefix(r.URL.Path, "/videos") {
-		ctx.videos(w, r)
-		return
-	}
-	if strings.HasPrefix(r.URL.Path, "/video") {
-		ctx.video(w, r)
-		return
-	}
-	if strings.HasPrefix(r.URL.Path, "/image") {
-		ctx.image(w, r)
-		return
-	}
-	if strings.HasPrefix(r.URL.Path, "/session") {
-		ctx.getSession(w, r)
-		return
-	}
-	ctx.frontend.ServeHTTP(w, r)
 }

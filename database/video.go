@@ -9,9 +9,9 @@ import (
 
 func (sb *SBDatabase) prepareAddVideo() (err error) {
 	sb.addVideo, err = sb.db.Prepare(`
-INSERT INTO videos (title, type, format, duration, fps, thumbnail_id) 
+INSERT INTO videos (title, type, format, duration, thumbnail_id) 
 SELECT 
-	?, ?, ?, ?, ?, id
+	?, ?, ?, ?, id
 FROM images
 WHERE images.key = ?
 	`)
@@ -20,7 +20,7 @@ WHERE images.key = ?
 
 // AddVideo adds the video to the database
 func (sb *SBDatabase) AddVideo(video *sbvision.Video) error {
-	result, err := sb.addVideo.Exec(video.Title, video.Type, video.Format, video.Duration, video.FPS, video.Thumbnail)
+	result, err := sb.addVideo.Exec(video.Title, video.Type, video.Format, video.Duration, video.Thumbnail)
 	if err != nil {
 		return fmt.Errorf("\n\tError adding video: %s", err.Error())
 	}
@@ -49,6 +49,43 @@ func (sb *SBDatabase) GetVideoCount() (int64, error) {
 	return count, nil
 }
 
+// prepareGetVideoById prepares the GetVideoById query
+func (sb *SBDatabase) prepareGetVideoByID() (err error) {
+	sb.getVideoByID, err = sb.db.Prepare(`
+SELECT	
+	videos.id,
+	videos.title,
+	images.key,
+	videos.type,
+	videos.format,
+	videos.duration,
+	COUNT(*),
+	MAX(bounds.id)
+FROM videos
+INNER JOIN images 
+		ON images.id = videos.thumbnail_id
+LEFT JOIN frames
+		ON frames.video_id = videos.id
+LEFT JOIN bounds
+		ON bounds.frame_id = frames.id
+WHERE videos.id = ?
+GROUP BY videos.id
+ORDER BY discovery_time DESC
+	`)
+	return
+}
+
+// GetVideoByID gets a video record by it's id
+func (sb *SBDatabase) GetVideoByID(id int64) (*sbvision.Video, error) {
+	result := sb.getVideoByID.QueryRow(id)
+	video := sbvision.Video{}
+	err := sb.parseVideoRow(result, &video)
+	if err != nil {
+		return nil, fmt.Errorf("\n\tError getting video: %s", err)
+	}
+	return &video, nil
+}
+
 func (sb *SBDatabase) prepareGetVideos() (err error) {
 	sb.getVideoPage, err = sb.db.Prepare(`
 SELECT	
@@ -58,16 +95,15 @@ SELECT
 	videos.type,
 	videos.format,
 	videos.duration,
-	videos.fps,
 	COUNT(*),
-	MAX(clips.id)
+	MAX(bounds.id)
 FROM videos
 INNER JOIN images 
 		ON images.id = videos.thumbnail_id
 LEFT JOIN frames
 		ON frames.video_id = videos.id
-LEFT JOIN clips
-		ON clips.frame_id = frames.id
+LEFT JOIN bounds
+		ON bounds.frame_id = frames.id
 GROUP BY videos.id
 ORDER BY discovery_time DESC
 LIMIT ? OFFSET ?`)
@@ -75,7 +111,7 @@ LIMIT ? OFFSET ?`)
 }
 
 // GetVideos is a paged listing of videos
-func (sb *SBDatabase) GetVideos(offset, count int) ([]sbvision.Video, error) {
+func (sb *SBDatabase) GetVideos(offset, count int64) ([]sbvision.Video, error) {
 	results, err := sb.getVideoPage.Query(count, offset)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tError getting database video records: %s", err.Error())
@@ -107,7 +143,6 @@ func (sb *SBDatabase) parseVideoRow(src scannable, dst *sbvision.Video) error {
 		&dst.Type,
 		&dst.Format,
 		&dst.Duration,
-		&dst.FPS,
 		&clipCount,
 		&clipFound,
 	)
