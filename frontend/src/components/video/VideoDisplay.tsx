@@ -122,14 +122,14 @@ export function VideoDisplay(props: VideoDisplayProps) {
             }}
             ></VideoScrubber>
         <img
+            src="/play.png"
+            onClick={() => video.current?.play()}
             style={{
                 ...bounds,
                 position: "absolute",
                 objectFit: "contain",
                 display: hasPlayed ? "none" : "block"
             }}
-            src={`/images/${videoInfo.thumbnail}`}
-            onClick={() => video.current && video.current.play() }
         />
 </> : <div>Loading Video Info....</div>}
     </div> 

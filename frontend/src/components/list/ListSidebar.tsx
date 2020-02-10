@@ -52,7 +52,10 @@ export function ListSidebar(props: ListAddProps) {
 
 
         <div className="list-add-extra">
-            <p>This section is reserved for future additions. Some features that might go here include</p>
+            <p>Welcome to the kwylder SkateboardVision project. </p> 
+            <p>We are collecting a dataset of skateboards for training a neural network to identify skateboards and their orientation. </p>
+            <p>Go ahead and paste a youtube video link in the box above to add it to the collection on the right</p>
+            <p>Some things that might go on this sidebar in the future include</p>
             <ol>
                 <li>User Login</li>
                 <li>Clip Review</li>

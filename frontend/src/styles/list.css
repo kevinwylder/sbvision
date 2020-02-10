@@ -94,6 +94,10 @@ html {
     color: red;
 }
 
+.list-add-extra {
+    font-size: medium;
+}
+
 .list-pagenation {
     display: flex;
     justify-content: space-between;
@@ -101,7 +105,7 @@ html {
     font-size: larger;
 }
 
-@media screen and (max-width: 499px) {
+@media screen and (max-width: 579px) {
     .list-add {
         text-align: center;
         width: 100%;
