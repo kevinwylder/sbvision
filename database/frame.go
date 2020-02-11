@@ -14,7 +14,7 @@ SELECT
 FROM frames 
 INNER JOIN images
 		ON images.id = frames.image_id
-WHERE frame = ? AND video_id = ?
+WHERE frames.time = ? AND frames.video_id = ?
 	`)
 	return
 }
@@ -23,8 +23,8 @@ WHERE frame = ? AND video_id = ?
 func (sb *SBDatabase) GetFrame(video int64, frameNum int64) (*sbvision.Frame, error) {
 	result := sb.getFrame.QueryRow(frameNum, video)
 	frame := &sbvision.Frame{
-		FrameNum: frameNum,
-		VideoID:  video,
+		Time:    frameNum,
+		VideoID: video,
 	}
 	err := result.Scan(&frame.ID, &frame.Image)
 	if err != nil {
@@ -35,7 +35,7 @@ func (sb *SBDatabase) GetFrame(video int64, frameNum int64) (*sbvision.Frame, er
 
 func (sb *SBDatabase) prepareAddFrame() (err error) {
 	sb.addFrame, err = sb.db.Prepare(`
-INSERT INTO frames (image_id, video_id, frame) 
+INSERT INTO frames (image_id, video_id, time) 
 SELECT 
 	images.id, ?, ?
 FROM images
@@ -46,7 +46,7 @@ WHERE images.key = ?
 
 // AddFrame adds the given frame to the database and fills in the autoincrement
 func (sb *SBDatabase) AddFrame(frame *sbvision.Frame) error {
-	result, err := sb.addFrame.Exec(frame.VideoID, frame.FrameNum, frame.Image)
+	result, err := sb.addFrame.Exec(frame.VideoID, frame.Time, frame.Image)
 	if err != nil {
 		return fmt.Errorf("\n\tError adding frame: %s", err.Error())
 	}

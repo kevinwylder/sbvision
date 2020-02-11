@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -27,18 +26,22 @@ func (ctx *serverContext) handleFrameUpload(w http.ResponseWriter, r *http.Reque
 	frame, err := ctx.db.GetFrame(video, frameNum)
 	if err != nil {
 
-		prefix := "data:image/png;base64,"
-		dataURI := make([]byte, len(prefix))
-		read, err := r.Body.Read(dataURI)
-		if read != 22 || string(dataURI) != prefix {
-			http.Error(w, "Not a valid png URI. What do you think you're tryin here...", 400)
+		err := r.ParseMultipartForm(10 * 1024 * 1024)
+		if err != nil {
+			fmt.Println(err)
+			http.Error(w, "Error parsing multipart form", 400)
 			return
 		}
 
-		decoded := base64.NewDecoder(base64.StdEncoding, r.Body)
-
 		image := sbvision.Image(fmt.Sprintf("frame/%d-%d.png", video, frameNum))
-		err = ctx.assets.PutAsset(string(image), decoded)
+		file, _, err := r.FormFile("image")
+		if err != nil {
+			fmt.Println(err)
+			http.Error(w, "Could not get image file", 400)
+			return
+		}
+
+		err = ctx.assets.PutAsset(string(image), file)
 		if err != nil {
 			fmt.Println("Error putting asset", err)
 			http.Error(w, "Error storing asset", 500)
@@ -52,9 +55,9 @@ func (ctx *serverContext) handleFrameUpload(w http.ResponseWriter, r *http.Reque
 		}
 
 		frame = &sbvision.Frame{
-			VideoID:  video,
-			FrameNum: frameNum,
-			Image:    image,
+			VideoID: video,
+			Time:    frameNum,
+			Image:   image,
 		}
 
 		err = ctx.db.AddFrame(frame)

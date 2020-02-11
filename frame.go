@@ -2,10 +2,10 @@ package sbvision
 
 // Frame is a frame of a video
 type Frame struct {
-	ID       int64 `json:"id"`
-	Image    Image `json:"image"`
-	VideoID  int64 `json:"video"`
-	FrameNum int64 `json:"frame"`
+	ID      int64 `json:"id"`
+	Image   Image `json:"image"`
+	VideoID int64 `json:"video"`
+	Time    int64 `json:"time"`
 }
 
 // Bound is an area on a frame

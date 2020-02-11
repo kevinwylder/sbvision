@@ -15,8 +15,6 @@ interface frameStatus {
     boundsToUpload?: Bounds
 }
 
-const FRAME_RATE = 24;
-
 /**
  * The frame manager is responsible for matching requests to upload a frame with 
  * bounds applied to the frames.
@@ -33,8 +31,7 @@ export class FrameManager {
     ) { }
 
     private currentFrame() {
-        let frame = Math.ceil(this.elem.currentTime * FRAME_RATE);
-        this.elem.currentTime = frame / FRAME_RATE;
+        let frame = Math.ceil(this.elem.currentTime * 1000);
         return frame
     }
 
@@ -62,15 +59,25 @@ export class FrameManager {
         if (!okay) {
             return;
         }
-        let data = canvas.toDataURL();
         this.frameIDs[frame] = { isUploading: true }
-        fetch(`/frame?video=${this.video.id}&frame=${frame}`, {
-            method: "POST",
-            body: data,
-            headers: session,
+
+        fetch(canvas.toDataURL("image/png")) // convert data to array
+        .then(res => res.arrayBuffer())
+        .then(data => {
+            // convert array to form data body
+            let form = new FormData();
+            form.append("image", new Blob([new Uint8Array(data)]));
+            return form;
         })
+        .then(body => fetch(`/frame?video=${this.video.id}&frame=${frame}`,
+        { // send form data to the server
+            method: "POST",
+            body,
+            headers: session,
+        }))
         .then(res => res.json())
         .then(({id}) => {
+            // get the id of the frame
             this.frameIDs[frame].isUploading = false;
             this.frameIDs[frame].id = id;
             let waitingBounds = this.frameIDs[frame].boundsToUpload;
