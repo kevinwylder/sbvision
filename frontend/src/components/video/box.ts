@@ -1,4 +1,10 @@
-import { Bounds } from '../../api';
+
+export interface Bounds {
+    left: number
+    top: number
+    width: number
+    height: number
+}
 
 export class Box {
 
@@ -55,9 +61,9 @@ export class Box {
         this.ctx.fillStyle = "rgba(0, 0, 0, .7)";
         if (this.empty) {
             this.ctx.fillRect(0, 0, this.areaWidth, this.areaHeight);
-            this.ctx.font = "12px Arial";
+            this.ctx.font = (this.areaHeight * .05) + "px Arial";
             this.ctx.fillStyle = "white";
-            this.ctx.fillText("Draw a box around the skateboard", 100, 50);
+            this.ctx.fillText("box the skateboard", 50, this.areaHeight * .85);
             return;
         }
         let { top, bottom, left, right } = this.describe();

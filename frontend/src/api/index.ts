@@ -1,3 +1,4 @@
 
 export { Video, addVideo, getVideos, getVideoById } from './videos'
-export { FrameManager, Bounds } from './frame';
+export { uploadBounds, uploadFrame } from './collection';
+export { getFrames, Frame } from './data';

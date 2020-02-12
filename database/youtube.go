@@ -10,7 +10,10 @@ import (
 func (sb *SBDatabase) prepareAddYoutubeRecord() (err error) {
 	sb.addYoutubeRecord, err = sb.db.Prepare(`
 INSERT INTO youtube_videos (youtube_id, video_id, mirror_url, mirror_expire) 
-VALUES (?, ?, ?, ?);
+VALUES (?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE
+	mirror_url = VALUES(mirror_url),
+	mirror_expire = VALUES(mirror_expire);
 	`)
 	return
 }

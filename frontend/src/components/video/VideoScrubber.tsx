@@ -7,9 +7,10 @@ interface VideoControlProps {
         left: number,
         width: number
     }
+    height: number
 }
 
-export function VideoScrubber({ bounds, video }: VideoControlProps) {
+export function VideoScrubber(props: VideoControlProps) {
 
     const WIDE_SCRUBBER_DURATION = 2000;
 
@@ -30,7 +31,7 @@ export function VideoScrubber({ bounds, video }: VideoControlProps) {
     }, [lastInteraction]);
 
     React.useEffect(() => {
-        if (!video.current) {
+        if (!props.video.current) {
             return;
         }
         function onTimeUpdate(this: HTMLVideoElement) {
@@ -38,16 +39,16 @@ export function VideoScrubber({ bounds, video }: VideoControlProps) {
             setBuffer(this.buffered);
             setDuration(this.duration);
         }
-        video.current.addEventListener("timeupdate", onTimeUpdate);
-        return () => video.current?.removeEventListener("timeupdate", onTimeUpdate);
-    }, [video.current])
+        props.video.current.addEventListener("timeupdate", onTimeUpdate);
+        return () => props.video.current?.removeEventListener("timeupdate", onTimeUpdate);
+    }, [props.video.current])
 
     const scrub = (e: {clientX: number}) => {
         render();
-        if (!canvas.current || !video.current) return
+        if (!canvas.current || !props.video.current) return
         let { x } = canvas.current.getBoundingClientRect();
-        let time = video.current.duration * (e.clientX - x) / bounds.width;
-        video.current.currentTime = time;
+        let time = props.video.current.duration * (e.clientX - x) / props.bounds.width;
+        props.video.current.currentTime = time;
         setTime(time);
     }
 
@@ -56,24 +57,28 @@ export function VideoScrubber({ bounds, video }: VideoControlProps) {
         if (!ctx) {
             return;
         }
-        let height = (new Date().getTime() - lastInteraction.getTime()) > WIDE_SCRUBBER_DURATION ? 5 : 30;
-        let y = (30 - height) / 2
-        let pixelsPerSecond = bounds.width / duration;
-        ctx.clearRect(0, 0, bounds.width, 30);
+        let height = (new Date().getTime() - lastInteraction.getTime()) > WIDE_SCRUBBER_DURATION ? 5 : props.height;
+        let pixelsPerSecond = props.bounds.width / duration;
+        ctx.clearRect(0, 0, props.bounds.width, props.height);
         if (buffer) {
             ctx.fillStyle = "grey";
             for (let i = 0; i < buffer.length; i++) {
-                ctx.fillRect(buffer.start(i) * pixelsPerSecond, y, buffer.end(i) * pixelsPerSecond, height);
+                ctx.fillRect(buffer.start(i) * pixelsPerSecond, 0, buffer.end(i) * pixelsPerSecond, height);
             }
         }
         ctx.fillStyle = "#33b5e5";
-        ctx.fillRect(0, y, time * pixelsPerSecond, height);
+        ctx.fillRect(0, 0, time * pixelsPerSecond, height);
     }
 
     return <canvas
         ref={canvas}
-        width={bounds.width}
-        onMouseDown={_ => setDragging(true)}
+        onMouseDown={e => {
+            setDragging(true);
+            setLastInteraction(new Date());
+            scrub(e);
+        }}
+        onMouseLeave={_ => setDragging(false)}
+        onMouseOut={_ => setDragging(false)}
         onMouseMove={e => {
             setLastInteraction(new Date());
             if (dragging) {
@@ -81,18 +86,17 @@ export function VideoScrubber({ bounds, video }: VideoControlProps) {
             }
         }}
         onMouseUp={_ => setDragging(false)}
-        onMouseLeave={_ => setDragging(false)}
-        onMouseOut={_ => setDragging(false)}
         onTouchStart={_ => setLastInteraction(new Date())}
         onTouchMove={e => {
             setLastInteraction(new Date());
             scrub(e.targetTouches[0])
         }}
-        height={30}
+        width={props.bounds.width}
+        height={props.height}
         style={{
-            ...bounds,
+            ...props.bounds,
             position: "absolute",
-            height: 30
+            height: props.height
         }}
     ></canvas>
 

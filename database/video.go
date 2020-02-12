@@ -31,24 +31,6 @@ func (sb *SBDatabase) AddVideo(video *sbvision.Video) error {
 	return nil
 }
 
-func (sb *SBDatabase) prepareGetVideoCount() (err error) {
-	sb.getVideoCount, err = sb.db.Prepare(`
-SELECT COUNT(*) FROM videos
-	`)
-	return
-}
-
-// GetVideoCount gets the total number of videos in the database
-func (sb *SBDatabase) GetVideoCount() (int64, error) {
-	result := sb.getVideoCount.QueryRow()
-	var count int64
-	err := result.Scan(&count)
-	if err != nil {
-		return 0, fmt.Errorf("\n\tError getting video count from db: %s", err.Error())
-	}
-	return count, nil
-}
-
 // prepareGetVideoById prepares the GetVideoById query
 func (sb *SBDatabase) prepareGetVideoByID() (err error) {
 	sb.getVideoByID, err = sb.db.Prepare(`
@@ -126,10 +108,6 @@ func (sb *SBDatabase) GetVideos(offset, count int64) ([]sbvision.Video, error) {
 		}
 	}
 	return videos, nil
-}
-
-type scannable interface {
-	Scan(to ...interface{}) error
 }
 
 func (sb *SBDatabase) parseVideoRow(src scannable, dst *sbvision.Video) error {

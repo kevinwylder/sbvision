@@ -40,4 +40,13 @@ func (ctx *serverContext) handleBoundsUpload(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	data, err := json.Marshal(&bounds)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "could not format bounds", 500)
+		return
+	}
+
+	w.Write(data)
+
 }

@@ -1,52 +1,41 @@
 import * as React from 'react';
 
-import '../../styles/list.css';
+import './list.css';
 
 import { ListRow } from './ListRow'
 import { Video, getVideos } from '../../api';
 import { ListSidebar } from './ListSidebar';
 import { ListPagenation } from './ListPagenation';
+import { getStats } from '../../api/data';
+import { CollectionStatistics } from '../CollectionStats';
 
-interface VideoList {
-    onVideoSelected: (video: Video) => void
-}
-
-export function Listing(props: VideoList) {
+export function Listing() {
 
     const PAGE_SIZE = 7;
     // fields for video select
     let [ offset, setOffset ] = React.useState(0);
     let [ maxVideos, setMaxVideos ] = React.useState(0);
-    let [ selectedVideo, setSelectedVideo ] = React.useState<Video>()
     let [ videos, setVideos ] = React.useState<Video[]>([]);
+    let [ stats, setStats ] = React.useState<CollectionStatistics>();
 
     React.useEffect(() => {
-        getVideos(offset, PAGE_SIZE)
-        .then(({ total, videos}) => {
+        Promise.all([getVideos(offset, PAGE_SIZE), getStats()])
+        .then(([{ total, videos }, stats]) => {
             setVideos(videos); 
             setMaxVideos(total);
+            setStats(stats);
         })
         .catch(err => {
             console.log(err)
         });
-    }, [offset])
-
-    // Pass selected video up the tree
-    React.useEffect(() => selectedVideo && props.onVideoSelected(selectedVideo), [selectedVideo]);
+    }, [offset]);
 
     return (
     <div className="listing">
-        <ListSidebar 
-            onVideoAdded={setSelectedVideo}
-        />
+        <ListSidebar stats={stats} />
         <div className="list-container">
             {videos.map((v, i) => 
-                <ListRow
-                    selected={selectedVideo ? v.id == selectedVideo.id : false}
-                    onSelect={setSelectedVideo}
-                    key={i}
-                    video={v}
-                />
+                <ListRow key={i} video={v} />
             )}
             <ListPagenation
                 pageSize={PAGE_SIZE}

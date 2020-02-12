@@ -1,17 +1,21 @@
 import * as React from 'react';
 
 import { Video, addVideo } from '../../api';
+import { CollectionStats, CollectionStatistics } from '../CollectionStats';
+import { Redirect } from 'react-router-dom';
 
-interface ListAddProps {
-    onVideoAdded: (video: Video) => void
+interface ListSidebarProps {
+    stats?: CollectionStatistics
 }
 
-export function ListSidebar(props: ListAddProps) {
+export function ListSidebar(props: ListSidebarProps) {
 
     let inputURL = React.createRef<HTMLInputElement>()
     let [ errorText, setErrorText ] = React.useState("");
+    let [ video, setVideo ] = React.useState<Video>()
 
     const onVideoDiscoveryRequest = () => {
+        setErrorText("loading...")
         if (!inputURL.current) {
             return;
         }
@@ -28,9 +32,12 @@ export function ListSidebar(props: ListAddProps) {
             return;
         }
         addVideo(inputURL.current.value, 1)
-        .then(video => props.onVideoAdded(video))
+        .then(setVideo)
         .catch(err => setErrorText("Server Error - " + err.toString()));
+    }
 
+    if (video) {
+        return <Redirect to={`/video/${video.id}`} />
     }
 
     return (<>
@@ -48,19 +55,19 @@ export function ListSidebar(props: ListAddProps) {
             <div className="list-add-error">
                 {errorText}
             </div>
+            <h3>The dataset so far</h3>
+            <div style={{
+                margin: "10px",
+            }}>
+                { props.stats && <CollectionStats {...props.stats} /> } 
+            </div>
+
         </div>
 
 
         <div className="list-add-extra">
             <p>Welcome to the kwylder SkateboardVision project. </p> 
-            <p>We are collecting a dataset of skateboards for training a neural network to identify skateboards and their orientation. </p>
-            <p>Go ahead and paste a youtube video link in the box above to add it to the collection on the right</p>
-            <p>Some things that might go on this sidebar in the future include</p>
-            <ol>
-                <li>User Login</li>
-                <li>Clip Review</li>
-                <li>Total Dataset Visualization</li>
-            </ol>
+            <p>We are collecting a dataset to learn how to identify skateboard orientations from video frames </p>
         </div>
     </div>
     </>)

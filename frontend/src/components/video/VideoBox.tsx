@@ -1,7 +1,6 @@
 import * as React from 'react';
 
-import { Box } from './box';
-import { Bounds } from '../../api';
+import { Box, Bounds } from './box';
 
 interface VideoBoxProps {
     video: React.RefObject<HTMLVideoElement>
@@ -10,6 +9,7 @@ interface VideoBoxProps {
     videoHeight: number
 
     onSubmit: (bounds: Bounds) => void
+    onReject: () => void
 }
 
 export function VideoBox(props: VideoBoxProps) {
@@ -37,7 +37,7 @@ export function VideoBox(props: VideoBoxProps) {
 
     // bind canvas events to canvas box
     React.useEffect(() => {
-        if (!canvas.current) {
+        if (!canvas.current || !props.video.current) {
             return;
         }
         let ctx = canvas.current.getContext("2d");
@@ -62,7 +62,7 @@ export function VideoBox(props: VideoBoxProps) {
         }
         canvas.current.onmouseup = (e) => {
             e.preventDefault();
-            box.release(props.onSubmit, () => props.video.current?.play());
+            box.release(props.onSubmit, props.onReject);
         }
         canvas.current.ontouchstart = (e) => {
             e.preventDefault();
@@ -74,7 +74,7 @@ export function VideoBox(props: VideoBoxProps) {
         }
         canvas.current.ontouchend = (e) => {
             e.preventDefault();
-            box.release(props.onSubmit, () => props.video.current?.play());
+            box.release(props.onSubmit, props.onReject);
         }
     }, [canvas.current, props.layout, props.video.current])
 

@@ -6,8 +6,6 @@ import { Redirect } from 'react-router-dom';
 
 interface VideoRowProps {
     video: Video
-    selected: boolean
-    onSelect: (video: Video) => void
 }
 
 function timeString(duration: number): string {
@@ -17,12 +15,13 @@ function timeString(duration: number): string {
     return duration + "s";
 }
 
-export function ListRow({video, selected, onSelect}: VideoRowProps) {
+export function ListRow({video}: VideoRowProps) {
+    let [ selected, setSelected ] = React.useState(false);
     if (selected) {
         return <Redirect push to={`/video/${video.id}`}/>
     }
     return (
-        <div className="list-row" onClick={() => onSelect(video)}>
+        <div className="list-row" onClick={() => setSelected(true)}>
             <img className="list-row-image"
                 src={`/image/${video.thumbnail}`} />
             <div className="list-row-text">

@@ -24,7 +24,7 @@ func (ctx *serverContext) handleFrameUpload(w http.ResponseWriter, r *http.Reque
 	video, frameNum := ids[0], ids[1]
 
 	frame, err := ctx.db.GetFrame(video, frameNum)
-	if err != nil {
+	if frame == nil {
 
 		err := r.ParseMultipartForm(10 * 1024 * 1024)
 		if err != nil {
@@ -72,6 +72,52 @@ func (ctx *serverContext) handleFrameUpload(w http.ResponseWriter, r *http.Reque
 	data, err := json.Marshal(frame)
 	if err != nil {
 		http.Error(w, "Error representing frame", 500)
+		return
+	}
+
+	w.Write(data)
+}
+
+func (ctx *serverContext) handleGetFrames(w http.ResponseWriter, r *http.Request) {
+	video, err := getIDs(r, []string{"video"})
+	if err != nil {
+		frames, bounds, rotations, err := ctx.db.DataCounts()
+		if err != nil {
+			http.Error(w, "Error counting data", 500)
+			return
+		}
+		data, err := json.Marshal(&struct {
+			Frames    int64 `json:"frames"`
+			Bounds    int64 `json:"bounds"`
+			Rotations int64 `json:"rotations"`
+		}{
+			Frames:    frames,
+			Bounds:    bounds,
+			Rotations: rotations,
+		})
+		if err != nil {
+			http.Error(w, "Error formating counted data", 500)
+			return
+		}
+		w.Write(data)
+		return
+	}
+	videoID := video[0]
+	frames, err := ctx.db.DataVideoFrames(videoID)
+	if err != nil {
+		fmt.Println("error loading video frames from db", err)
+		http.Error(w, "Error loading video frames", 500)
+		return
+	}
+
+	data, err := json.Marshal(&struct {
+		Frames []sbvision.Frame `json:"frames"`
+	}{
+		Frames: frames,
+	})
+	if err != nil {
+		fmt.Println("Error formatting video frame data", err)
+		http.Error(w, "Could not format response", 500)
 		return
 	}
 

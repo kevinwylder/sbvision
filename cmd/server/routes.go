@@ -26,45 +26,38 @@ func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
 			ctx.handleVideoDiscovery(w, r)
-			return
 		case http.MethodGet:
 			ctx.handleVideoPage(w, r)
-			return
 		}
 
 	case "/stream":
-		err := r.ParseForm()
-		if err != nil {
-			http.Error(w, err.Error(), 400)
-			return
-		}
 		ctx.handleStream(w, r)
-		return
 
 	case "/session":
 		ctx.handleNewSession(w, r)
-		return
 
-	case "/frame":
+	case "/frames":
 		switch r.Method {
 		case http.MethodPost:
 			ctx.handleFrameUpload(w, r)
-			return
+		case http.MethodGet:
+			ctx.handleGetFrames(w, r)
 		}
 
 	case "/bounds":
 		switch r.Method {
 		case http.MethodPost:
 			ctx.handleBoundsUpload(w, r)
-			return
 		}
 
+	default:
+		// redirect /video/:id requests to index
+		if strings.HasPrefix(r.URL.Path, "/video/") {
+			r.URL.Path = "/"
+		}
+		// fallthrough to the frontend
+		ctx.frontend.ServeHTTP(w, r)
+
 	}
 
-	// redirect /video/:id requests to index
-	if strings.HasPrefix(r.URL.Path, "/video/") {
-		r.URL.Path = "/"
-	}
-	// fallthrough to the frontend
-	ctx.frontend.ServeHTTP(w, r)
 }
