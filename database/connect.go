@@ -16,6 +16,7 @@ type SBDatabase struct {
 	addYoutubeRecord *sql.Stmt
 	addFrame         *sql.Stmt
 	addBounds        *sql.Stmt
+	addRotation      *sql.Stmt
 
 	getVideoPage     *sql.Stmt
 	getVideoCount    *sql.Stmt
@@ -23,8 +24,10 @@ type SBDatabase struct {
 	getYoutubeRecord *sql.Stmt
 	getFrame         *sql.Stmt
 
-	dataCounts      *sql.Stmt
-	dataVideoFrames *sql.Stmt
+	dataCounts         *sql.Stmt
+	dataVideoFrames    *sql.Stmt
+	dataRotationFrames *sql.Stmt
+	dataByBoundID      *sql.Stmt
 }
 
 // ConnectToDatabase waits for a sql connection then prepares queries for runtime
@@ -49,6 +52,7 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 		sb.prepareAddSession,
 		sb.prepareAddVideo,
 		sb.prepareAddYoutubeRecord,
+		sb.prepareAddRotation,
 		sb.prepareGetFrame,
 		sb.prepareGetVideoByID,
 		sb.prepareGetVideoCount,
@@ -56,6 +60,8 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 		sb.prepareGetYoutubeRecord,
 		sb.prepareDataVideoFrames,
 		sb.prepareDataCounts,
+		sb.prepareDataRotationFrames,
+		sb.prepareDataByBoundID,
 	}
 
 	for _, f := range prepFunctions {

@@ -8,6 +8,8 @@ import {
 
 import { Listing } from './components/list/Listing';
 import { VideoDisplay } from './components/video/VideoDisplay';
+import { RotationInstructions } from "./components/rotation/RotationInstructions";
+import { RotationMatcher } from "./components/rotation/RotationMatcher";
 
 export function App() {
 
@@ -18,6 +20,9 @@ export function App() {
             </Route>
             <Route exact path="/">
                 <Listing /> 
+            </Route>
+            <Route path="/rotations">
+                <RotationMatcher/>
             </Route>
         </Switch>
     </Router>

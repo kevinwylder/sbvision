@@ -35,3 +35,9 @@ export function getStats(): Promise<{frames: number, bounds: number, rotations: 
     return fetch(`/frames`)
     .then(res => res.json())
 }
+
+export function getRotations(): Promise<Frame[]> {
+    return fetch(`/frames?rotationless=1`)
+    .then(res => res.json())
+    .then(({frames}) => frames);
+}

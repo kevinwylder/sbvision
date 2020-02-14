@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Video, addVideo } from '../../api';
 import { CollectionStats, CollectionStatistics } from '../CollectionStats';
-import { Redirect } from 'react-router-dom';
+import { Redirect, Link } from 'react-router-dom';
 
 interface ListSidebarProps {
     stats?: CollectionStatistics
@@ -68,6 +68,7 @@ export function ListSidebar(props: ListSidebarProps) {
         <div className="list-add-extra">
             <p>Welcome to the kwylder SkateboardVision project. </p> 
             <p>We are collecting a dataset to learn how to identify skateboard orientations from video frames </p>
+            <Link to="/rotations"> Help find the skateboard orientation if you have a mouse </Link> 
         </div>
     </div>
     </>)

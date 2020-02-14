@@ -48,11 +48,22 @@ func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
 			ctx.handleBoundsUpload(w, r)
+		case http.MethodGet:
+			ctx.handleBoundsImage(w, r)
+		}
+
+	case "/orientation":
+		switch r.Method {
+		case http.MethodPost:
+			ctx.handleAddRotation(w, r)
 		}
 
 	default:
 		// redirect /video/:id requests to index
 		if strings.HasPrefix(r.URL.Path, "/video/") {
+			r.URL.Path = "/"
+		}
+		if strings.HasPrefix(r.URL.Path, "/rotations") {
 			r.URL.Path = "/"
 		}
 		// fallthrough to the frontend

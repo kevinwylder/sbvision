@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -49,4 +50,35 @@ func (ctx *serverContext) handleBoundsUpload(w http.ResponseWriter, r *http.Requ
 
 	w.Write(data)
 
+}
+
+func (ctx *serverContext) handleBoundsImage(w http.ResponseWriter, r *http.Request) {
+	ids, err := getIDs(r, []string{"id"})
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+	frame, err := ctx.db.DataByBoundID(ids[0])
+	if err != nil {
+		http.Error(w, "Could not find bounds", 404)
+		return
+	}
+
+	image, err := ctx.cropper.GetFrame(frame)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Could not decode image", 500)
+		return
+	}
+
+	buffer := new(bytes.Buffer)
+	err = image.GetCroppedPng(&frame.Bounds[0], buffer)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Could not crop png", 500)
+		return
+	}
+
+	w.Write(buffer.Bytes())
 }

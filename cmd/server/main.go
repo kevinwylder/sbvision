@@ -13,6 +13,7 @@ import (
 	"github.com/kevinwylder/sbvision"
 	"github.com/kevinwylder/sbvision/assets/amazon"
 	"github.com/kevinwylder/sbvision/assets/filesystem"
+	"github.com/kevinwylder/sbvision/cropper"
 	"github.com/kevinwylder/sbvision/database"
 	"github.com/kevinwylder/sbvision/frontend"
 	"github.com/kevinwylder/sbvision/session"
@@ -20,12 +21,12 @@ import (
 )
 
 type serverContext struct {
-	session   sbvision.SessionManager
-	assets    sbvision.KeyValueStore
-	youtube   sbvision.VideoHandler
-	frontend  http.Handler
-	testVideo []byte
-	db        *database.SBDatabase
+	session  sbvision.SessionManager
+	assets   sbvision.KeyValueStore
+	youtube  sbvision.VideoHandler
+	frontend http.Handler
+	cropper  *cropper.PngCropper
+	db       *database.SBDatabase
 }
 
 func main() {
@@ -79,6 +80,8 @@ func main() {
 	if server.assets == nil {
 		server.assets = cache
 	}
+
+	server.cropper = cropper.NewPngCropper(server.assets)
 
 	server.youtube = youtube.NewYoutubeHandler(db, server.assets)
 

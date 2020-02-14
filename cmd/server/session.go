@@ -11,12 +11,7 @@ import (
 func (ctx *serverContext) handleNewSession(w http.ResponseWriter, r *http.Request) {
 	session := &sbvision.Session{
 		Time: time.Now().Unix(),
-	}
-	forwarded := r.Header.Get("X-FORWARDED-FOR")
-	if forwarded != "" {
-		session.IP = forwarded
-	} else {
-		session.IP = r.RemoteAddr
+		IP:   r.RemoteAddr,
 	}
 	err := ctx.db.AddSession(session)
 	if err != nil {

@@ -7,6 +7,55 @@ import (
 	"github.com/kevinwylder/sbvision"
 )
 
+func (sb *SBDatabase) prepareDataByBoundID() (err error) {
+	sb.dataByBoundID, err = sb.db.Prepare(`
+SELECT ` + frameColumns + `
+FROM ` + frameJoin + `
+WHERE bounds.id = ?
+	`)
+	return
+}
+
+// DataByBoundID gets a frame and it's rotations by the given bound id
+func (sb *SBDatabase) DataByBoundID(id int64) (*sbvision.Frame, error) {
+	result, err := sb.dataByBoundID.Query(id)
+	if err != nil {
+		return nil, fmt.Errorf("\n\tError querying frames for ByBoundID: %s", err.Error())
+	}
+	frames, err := parseFrames(result)
+	if err != nil {
+		return nil, fmt.Errorf("\n\tError parsing frames for ByBoundID: %s", err.Error())
+	}
+	if len(frames) != 1 {
+		return nil, fmt.Errorf("\n\tBound not found")
+	}
+	return &frames[0], nil
+}
+
+func (sb *SBDatabase) prepareDataRotationFrames() (err error) {
+	sb.dataRotationFrames, err = sb.db.Prepare(`
+SELECT ` + frameColumns + `
+FROM ` + frameJoin + `
+WHERE rotations.id IS NULL AND bounds.id IS NOT NULL
+ORDER BY frames.video_id ASC, frames.time ASC
+LIMIT 100;
+	`)
+	return
+}
+
+// DataRotationFrames gets the frames that need an orientation
+func (sb *SBDatabase) DataRotationFrames() ([]sbvision.Frame, error) {
+	results, err := sb.dataRotationFrames.Query()
+	if err != nil {
+		return nil, fmt.Errorf("\n\tError getting rotation frames: %s", err.Error())
+	}
+	frames, err := parseFrames(results)
+	if err != nil {
+		return nil, fmt.Errorf("\n\tError parsing rotation frames: %s", err.Error())
+	}
+	return frames, nil
+}
+
 func (sb *SBDatabase) prepareGetFrame() (err error) {
 	sb.getFrame, err = sb.db.Prepare(`
 SELECT ` + frameColumns + `
@@ -36,7 +85,8 @@ func (sb *SBDatabase) prepareDataVideoFrames() (err error) {
 	sb.dataVideoFrames, err = sb.db.Prepare(`
 SELECT ` + frameColumns + `
 FROM ` + frameJoin + `
-WHERE frames.video_id = ?`)
+WHERE frames.video_id = ?
+ORDER BY frames.time ASC`)
 	return
 }
 

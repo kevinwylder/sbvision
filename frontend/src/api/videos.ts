@@ -24,6 +24,7 @@ export function getVideos(offset: number, limit: number): Promise<GetVideosRespo
         } 
         return res.json()
     })
+    .then(({videos, total}) => videos ? {videos, total} : {videos: [], total: 0});
 }
 
 export function getVideoById(id: number) : Promise<GetVideosResponse> {

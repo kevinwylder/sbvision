@@ -47,3 +47,12 @@ export function uploadBounds(frameId: number, bounds: {x: number, y: number, wid
     })
     .then(res => res.json())
 }
+
+export function addRotation(boundId: number, quaternion: {r: number, i: number, j: number, k: number}) {
+    return fetch(`/orientation?bound=${boundId}`,{
+        method: "POST",
+        headers: session,
+        body: JSON.stringify(quaternion),
+    })
+    .then(res => res.json())
+}

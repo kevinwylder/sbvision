@@ -78,28 +78,37 @@ func (ctx *serverContext) handleFrameUpload(w http.ResponseWriter, r *http.Reque
 	w.Write(data)
 }
 
+func (ctx *serverContext) handleGetDataCounts(w http.ResponseWriter, r *http.Request) {
+	frames, bounds, rotations, err := ctx.db.DataCounts()
+	if err != nil {
+		http.Error(w, "Error counting data", 500)
+		return
+	}
+	data, err := json.Marshal(&struct {
+		Frames    int64 `json:"frames"`
+		Bounds    int64 `json:"bounds"`
+		Rotations int64 `json:"rotations"`
+	}{
+		Frames:    frames,
+		Bounds:    bounds,
+		Rotations: rotations,
+	})
+	if err != nil {
+		http.Error(w, "Error formating counted data", 500)
+		return
+	}
+	w.Write(data)
+}
+
 func (ctx *serverContext) handleGetFrames(w http.ResponseWriter, r *http.Request) {
+	if r.Form.Get("rotationless") != "" {
+		ctx.handleGetRotationFrames(w, r)
+		return
+	}
+
 	video, err := getIDs(r, []string{"video"})
 	if err != nil {
-		frames, bounds, rotations, err := ctx.db.DataCounts()
-		if err != nil {
-			http.Error(w, "Error counting data", 500)
-			return
-		}
-		data, err := json.Marshal(&struct {
-			Frames    int64 `json:"frames"`
-			Bounds    int64 `json:"bounds"`
-			Rotations int64 `json:"rotations"`
-		}{
-			Frames:    frames,
-			Bounds:    bounds,
-			Rotations: rotations,
-		})
-		if err != nil {
-			http.Error(w, "Error formating counted data", 500)
-			return
-		}
-		w.Write(data)
+		ctx.handleGetDataCounts(w, r)
 		return
 	}
 	videoID := video[0]
