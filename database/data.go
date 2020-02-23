@@ -62,14 +62,24 @@ func (sb *SBDatabase) prepareGetFrame() (err error) {
 	sb.getFrame, err = sb.db.Prepare(`
 SELECT ` + frameColumns + `
 FROM ` + frameJoin + `
-WHERE frames.time = ? AND frames.video_id = ?
+WHERE (
+	frames.time = ? 
+	OR
+	(
+		frames.image_hash = ?
+		AND 
+		ABS(frames.time - ?) < 1000
+	)
+) 
+AND
+frames.video_id = ?
 	`)
 	return
 }
 
 // GetFrame returns a frame object for the given video
-func (sb *SBDatabase) GetFrame(video int64, frameNum int64) (*sbvision.Frame, error) {
-	result, err := sb.getFrame.Query(frameNum, video)
+func (sb *SBDatabase) GetFrame(video int64, frameNum int64, hash int64) (*sbvision.Frame, error) {
+	result, err := sb.getFrame.Query(frameNum, hash, frameNum, video)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tError getting frame %d of video %d: %s", frameNum, video, err)
 	}
@@ -145,8 +155,6 @@ const frameColumns = `
 	rotations.k `
 
 const frameJoin = ` frames
-INNER JOIN images
-		ON images.id = frames.image_id
 LEFT JOIN bounds
 		ON bounds.frame_id = frames.id
 LEFT JOIN rotations

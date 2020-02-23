@@ -13,7 +13,6 @@ import (
 // SBDatabase is a namespace of database queries
 type SBDatabase struct {
 	db               *sql.DB
-	addImage         *sql.Stmt
 	addSession       *sql.Stmt
 	addVideo         *sql.Stmt
 	addYoutubeRecord *sql.Stmt
@@ -32,8 +31,6 @@ type SBDatabase struct {
 	dataAllFrames      *sql.Stmt
 	dataRotationFrames *sql.Stmt
 	dataByBoundID      *sql.Stmt
-
-	setFrameHash *sql.Stmt
 }
 
 // ConnectToDatabase waits for a sql connection then prepares queries for runtime
@@ -54,7 +51,6 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 	var prepFunctions = [](func() error){
 		sb.prepareAddBounds,
 		sb.prepareAddFrame,
-		sb.prepareAddImage,
 		sb.prepareAddSession,
 		sb.prepareAddVideo,
 		sb.prepareAddYoutubeRecord,
@@ -68,7 +64,6 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 		sb.prepareDataCounts,
 		sb.prepareDataRotationFrames,
 		sb.prepareDataByBoundID,
-		sb.prepareSetFrameHash,
 		sb.prepareDataAllFrames,
 	}
 

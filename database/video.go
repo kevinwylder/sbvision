@@ -9,18 +9,14 @@ import (
 
 func (sb *SBDatabase) prepareAddVideo() (err error) {
 	sb.addVideo, err = sb.db.Prepare(`
-INSERT INTO videos (title, type, format, duration, thumbnail_id) 
-SELECT 
-	?, ?, ?, ?, id
-FROM images
-WHERE images.key = ?
+INSERT INTO videos (title, type, format, duration) VALUES ( ?, ?, ?, ? );
 	`)
 	return
 }
 
 // AddVideo adds the video to the database
 func (sb *SBDatabase) AddVideo(video *sbvision.Video) error {
-	result, err := sb.addVideo.Exec(video.Title, video.Type, video.Format, video.Duration, video.Thumbnail)
+	result, err := sb.addVideo.Exec(video.Title, video.Type, video.Format, video.Duration)
 	if err != nil {
 		return fmt.Errorf("\n\tError adding video: %s", err.Error())
 	}
@@ -37,15 +33,12 @@ func (sb *SBDatabase) prepareGetVideoByID() (err error) {
 SELECT	
 	videos.id,
 	videos.title,
-	images.key,
 	videos.type,
 	videos.format,
 	videos.duration,
 	COUNT(*),
 	MAX(bounds.id)
 FROM videos
-INNER JOIN images 
-		ON images.id = videos.thumbnail_id
 LEFT JOIN frames
 		ON frames.video_id = videos.id
 LEFT JOIN bounds
@@ -73,15 +66,12 @@ func (sb *SBDatabase) prepareGetVideos() (err error) {
 SELECT	
 	videos.id,
 	videos.title,
-	images.key,
 	videos.type,
 	videos.format,
 	videos.duration,
 	COUNT(*),
 	MAX(bounds.id)
 FROM videos
-INNER JOIN images 
-		ON images.id = videos.thumbnail_id
 LEFT JOIN frames
 		ON frames.video_id = videos.id
 LEFT JOIN bounds
@@ -117,7 +107,6 @@ func parseVideoRow(src scannable, dst *sbvision.Video) error {
 	err := src.Scan(
 		&dst.ID,
 		&dst.Title,
-		&dst.Thumbnail,
 		&dst.Type,
 		&dst.Format,
 		&dst.Duration,

@@ -13,7 +13,6 @@ import (
 
 // YTDatabase is the required subset of functions used for this
 type YTDatabase interface {
-	sbvision.ImageTracker
 	sbvision.VideoTracker
 	sbvision.YoutubeVideoTracker
 	sbvision.YoutubeSearch
@@ -47,23 +46,9 @@ func (dl *youtubeHandler) HandleDiscover(req *sbvision.VideoDiscoverRequest) (*s
 	if req.Session == nil {
 		return nil, fmt.Errorf("\n\tMissing Session from videodownloadrequest")
 	}
-	yt, video, err := dl.getYoutubeVideo(req.URL)
+	video, err := dl.getYoutubeVideo(req.URL)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCould not get video: %s", err.Error())
-	}
-	// add video and thumbnail image to database
-	err = dl.db.AddImage(video.Thumbnail, req.Session)
-	if err != nil {
-		return nil, fmt.Errorf("\n\tCannot add video thumbnail: %s", err.Error())
-	}
-	err = dl.db.AddVideo(video)
-	if err != nil {
-		return nil, fmt.Errorf("\n\tCannot add video: %s", err.Error())
-	}
-	yt.VideoID = video.ID
-	err = dl.db.AddYoutubeRecord(yt)
-	if err != nil {
-		return nil, fmt.Errorf("\n\tCannot add youtube video: %s", err.Error())
 	}
 	return video, nil
 }

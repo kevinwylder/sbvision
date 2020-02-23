@@ -1,11 +1,21 @@
 package sbvision
 
+import (
+	"fmt"
+	"io"
+)
+
 // Frame is a frame of a video
 type Frame struct {
 	ID      int64   `json:"id"`
 	VideoID int64   `json:"video"`
 	Time    int64   `json:"time"`
 	Bounds  []Bound `json:"bounds"`
+}
+
+// GetImage reads this image asset out of the store
+func (frame *Frame) GetImage(store KeyValueStore) (io.ReadCloser, error) {
+	return store.GetAsset(fmt.Sprintf("frame/%d.png", frame.ID))
 }
 
 // Bound is an area on a frame
