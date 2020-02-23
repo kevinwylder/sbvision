@@ -70,6 +70,7 @@ export function renderSkateboard(ctx: CanvasRenderingContext2D, rotation: Quater
     let translated = rotated.map(([x, y, z]) => [x, y, z - 10]);
     let perspective = translated.map(([x, y, z]) => [-1.5 * x / z, -1.5 * y / z, z]);
 
+    ctx.lineCap = "round";
     ctx.fillStyle = "white";
     ctx.fillRect(box[0], box[1], box[2]-box[0], box[3]-box[1]);
     let scale = 2 * Math.abs(box[0] - box[2]) / 2;
@@ -87,8 +88,8 @@ export function renderSkateboard(ctx: CanvasRenderingContext2D, rotation: Quater
             ctx.lineTo(x1 * scale + dx, y1 * scale + dy);
             ctx.lineTo(x2 * scale + dx, y2 * scale + dy);
             ctx.closePath();
-            ctx.fill();
             ctx.stroke();
+            ctx.fill();
         })
     }
 
@@ -103,8 +104,8 @@ export function renderSkateboard(ctx: CanvasRenderingContext2D, rotation: Quater
         ctx.lineTo(x1 * scale + dx, y1 * scale + dy);
         ctx.lineTo(x2 * scale + dx, y2 * scale + dy);
         ctx.closePath();
-        ctx.fill();
         ctx.stroke();
+        ctx.fill();
     })
 
     if (zDepth < 0) {
@@ -118,8 +119,8 @@ export function renderSkateboard(ctx: CanvasRenderingContext2D, rotation: Quater
             ctx.lineTo(x1 * scale + dx, y1 * scale + dy);
             ctx.lineTo(x2 * scale + dx, y2 * scale + dy);
             ctx.closePath();
-            ctx.fill();
             ctx.stroke();
+            ctx.fill();
         })
     }
 

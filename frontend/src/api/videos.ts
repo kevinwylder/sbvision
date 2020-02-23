@@ -3,7 +3,6 @@ import { session } from './session';
 export interface Video {
     id: number
     title: string
-    thumbnail: string
     type: number
     format: string
     duration: number
