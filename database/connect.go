@@ -1,6 +1,9 @@
 package database
 
 import (
+	// this package only supports mysql
+	_ "github.com/go-sql-driver/mysql"
+
 	"database/sql"
 	"fmt"
 	"reflect"
@@ -26,8 +29,11 @@ type SBDatabase struct {
 
 	dataCounts         *sql.Stmt
 	dataVideoFrames    *sql.Stmt
+	dataAllFrames      *sql.Stmt
 	dataRotationFrames *sql.Stmt
 	dataByBoundID      *sql.Stmt
+
+	setFrameHash *sql.Stmt
 }
 
 // ConnectToDatabase waits for a sql connection then prepares queries for runtime
@@ -62,6 +68,8 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 		sb.prepareDataCounts,
 		sb.prepareDataRotationFrames,
 		sb.prepareDataByBoundID,
+		sb.prepareSetFrameHash,
+		sb.prepareDataAllFrames,
 	}
 
 	for _, f := range prepFunctions {

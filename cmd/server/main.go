@@ -8,14 +8,12 @@ import (
 	"os"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
-
 	"github.com/kevinwylder/sbvision"
 	"github.com/kevinwylder/sbvision/assets/amazon"
 	"github.com/kevinwylder/sbvision/assets/filesystem"
-	"github.com/kevinwylder/sbvision/cropper"
 	"github.com/kevinwylder/sbvision/database"
 	"github.com/kevinwylder/sbvision/frontend"
+	"github.com/kevinwylder/sbvision/sbimage"
 	"github.com/kevinwylder/sbvision/session"
 	"github.com/kevinwylder/sbvision/youtube"
 )
@@ -25,7 +23,7 @@ type serverContext struct {
 	assets   sbvision.KeyValueStore
 	youtube  sbvision.VideoHandler
 	frontend http.Handler
-	cropper  *cropper.PngCropper
+	cropper  *sbimage.PngCropper
 	db       *database.SBDatabase
 }
 
@@ -81,7 +79,7 @@ func main() {
 		server.assets = cache
 	}
 
-	server.cropper = cropper.NewPngCropper(server.assets)
+	server.cropper = sbimage.NewPngCropper(server.assets)
 
 	server.youtube = youtube.NewYoutubeHandler(db, server.assets)
 

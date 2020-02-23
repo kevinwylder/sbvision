@@ -3,7 +3,6 @@ package sbvision
 // Frame is a frame of a video
 type Frame struct {
 	ID      int64   `json:"id"`
-	Image   Image   `json:"image"`
 	VideoID int64   `json:"video"`
 	Time    int64   `json:"time"`
 	Bounds  []Bound `json:"bounds"`

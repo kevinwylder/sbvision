@@ -21,3 +21,38 @@ func (sb *SBDatabase) AddImage(image sbvision.Image, session *sbvision.Session) 
 	}
 	return nil
 }
+
+// GetAllImages returns all the image Keys from the database
+func (sb *SBDatabase) GetAllImages() ([]string, error) {
+	rows, err := sb.db.Query(` SELECT ` + "`key`" + ` FROM images WHERE ` + "`key`" + `NOT LIKE "%.jpg" `)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var images []string
+	for rows.Next() {
+		var image string
+		rows.Scan(&image)
+		images = append(images, image)
+	}
+	return images, nil
+}
+
+func (sb *SBDatabase) prepareSetFrameHash() (err error) {
+	sb.setFrameHash, err = sb.db.Prepare(`
+UPDATE frames
+SET frames.image_hash = ?
+WHERE frames.id = ?
+	`)
+	return
+}
+
+// SetFrameHash updates the hash of the frame
+func (sb *SBDatabase) SetFrameHash(hash int64, frameID int64) error {
+	_, err := sb.setFrameHash.Exec(hash, frameID)
+	if err != nil {
+		return fmt.Errorf("\n\tError updating hash: %s", err.Error())
+	}
+	return nil
+}

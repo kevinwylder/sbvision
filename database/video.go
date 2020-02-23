@@ -61,7 +61,7 @@ ORDER BY discovery_time DESC
 func (sb *SBDatabase) GetVideoByID(id int64) (*sbvision.Video, error) {
 	result := sb.getVideoByID.QueryRow(id)
 	video := sbvision.Video{}
-	err := sb.parseVideoRow(result, &video)
+	err := parseVideoRow(result, &video)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tError getting video: %s", err)
 	}
@@ -102,7 +102,7 @@ func (sb *SBDatabase) GetVideos(offset, count int64) ([]sbvision.Video, error) {
 	var videos []sbvision.Video
 	for results.Next() {
 		videos = append(videos, sbvision.Video{})
-		err = sb.parseVideoRow(results, &videos[len(videos)-1])
+		err = parseVideoRow(results, &videos[len(videos)-1])
 		if err != nil {
 			return nil, fmt.Errorf("\n\tError Parsing video in list: %s", err.Error())
 		}
@@ -110,7 +110,7 @@ func (sb *SBDatabase) GetVideos(offset, count int64) ([]sbvision.Video, error) {
 	return videos, nil
 }
 
-func (sb *SBDatabase) parseVideoRow(src scannable, dst *sbvision.Video) error {
+func parseVideoRow(src scannable, dst *sbvision.Video) error {
 	var clipCount int64
 	var clipFound sql.NullInt64
 
