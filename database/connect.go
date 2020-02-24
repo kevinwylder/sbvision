@@ -1,6 +1,9 @@
 package database
 
 import (
+	// this package only supports mysql
+	_ "github.com/go-sql-driver/mysql"
+
 	"database/sql"
 	"fmt"
 	"reflect"
@@ -10,7 +13,6 @@ import (
 // SBDatabase is a namespace of database queries
 type SBDatabase struct {
 	db               *sql.DB
-	addImage         *sql.Stmt
 	addSession       *sql.Stmt
 	addVideo         *sql.Stmt
 	addYoutubeRecord *sql.Stmt
@@ -26,6 +28,7 @@ type SBDatabase struct {
 
 	dataCounts         *sql.Stmt
 	dataVideoFrames    *sql.Stmt
+	dataAllFrames      *sql.Stmt
 	dataRotationFrames *sql.Stmt
 	dataByBoundID      *sql.Stmt
 }
@@ -48,7 +51,6 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 	var prepFunctions = [](func() error){
 		sb.prepareAddBounds,
 		sb.prepareAddFrame,
-		sb.prepareAddImage,
 		sb.prepareAddSession,
 		sb.prepareAddVideo,
 		sb.prepareAddYoutubeRecord,
@@ -62,6 +64,7 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 		sb.prepareDataCounts,
 		sb.prepareDataRotationFrames,
 		sb.prepareDataByBoundID,
+		sb.prepareDataAllFrames,
 	}
 
 	for _, f := range prepFunctions {

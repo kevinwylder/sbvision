@@ -30,11 +30,11 @@ type dlInfo struct {
 
 // calls youtube-dl to collect a thumbnail and .info.json file. The thumbnail is uploaded, and the .info.json is used to create
 // a new YoutubeVideoInfo object to be tracked in the database
-func (dl *youtubeHandler) getYoutubeVideo(url string) (*sbvision.YoutubeVideoInfo, *sbvision.Video, error) {
+func (dl *youtubeHandler) getYoutubeVideo(url string) (*sbvision.Video, error) {
 	// create a temp dir to download the json and thumbnail
 	directory, err := ioutil.TempDir("", "")
 	if err != nil {
-		return nil, nil, fmt.Errorf("\n\tCannot create tmp dir: %s", err.Error())
+		return nil, fmt.Errorf("\n\tCannot create tmp dir: %s", err.Error())
 	}
 	defer os.RemoveAll(directory)
 
@@ -44,7 +44,7 @@ func (dl *youtubeHandler) getYoutubeVideo(url string) (*sbvision.YoutubeVideoInf
 	err = cmd.Run()
 	if err != nil {
 		data, _ := cmd.CombinedOutput()
-		return nil, nil, fmt.Errorf("\n\tError running youtube-dl for %s %s.\nyoutube-dl Output: %s", url, err.Error(), string(data))
+		return nil, fmt.Errorf("\n\tError running youtube-dl for %s %s.\nyoutube-dl Output: %s", url, err.Error(), string(data))
 	}
 
 	// look for the files in the tmp directory
@@ -60,7 +60,7 @@ func (dl *youtubeHandler) getYoutubeVideo(url string) (*sbvision.YoutubeVideoInf
 		}
 	}
 	if infoJSON == nil || thumbnail == nil {
-		return nil, nil, fmt.Errorf("\n\tCould not find thumbnail (%v) or info.json (%v)", thumbnail, infoJSON)
+		return nil, fmt.Errorf("\n\tCould not find thumbnail (%v) or info.json (%v)", thumbnail, infoJSON)
 	}
 
 	// parse video info json file
@@ -68,27 +68,39 @@ func (dl *youtubeHandler) getYoutubeVideo(url string) (*sbvision.YoutubeVideoInf
 	yt := &sbvision.YoutubeVideoInfo{}
 	infoFile, err := os.Open(path.Join(directory, infoJSON.Name()))
 	if err != nil {
-		return nil, nil, fmt.Errorf("\n\tCannot open .info.json file: %s", err.Error())
+		return nil, fmt.Errorf("\n\tCannot open .info.json file: %s", err.Error())
 	}
 	defer infoFile.Close()
 	err = parseInfo(infoFile, yt, video)
 	if err != nil {
-		return nil, nil, fmt.Errorf("\n\tCannot parse file: %s", err.Error())
+		return nil, fmt.Errorf("\n\tCannot parse file: %s", err.Error())
+	}
+
+	// Add video to database
+	err = dl.db.AddVideo(video)
+	if err != nil {
+		return nil, fmt.Errorf("\n\tCannot add video: %s", err.Error())
 	}
 
 	// upload the thumbnail
 	thumbnailFile, err := os.Open(path.Join(directory, thumbnail.Name()))
 	if err != nil {
-		return nil, nil, fmt.Errorf("\n\tCannot open image file: %s", err.Error())
+		return nil, fmt.Errorf("\n\tCannot open image file: %s", err.Error())
 	}
 	defer thumbnailFile.Close()
-	video.Thumbnail = sbvision.Image("thumbnail/" + yt.YoutubeID + ".jpg")
-	err = dl.images.PutAsset(string(video.Thumbnail), thumbnailFile)
+	err = dl.images.PutAsset(fmt.Sprintf("thumbnail/%d.jpg", video.ID), thumbnailFile)
 	if err != nil {
-		return nil, nil, fmt.Errorf("\n\tCannot upload image: %s", err.Error())
+		return nil, fmt.Errorf("\n\tCannot upload image: %s", err.Error())
 	}
 
-	return yt, video, nil
+	// add youtube video to the database
+	yt.VideoID = video.ID
+	err = dl.db.AddYoutubeRecord(yt)
+	if err != nil {
+		return nil, fmt.Errorf("\n\tCannot add youtube video: %s", err.Error())
+	}
+
+	return video, nil
 }
 
 // updateVideoLink uses youtube-dl to acquire a new .info.json struct for the purposes of refreshing the

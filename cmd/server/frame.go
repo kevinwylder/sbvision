@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/kevinwylder/sbvision/sbimage"
+
 	"github.com/kevinwylder/sbvision"
 )
 
@@ -23,50 +25,55 @@ func (ctx *serverContext) handleFrameUpload(w http.ResponseWriter, r *http.Reque
 	}
 	video, frameNum := ids[0], ids[1]
 
-	frame, err := ctx.db.GetFrame(video, frameNum)
+	err = r.ParseMultipartForm(10 * 1024 * 1024)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Error parsing multipart form", 400)
+		return
+	}
+
+	file, _, err := r.FormFile("image")
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Could not get image file", 400)
+		return
+	}
+	defer file.Close()
+
+	hash, err := sbimage.HashImage(file)
+	if err != nil {
+		http.Error(w, "Could not compute image hash", 500)
+		return
+	}
+
+	frame, err := ctx.db.GetFrame(video, frameNum, hash)
 	if frame == nil {
-
-		err := r.ParseMultipartForm(10 * 1024 * 1024)
-		if err != nil {
-			fmt.Println(err)
-			http.Error(w, "Error parsing multipart form", 400)
-			return
-		}
-
-		image := sbvision.Image(fmt.Sprintf("frame/%d-%d.png", video, frameNum))
-		file, _, err := r.FormFile("image")
-		if err != nil {
-			fmt.Println(err)
-			http.Error(w, "Could not get image file", 400)
-			return
-		}
-
-		err = ctx.assets.PutAsset(string(image), file)
-		if err != nil {
-			fmt.Println("Error putting asset", err)
-			http.Error(w, "Error storing asset", 500)
-			return
-		}
-
-		err = ctx.db.AddImage(image, session)
-		if err != nil {
-			http.Error(w, "Error adding image to DB", 500)
-			return
-		}
 
 		frame = &sbvision.Frame{
 			VideoID: video,
 			Time:    frameNum,
-			Image:   image,
 		}
 
-		err = ctx.db.AddFrame(frame)
+		err = ctx.db.AddFrame(frame, session, hash)
 		if err != nil {
 			fmt.Println("Error adding frame", err)
 			http.Error(w, "Could not add frame", 500)
 			return
 		}
 
+		_, err = file.Seek(0, 0)
+		if err != nil {
+			fmt.Println("Error seeking to beginning of uploaded file: ", err)
+			http.Error(w, "Could not save frame", 500)
+			return
+		}
+
+		err = ctx.assets.PutAsset(fmt.Sprintf("frame/%d.png", frame.ID), file)
+		if err != nil {
+			fmt.Println("Error putting asset", err)
+			http.Error(w, "Error storing asset", 500)
+			return
+		}
 	}
 
 	data, err := json.Marshal(frame)

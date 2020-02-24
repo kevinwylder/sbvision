@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/kevinwylder/sbvision/sbimage"
+
 	"github.com/kevinwylder/sbvision"
 )
 
@@ -65,7 +67,13 @@ func (ctx *serverContext) handleBoundsImage(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	image, err := ctx.cropper.GetFrame(frame)
+	data, err := frame.GetImage(ctx.assets)
+	if err != nil {
+		http.Error(w, "Could not get bounds frame", 404)
+		return
+	}
+	defer data.Close()
+	image, err := sbimage.Crop(data)
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, "Could not decode image", 500)

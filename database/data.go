@@ -22,6 +22,7 @@ func (sb *SBDatabase) DataByBoundID(id int64) (*sbvision.Frame, error) {
 	if err != nil {
 		return nil, fmt.Errorf("\n\tError querying frames for ByBoundID: %s", err.Error())
 	}
+	defer result.Close()
 	frames, err := parseFrames(result)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tError parsing frames for ByBoundID: %s", err.Error())
@@ -49,6 +50,7 @@ func (sb *SBDatabase) DataRotationFrames() ([]sbvision.Frame, error) {
 	if err != nil {
 		return nil, fmt.Errorf("\n\tError getting rotation frames: %s", err.Error())
 	}
+	defer results.Close()
 	frames, err := parseFrames(results)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tError parsing rotation frames: %s", err.Error())
@@ -60,17 +62,28 @@ func (sb *SBDatabase) prepareGetFrame() (err error) {
 	sb.getFrame, err = sb.db.Prepare(`
 SELECT ` + frameColumns + `
 FROM ` + frameJoin + `
-WHERE frames.time = ? AND frames.video_id = ?
+WHERE (
+	frames.time = ? 
+	OR
+	(
+		frames.image_hash = ?
+		AND 
+		ABS(frames.time - ?) < 1000
+	)
+) 
+AND
+frames.video_id = ?
 	`)
 	return
 }
 
 // GetFrame returns a frame object for the given video
-func (sb *SBDatabase) GetFrame(video int64, frameNum int64) (*sbvision.Frame, error) {
-	result, err := sb.getFrame.Query(frameNum, video)
+func (sb *SBDatabase) GetFrame(video int64, frameNum int64, hash int64) (*sbvision.Frame, error) {
+	result, err := sb.getFrame.Query(frameNum, hash, frameNum, video)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tError getting frame %d of video %d: %s", frameNum, video, err)
 	}
+	defer result.Close()
 	frames, err := parseFrames(result)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tError parsing frame %d of video %d: %s", frameNum, video, err)
@@ -79,6 +92,28 @@ func (sb *SBDatabase) GetFrame(video int64, frameNum int64) (*sbvision.Frame, er
 		return nil, nil
 	}
 	return &frames[0], nil
+}
+
+func (sb *SBDatabase) prepareDataAllFrames() (err error) {
+	sb.dataAllFrames, err = sb.db.Prepare(`
+SELECT ` + frameColumns + `
+FROM ` + frameJoin + `
+ORDER BY frames.video_id ASC, frames.time ASC
+	`)
+	return
+}
+
+// DataAllFrames gets all teh datas
+func (sb *SBDatabase) DataAllFrames() ([]sbvision.Frame, error) {
+	rows, err := sb.dataAllFrames.Query()
+	if err != nil {
+		return nil, fmt.Errorf("\n\tError getting data frames: %s", err.Error())
+	}
+	frames, err := parseFrames(rows)
+	if err != nil {
+		return nil, fmt.Errorf("\n\tError parsing all frames: %s", err.Error())
+	}
+	return frames, nil
 }
 
 func (sb *SBDatabase) prepareDataVideoFrames() (err error) {
@@ -96,6 +131,7 @@ func (sb *SBDatabase) DataVideoFrames(videoID int64) ([]sbvision.Frame, error) {
 	if err != nil {
 		return nil, fmt.Errorf("\n\tError querying video data frames: %s", err.Error())
 	}
+	defer result.Close()
 	frames, err := parseFrames(result)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tError scanning video data frame results: %s", err.Error())
@@ -105,8 +141,8 @@ func (sb *SBDatabase) DataVideoFrames(videoID int64) ([]sbvision.Frame, error) {
 
 const frameColumns = `
 	frames.id,
-	images.key,
 	frames.time,
+	frames.video_id,
 	bounds.id,
 	bounds.x,
 	bounds.y,
@@ -119,8 +155,6 @@ const frameColumns = `
 	rotations.k `
 
 const frameJoin = ` frames
-INNER JOIN images
-		ON images.id = frames.image_id
 LEFT JOIN bounds
 		ON bounds.frame_id = frames.id
 LEFT JOIN rotations
@@ -128,8 +162,7 @@ LEFT JOIN rotations
 `
 
 func parseFrames(results *sql.Rows) ([]sbvision.Frame, error) {
-	var frameID, frameTime int64
-	var image string
+	var frameID, frameTime, videoID int64
 	var boundID, x, y, width, height, rotationID sql.NullInt64
 	var r, i, j, k sql.NullFloat64
 	var frames []sbvision.Frame
@@ -138,8 +171,8 @@ func parseFrames(results *sql.Rows) ([]sbvision.Frame, error) {
 	for results.Next() {
 		err := results.Scan(
 			&frameID,
-			&image,
 			&frameTime,
+			&videoID,
 			&boundID,
 			&x,
 			&y,
@@ -157,9 +190,9 @@ func parseFrames(results *sql.Rows) ([]sbvision.Frame, error) {
 
 		if frame == nil || frame.ID != frameID {
 			frames = append(frames, sbvision.Frame{
-				ID:    frameID,
-				Time:  frameTime,
-				Image: sbvision.Image(image),
+				ID:      frameID,
+				VideoID: videoID,
+				Time:    frameTime,
 			})
 			frame = &frames[len(frames)-1]
 		}

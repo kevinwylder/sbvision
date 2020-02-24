@@ -1,7 +1,6 @@
 
 export interface Frame {
     id: number
-    image: string
     time: number
     bounds: Bound[]
 }

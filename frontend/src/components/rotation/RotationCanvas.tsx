@@ -16,11 +16,11 @@ export function RotationCanvas({frame, style, onFrameComplete}: RotationCanvasPr
     let [ image, setImage ] = React.useState<HTMLImageElement>()
     React.useEffect(() => {
         let i = document.createElement("img");
-        i.src = `/images/${frame.image}`;
+        i.src = `/images/frame/${frame.id}.png`;
         i.onload = () => {
             setImage(i);
         }
-    }, [frame.image]);
+    }, [frame.id]);
 
     let canvas = React.createRef<HTMLCanvasElement>()
     React.useEffect(() => {
@@ -40,6 +40,15 @@ export function RotationCanvas({frame, style, onFrameComplete}: RotationCanvasPr
         let offsetY = (y + y + height < image.height) ? 0 : height - long;
         renderSkateboard(ctx, quaternion, [ x + offsetX, y + offsetY, x + offsetX + long, y + offsetY + long]);
     }, [canvas.current, image, bound, quaternion])
+
+    React.useEffect(() => {
+        function deleteBounds(e: KeyboardEvent) {
+            if (e.key == "Backspace") {
+            }
+        }
+        window.addEventListener("keypress", deleteBounds);
+        return () => window.removeEventListener("keypress", deleteBounds);
+    }, []);
 
     const handleClick = () => {
         let [ r, i, j, k ] = quaternion;

@@ -9,9 +9,9 @@ interface RotationInstructionProps {
 
 export function RotationInstructions({onClosed, isTouchEvent}: RotationInstructionProps) {
     let move = (isTouchEvent) ? "Drag" : "Move";
-    let scroll = (isTouchEvent) ? "Two Finger Drag" : "Scroll Up/Down";
+    let scroll = (isTouchEvent) ? "Two Finger Drag" : "Scroll Up/Down"
     let accept = (isTouchEvent) ? "Tap Next Button" : "Click"
-    let reject = (isTouchEvent) ? "Tap Skip Button" : "Right Click"
+    let reject = "Delete Key"
     return <div className="rotation-instructions">
         <div></div><div></div><div></div><div onClick={onClosed}>Start</div>
         <div></div><div style={{gridColumn: "2 / span 2"}}>Rotation Controls</div><div></div>

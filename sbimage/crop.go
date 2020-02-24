@@ -1,4 +1,4 @@
-package cropper
+package sbimage
 
 import (
 	"fmt"
@@ -9,42 +9,24 @@ import (
 	"github.com/kevinwylder/sbvision"
 )
 
-// PngCropper is able to crop png files
+// PngCropper holds a decoded PNG and can get bounds of that image
 type PngCropper struct {
-	assets sbvision.KeyValueStore
-}
-
-// NewPngCropper is the constructor for the png cropper
-func NewPngCropper(assets sbvision.KeyValueStore) *PngCropper {
-	return &PngCropper{
-		assets: assets,
-	}
-}
-
-// FrameCropper holds a decoded PNG and can get bounds of that image
-type FrameCropper struct {
 	image image.Image
-	frame *sbvision.Frame
 }
 
-// GetFrame will fetch and decode the frame in this png
-func (cropper *PngCropper) GetFrame(frame *sbvision.Frame) (*FrameCropper, error) {
-	reader, err := cropper.assets.GetAsset(string(frame.Image))
-	if err != nil {
-		return nil, fmt.Errorf("\n\tError getting asset: %s", err.Error())
-	}
-	image, err := png.Decode(reader)
+// Crop will fetch and decode the frame in this png
+func Crop(data io.Reader) (*PngCropper, error) {
+	image, err := png.Decode(data)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tError decoding png: %s", err.Error())
 	}
-	return &FrameCropper{
+	return &PngCropper{
 		image: image,
-		frame: frame,
 	}, nil
 }
 
 // GetCroppedPng crops the frame and returns a PNG of just the given bounds
-func (frame *FrameCropper) GetCroppedPng(bounds *sbvision.Bound, dst io.Writer) error {
+func (frame *PngCropper) GetCroppedPng(bounds *sbvision.Bound, dst io.Writer) error {
 	rectangle := image.Rect(int(bounds.X), int(bounds.Y), int(bounds.X+bounds.Width), int(bounds.Y+bounds.Height))
 	var subImage image.Image
 	switch i := frame.image.(type) {
