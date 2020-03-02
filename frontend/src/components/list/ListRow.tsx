@@ -23,7 +23,7 @@ export function ListRow({video}: VideoRowProps) {
     return (
         <div className="list-row" onClick={() => setSelected(true)}>
             <img className="list-row-image"
-                src={`/image/thumbnail/${video.id}.jpg`} />
+                src={`/app/video/thumbnail?id=${video.id}`} />
             <div className="list-row-text">
                 <h3 className="list-row-title" style={{
                     color: selected ? "red" : "black"

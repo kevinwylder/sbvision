@@ -5,9 +5,11 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 )
 
 type frontend struct {
+	files    http.Handler
 	dist     http.Dir
 	react    http.Dir
 	reactDOM http.Dir
@@ -27,11 +29,29 @@ func ServeFrontend(dir string) (http.Handler, error) {
 	if _, err := os.Stat(reactDOMFolder); os.IsNotExist(err) {
 		return nil, fmt.Errorf("\n\tCannot find node_modules/react-dom/umd folder in %s. Try `yarn`", dir)
 	}
-	return http.FileServer(&frontend{
+	f := &frontend{
 		dist:     http.Dir(distFolder),
 		react:    http.Dir(reactFolder),
 		reactDOM: http.Dir(reactDOMFolder),
-	}), nil
+	}
+	f.files = http.FileServer(f)
+	return f, nil
+}
+
+func (f *frontend) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// catch and redirect all routing requests
+	if strings.HasPrefix(r.URL.Path, "/video/") {
+		r.URL.Path = "/"
+	}
+	switch r.URL.Path {
+	case "/videos":
+		r.URL.Path = "/"
+	case "/rotations":
+		r.URL.Path = "/"
+	case "/dataset":
+		r.URL.Path = "/"
+	}
+	f.files.ServeHTTP(w, r)
 }
 
 func (f *frontend) Open(path string) (http.File, error) {

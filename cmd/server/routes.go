@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"strings"
 )
 
 func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -15,57 +14,36 @@ func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if strings.HasPrefix(r.URL.Path, "/image") {
-		ctx.handleImage(w, r)
-		return
-	}
-
 	switch r.URL.Path {
 
-	case "/videos":
-		switch r.Method {
-		case http.MethodPost:
-			ctx.handleVideoDiscovery(w, r)
-		case http.MethodGet:
-			ctx.handleVideoPage(w, r)
-		}
-
-	case "/stream":
-		ctx.handleStream(w, r)
-
-	case "/session":
+	case "/app/session":
 		ctx.handleNewSession(w, r)
 
-	case "/frames":
-		switch r.Method {
-		case http.MethodPost:
-			ctx.handleFrameUpload(w, r)
-		case http.MethodGet:
-			ctx.handleGetFrames(w, r)
-		}
+	case "/app/video/list":
+		ctx.handleVideoPage(w, r)
 
-	case "/bounds":
-		switch r.Method {
-		case http.MethodPost:
-			ctx.handleBoundsUpload(w, r)
-		case http.MethodGet:
-			ctx.handleBoundsImage(w, r)
-		}
+	case "/app/video/thumbnail":
+		ctx.handleVideoThumbnail(w, r)
 
-	case "/orientation":
-		switch r.Method {
-		case http.MethodPost:
-			ctx.handleAddRotation(w, r)
-		}
+	case "/app/video/stream":
+		ctx.handleVideoStream(w, r)
+
+	case "/app/contribute/frame":
+		ctx.handleAddFrame(w, r)
+
+	case "/app/contribute/bounds":
+		ctx.handleAddBounds(w, r)
+
+	case "/app/contribute/rotation":
+		ctx.handleAddRotation(w, r)
+
+	case "/api/frames":
+		ctx.handleGetFrames(w, r)
+
+	case "/api/image":
+		ctx.handleAPIImage(w, r)
 
 	default:
-		// redirect /video/:id requests to index
-		if strings.HasPrefix(r.URL.Path, "/video/") {
-			r.URL.Path = "/"
-		}
-		if strings.HasPrefix(r.URL.Path, "/rotations") {
-			r.URL.Path = "/"
-		}
 		// fallthrough to the frontend
 		ctx.frontend.ServeHTTP(w, r)
 

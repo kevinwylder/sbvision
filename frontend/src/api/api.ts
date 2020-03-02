@@ -25,18 +25,13 @@ export interface Rotation {
 }
 
 export function getFrames(videoId: number): Promise<Frame[]> {
-    return fetch(`/frames?video=${videoId}`)
+    return fetch(`/api/frames?video=${videoId}`)
     .then(res => res.json())
     .then(({frames}) => frames);
 }
 
-export function getStats(): Promise<{frames: number, bounds: number, rotations: number}> {
-    return fetch(`/frames`)
-    .then(res => res.json())
-}
-
 export function getRotations(): Promise<Frame[]> {
-    return fetch(`/frames?rotationless=1`)
+    return fetch(`/api/frames?rotationless=1`)
     .then(res => res.json())
     .then(({frames}) => frames);
 }

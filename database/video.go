@@ -7,6 +7,22 @@ import (
 	"github.com/kevinwylder/sbvision"
 )
 
+func (sb *SBDatabase) prepareGetVideoCount() (err error) {
+	sb.getVideoCount, err = sb.db.Prepare(` SELECT COUNT(*) FROM videos `)
+	return
+}
+
+// GetVideoCount gets the total number of videos in the database
+func (sb *SBDatabase) GetVideoCount() (int64, error) {
+	result := sb.getVideoCount.QueryRow()
+	var count int64
+	err := result.Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("\n\tError getting video count from db: %s", err.Error())
+	}
+	return count, nil
+}
+
 func (sb *SBDatabase) prepareAddVideo() (err error) {
 	sb.addVideo, err = sb.db.Prepare(`
 INSERT INTO videos (title, type, format, duration) VALUES ( ?, ?, ?, ? );

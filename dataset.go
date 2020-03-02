@@ -1,9 +1,11 @@
 package sbvision
 
-import (
-	"fmt"
-	"io"
-)
+// FramePage is a page of frame results that allows for pagenation of frame results
+type FramePage struct {
+	Frames      []Frame `json:"frames"`
+	IsTruncated bool    `json:"isTruncated"`
+	NextOffset  int64   `json:"nextOffset"`
+}
 
 // Frame is a frame of a video
 type Frame struct {
@@ -11,11 +13,6 @@ type Frame struct {
 	VideoID int64   `json:"video"`
 	Time    int64   `json:"time"`
 	Bounds  []Bound `json:"bounds"`
-}
-
-// GetImage reads this image asset out of the store
-func (frame *Frame) GetImage(store KeyValueStore) (io.ReadCloser, error) {
-	return store.GetAsset(fmt.Sprintf("frame/%d.png", frame.ID))
 }
 
 // Bound is an area on a frame

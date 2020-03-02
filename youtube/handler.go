@@ -13,9 +13,9 @@ import (
 
 // YTDatabase is the required subset of functions used for this
 type YTDatabase interface {
-	sbvision.VideoTracker
-	sbvision.YoutubeVideoTracker
-	sbvision.YoutubeSearch
+	AddVideo(*sbvision.Video) error
+	AddYoutubeRecord(*sbvision.YoutubeVideoInfo) error
+	GetYoutubeRecord(videoID int64) (*sbvision.YoutubeVideoInfo, error)
 }
 
 type youtubeHandler struct {
@@ -26,7 +26,7 @@ type youtubeHandler struct {
 	cache map[int64]*sbvision.YoutubeVideoInfo
 }
 
-// NewYoutubeHandler constructs a namespace for downloading youtube video info
+// NewYoutubeHandler is a constructor the youtube-dl wrapper
 func NewYoutubeHandler(storage YTDatabase, images sbvision.KeyValueStore) sbvision.VideoHandler {
 	handler := &youtubeHandler{
 		db:     storage,
@@ -39,14 +39,8 @@ func NewYoutubeHandler(storage YTDatabase, images sbvision.KeyValueStore) sbvisi
 	return handler
 }
 
-func (dl *youtubeHandler) HandleDiscover(req *sbvision.VideoDiscoverRequest) (*sbvision.Video, error) {
-	if req.Type != 1 {
-		return nil, fmt.Errorf("\n\tDownload request is not a youtube type")
-	}
-	if req.Session == nil {
-		return nil, fmt.Errorf("\n\tMissing Session from videodownloadrequest")
-	}
-	video, err := dl.getYoutubeVideo(req.URL)
+func (dl *youtubeHandler) HandleDiscover(url string) (*sbvision.Video, error) {
+	video, err := dl.getYoutubeVideo(url)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCould not get video: %s", err.Error())
 	}

@@ -12,25 +12,30 @@ import (
 
 // SBDatabase is a namespace of database queries
 type SBDatabase struct {
-	db               *sql.DB
-	addSession       *sql.Stmt
-	addVideo         *sql.Stmt
+	db *sql.DB
+
+	// in session.go
+	addSession *sql.Stmt
+
+	// in contribute.go
+	addFrame    *sql.Stmt
+	addBounds   *sql.Stmt
+	addRotation *sql.Stmt
+
+	// in dataset.go
+	dataWhereVideo      *sql.Stmt
+	dataWhereFrame      *sql.Stmt
+	dataWhereNoRotation *sql.Stmt
+
+	// in video.go
+	addVideo      *sql.Stmt
+	getVideoPage  *sql.Stmt
+	getVideoCount *sql.Stmt
+	getVideoByID  *sql.Stmt
+
+	// in youtube.go
 	addYoutubeRecord *sql.Stmt
-	addFrame         *sql.Stmt
-	addBounds        *sql.Stmt
-	addRotation      *sql.Stmt
-
-	getVideoPage     *sql.Stmt
-	getVideoCount    *sql.Stmt
-	getVideoByID     *sql.Stmt
 	getYoutubeRecord *sql.Stmt
-	getFrame         *sql.Stmt
-
-	dataCounts         *sql.Stmt
-	dataVideoFrames    *sql.Stmt
-	dataAllFrames      *sql.Stmt
-	dataRotationFrames *sql.Stmt
-	dataByBoundID      *sql.Stmt
 }
 
 // ConnectToDatabase waits for a sql connection then prepares queries for runtime
@@ -49,22 +54,28 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 	sb := &SBDatabase{db: db}
 
 	var prepFunctions = [](func() error){
-		sb.prepareAddBounds,
-		sb.prepareAddFrame,
+		// in session.go
 		sb.prepareAddSession,
-		sb.prepareAddVideo,
-		sb.prepareAddYoutubeRecord,
+
+		// in contribute.go
+		sb.prepareAddFrame,
+		sb.prepareAddBounds,
 		sb.prepareAddRotation,
-		sb.prepareGetFrame,
+
+		// in dataset.go
+		sb.prepareDataWhereVideo,
+		sb.prepareDataWhereFrame,
+		sb.prepareDataWhereNoRotation,
+
+		// in video.go
+		sb.prepareAddVideo,
+		sb.prepareGetVideos,
 		sb.prepareGetVideoByID,
 		sb.prepareGetVideoCount,
-		sb.prepareGetVideos,
+
+		// in youtube.go
+		sb.prepareAddYoutubeRecord,
 		sb.prepareGetYoutubeRecord,
-		sb.prepareDataVideoFrames,
-		sb.prepareDataCounts,
-		sb.prepareDataRotationFrames,
-		sb.prepareDataByBoundID,
-		sb.prepareDataAllFrames,
 	}
 
 	for _, f := range prepFunctions {

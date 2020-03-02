@@ -38,13 +38,13 @@ func NewS3BucketManager(bucket string, cache sbvision.KeyValueStore) (*S3Bucket,
 }
 
 // PutAsset puts the given data in the bucket
-func (sb *S3Bucket) PutAsset(key string, data io.Reader) error {
+func (sb *S3Bucket) PutAsset(key sbvision.Key, data io.Reader) error {
 	if sb.cache == nil {
 		// upload the file
 		_, err := sb.uploader.Upload(&s3manager.UploadInput{
 			Body:   data,
 			Bucket: sb.bucket,
-			Key:    aws.String(key),
+			Key:    aws.String(string(key)),
 		})
 		if err != nil {
 			return fmt.Errorf("\n\tCould not upload asset to s3 bucket without cache: %s", err)
@@ -88,7 +88,7 @@ type removeTmpFile struct {
 }
 
 // GetAsset looks gets the local image, downloading it if necessary
-func (sb *S3Bucket) GetAsset(key string) (io.ReadCloser, error) {
+func (sb *S3Bucket) GetAsset(key sbvision.Key) (io.ReadCloser, error) {
 	if sb.cache != nil {
 		data, err := sb.cache.GetAsset(key)
 		if err == nil {
@@ -102,7 +102,7 @@ func (sb *S3Bucket) GetAsset(key string) (io.ReadCloser, error) {
 	}
 
 	_, err = sb.downloader.Download(file, &s3.GetObjectInput{
-		Key:    aws.String(key),
+		Key:    aws.String(string(key)),
 		Bucket: sb.bucket,
 	})
 	if err != nil {

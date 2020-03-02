@@ -3,7 +3,6 @@ package youtube
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -70,7 +69,6 @@ func (dl *youtubeHandler) getYoutubeVideo(url string) (*sbvision.Video, error) {
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCannot open .info.json file: %s", err.Error())
 	}
-	defer infoFile.Close()
 	err = parseInfo(infoFile, yt, video)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCannot parse file: %s", err.Error())
@@ -88,7 +86,7 @@ func (dl *youtubeHandler) getYoutubeVideo(url string) (*sbvision.Video, error) {
 		return nil, fmt.Errorf("\n\tCannot open image file: %s", err.Error())
 	}
 	defer thumbnailFile.Close()
-	err = dl.images.PutAsset(fmt.Sprintf("thumbnail/%d.jpg", video.ID), thumbnailFile)
+	err = dl.images.PutAsset(video.Thumbnail(), thumbnailFile)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCannot upload image: %s", err.Error())
 	}
@@ -137,7 +135,6 @@ func (dl *youtubeHandler) updateVideoLink(info *sbvision.YoutubeVideoInfo) error
 	if err != nil {
 		return fmt.Errorf("\n\tCannot open .info.json file: %s", err.Error())
 	}
-	defer infoFile.Close()
 	err = parseInfo(infoFile, info, nil)
 	if err != nil {
 		return fmt.Errorf("\n\tCannot parse .info.json file: %s", err.Error())
@@ -145,9 +142,12 @@ func (dl *youtubeHandler) updateVideoLink(info *sbvision.YoutubeVideoInfo) error
 	return nil
 }
 
-func parseInfo(data io.Reader, yt *sbvision.YoutubeVideoInfo, video *sbvision.Video) error {
+// parseInfo reads the info file from youtube-dl and extracts the info for the video/youtubevideo
+func parseInfo(file *os.File, yt *sbvision.YoutubeVideoInfo, video *sbvision.Video) error {
+	defer file.Close()
+
 	var info dlInfo
-	decoder := json.NewDecoder(data)
+	decoder := json.NewDecoder(file)
 	err := decoder.Decode(&info)
 	if err != nil {
 		return err

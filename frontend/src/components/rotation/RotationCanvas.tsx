@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { renderSkateboard, Quaternion, rotateSkateboard, tiltSkateboard } from './skateboard';
+import { renderSkateboard, Quaternion, rotateSkateboard, tiltSkateboard } from '../../skateboard';
 import { Frame, addRotation } from '../../api';
 
 interface RotationCanvasProps {
@@ -16,7 +16,7 @@ export function RotationCanvas({frame, style, onFrameComplete}: RotationCanvasPr
     let [ image, setImage ] = React.useState<HTMLImageElement>()
     React.useEffect(() => {
         let i = document.createElement("img");
-        i.src = `/images/frame/${frame.id}.png`;
+        i.src = `/api/image?frame=${frame.id}`;
         i.onload = () => {
             setImage(i);
         }

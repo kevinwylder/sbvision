@@ -1,5 +1,5 @@
 import { session } from './session';
-import { Bound, Frame } from './data';
+import { Bound, Frame } from './api';
 
 export function uploadFrame(videoId: number, elem: HTMLVideoElement): Promise<Frame> {
     let frame = Math.ceil(elem.currentTime * 1000);
@@ -30,7 +30,7 @@ export function uploadFrame(videoId: number, elem: HTMLVideoElement): Promise<Fr
         form.append("image", new Blob([new Uint8Array(data)]));
         return form;
     })
-    .then(body => fetch(`/frames?video=${videoId}&frame=${frame}`,
+    .then(body => fetch(`/app/contribute/frame?video=${videoId}&frame=${frame}`,
     { // send form data to the server
         method: "POST",
         body,
@@ -40,7 +40,7 @@ export function uploadFrame(videoId: number, elem: HTMLVideoElement): Promise<Fr
 }
 
 export function uploadBounds(frameId: number, bounds: {x: number, y: number, width: number, height: number}): Promise<Bound> {
-    return fetch(`/bounds?frame=${frameId}`, {
+    return fetch(`/app/contribute/bounds?frame=${frameId}`, {
         method: "POST",
         body: JSON.stringify(bounds),
         headers: session,
@@ -49,7 +49,7 @@ export function uploadBounds(frameId: number, bounds: {x: number, y: number, wid
 }
 
 export function addRotation(boundId: number, quaternion: {r: number, i: number, j: number, k: number}) {
-    return fetch(`/orientation?bound=${boundId}`,{
+    return fetch(`/app/contribute/rotation?bound=${boundId}`,{
         method: "POST",
         headers: session,
         body: JSON.stringify(quaternion),

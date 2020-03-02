@@ -5,7 +5,7 @@ export let session: {
 
 function getSession() {
     console.log("Getting session header")
-    fetch("/session")
+    fetch("/app/session")
     .then(res => res.status == 200 ? res.text() : Promise.reject(res.text())) 
     .then(s => {
         session = {

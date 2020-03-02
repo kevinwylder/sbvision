@@ -16,7 +16,6 @@ export class VideoManager {
         private videoId: number,
         private elem: HTMLVideoElement,
         private ctx: CanvasRenderingContext2D,
-        private updateStats: (stats: CollectionStatistics) => void,
     ) { 
         // bind time updates to our scheduler with a local function
         this.elem.addEventListener("timeupdate", this.onTimeUpdate.bind(this));
@@ -46,7 +45,6 @@ export class VideoManager {
                 }
             })
         }
-        this.updateStats({ bounds: boundCount, frames: frameCount, rotations: rotationCount });
     }
 
 

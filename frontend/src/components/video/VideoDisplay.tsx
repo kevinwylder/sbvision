@@ -7,10 +7,8 @@ import { VideoManager } from './manager';
 
 import { VideoBox } from './VideoBox';
 import { VideoScrubber } from './VideoScrubber';
-import { VideoControls } from './VideoControls';
 
 import "./video.css";
-import { CollectionStatistics } from '../CollectionStats';
 
 const CONTROLS_HEIGHT = 49;
 const SCRUBBER_HEIGHT = 30;
@@ -22,7 +20,7 @@ export function VideoDisplay() {
     let params: { id?: string } = useParams();
     React.useEffect(() => {
         getVideoById(parseInt(params.id as string))
-        .then(v => setVideoInfo(v.videos[0]));
+        .then(v => setVideoInfo(v));
     }, [params.id])
 
     // use aspect ratio and container bounds to place the video
@@ -50,7 +48,6 @@ export function VideoDisplay() {
     let video = React.createRef<HTMLVideoElement>();
     let prestigeCanvas = React.createRef<HTMLCanvasElement>();
     let [ hasPlayed, setHasPlayed ] = React.useState(false);
-    let [ collectionStats, setCollectionStats ] = React.useState<CollectionStatistics>({bounds: 0, frames: 0, rotations: 0});
     let [ videoManager, setVideoManager ] = React.useState<VideoManager>()
     React.useEffect(() => {
         if (!video.current || !prestigeCanvas.current || !videoInfo) {
@@ -60,7 +57,7 @@ export function VideoDisplay() {
         if (!ctx) {
             return;
         }
-        let videoManager = new VideoManager(videoInfo.id, video.current, ctx, setCollectionStats);
+        let videoManager = new VideoManager(videoInfo.id, video.current, ctx);
         setVideoManager(videoManager);
         function onPlay() {
             setHasPlayed(true);
@@ -82,16 +79,7 @@ export function VideoDisplay() {
     return <div 
         ref={container}
         className="video-container">
-{videoInfo && collectionStats ? <>
-        <VideoControls
-            stats={collectionStats}
-            bounds={{
-                left: bounds.left,
-                top: bounds.top - CONTROLS_HEIGHT,
-                width: bounds.width,
-                height: CONTROLS_HEIGHT
-            }}
-        />
+{videoInfo ? <>
         <video
             ref={video} 
             playsInline={true}
@@ -102,7 +90,7 @@ export function VideoDisplay() {
                 ...bounds
             }}>
             <source
-                src={`/stream?type=${videoInfo.type}&id=${videoInfo.id}`}
+                src={`/app/video/stream?type=${videoInfo.type}&id=${videoInfo.id}`}
                 type={videoInfo.format}
             />
         </video>

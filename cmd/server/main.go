@@ -2,15 +2,13 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/kevinwylder/sbvision"
-	"github.com/kevinwylder/sbvision/assets/amazon"
-	"github.com/kevinwylder/sbvision/assets/filesystem"
+	"github.com/kevinwylder/sbvision/cmd"
 	"github.com/kevinwylder/sbvision/database"
 	"github.com/kevinwylder/sbvision/frontend"
 	"github.com/kevinwylder/sbvision/session"
@@ -56,26 +54,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	assetDir, exists := os.LookupEnv("ASSET_DIR")
-	if !exists {
-		assetDir, err = ioutil.TempDir("", "")
-		if err != nil {
-			log.Fatal("Could not create tmp dir for image storage", err)
-		}
+	assets, cleanup := cmd.GetLocalAssets()
+	if cleanup != "" {
+		defer os.RemoveAll(cleanup)
 	}
-	cache, err := filesystem.NewAssetDirectory(assetDir)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if bucket, exists := os.LookupEnv("S3_BUCKET"); exists {
-		server.assets, err = amazon.NewS3BucketManager(bucket, cache)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	if server.assets == nil {
-		server.assets = cache
-	}
+	server.assets = assets
 
 	server.youtube = youtube.NewYoutubeHandler(db, server.assets)
 

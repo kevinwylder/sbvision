@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+
+	"github.com/kevinwylder/sbvision"
 )
 
 // AssetDirectory is a folder that holds images
@@ -34,6 +36,10 @@ func NewAssetDirectory(dir string) (*AssetDirectory, error) {
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCannot create frame directory: %s", err.Error())
 	}
+	err = os.MkdirAll(path.Join(dir, "bound"), 0755)
+	if err != nil {
+		return nil, fmt.Errorf("\n\tCannot create bound directory: %s", err.Error())
+	}
 	err = os.MkdirAll(path.Join(dir, "videos"), 0755)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCannot create videos directory: %s", err.Error())
@@ -44,7 +50,7 @@ func NewAssetDirectory(dir string) (*AssetDirectory, error) {
 }
 
 // PutAsset reads the given source and writes it to the file
-func (sd *AssetDirectory) PutAsset(key string, data io.Reader) error {
+func (sd *AssetDirectory) PutAsset(key sbvision.Key, data io.Reader) error {
 	bytes, err := ioutil.ReadAll(data)
 	if err != nil {
 		return fmt.Errorf("\n\tCannot read image (%s) from reader: %s", key, err)
@@ -57,7 +63,7 @@ func (sd *AssetDirectory) PutAsset(key string, data io.Reader) error {
 }
 
 // GetAsset returns the open file
-func (sd *AssetDirectory) GetAsset(image string) (io.ReadCloser, error) {
+func (sd *AssetDirectory) GetAsset(image sbvision.Key) (io.ReadCloser, error) {
 	file, err := os.Open(path.Join(sd.path, string(image)))
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCannot open image (%s): %s", image, err)
