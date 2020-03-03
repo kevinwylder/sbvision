@@ -54,9 +54,6 @@ export function VideoDisplay() {
             ];
         }
 
-        canvas.current.onclick = () => {
-            renderer?.click();
-        }
         canvas.current.onmousedown = (e) => {
             if (renderer?.grab(convertCoordinates(e))) {
                 e.preventDefault();

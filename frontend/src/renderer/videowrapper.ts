@@ -71,31 +71,47 @@ export class VideoWrapper {
     }
 
     public grab(pos: [number, number]) {
-        if (!this.video.paused || !this.box || this.playbutton) return false;
-        this.box.grab(pos);
+        this.box?.grab(pos);
         this.render();
-        return true;
     }
     
     public drag(pos: [number, number]) {
-        if (!this.video.paused || !this.box || this.playbutton) return false;
-        if (this.box.drag(pos)) {
+        if (this.box?.drag(pos)) {
             this.render();
         }
-        return true;
     }
 
     public up() {
-        if (!this.video.paused || !this.box || this.playbutton) return false;
-        let [ wasTap, wasInsideBox ] = this.box.release();
-        if (wasTap) {
-            if (wasInsideBox) {
-                let frame = this.frames?.getFrame(this.video.currentTime * 1000);
-                if (!frame || !this.box) {
-                    this.video.play();
-                    return;
-                }
+        if (!this.box) {
+            return;
+        }
 
+        let [ wasTap, wasInsideBox, wasEmptyBox ] = this.box.release();
+
+        if (wasTap && wasEmptyBox) {
+            if (this.video.paused) {
+                this.video.play();
+            } else {
+                this.video.pause();
+            }
+            return;
+        }
+
+        if (!this.video.paused) {
+            this.box.reset();
+            return;
+        }
+
+        if (!wasTap) {
+            if (this.ctx) {
+                this.box.drawHelpDelayed(this.ctx);
+            }
+            return;
+        } 
+
+        if (wasInsideBox) {
+            let frame = this.frames?.getFrame(this.video.currentTime * 1000);
+            if (frame && this.box) {
                 addBounds(frame.id, this.box.bounds())
                 .then(() => { 
                     this.video.currentTime += 0.1; 
@@ -104,21 +120,11 @@ export class VideoWrapper {
                     console.log(err);
                     this.video.play();
                 });
-            } else {
-                this.video.play();
+                return;
             }
-        } else if (this.ctx) {
-            this.box.drawHelpDelayed(this.ctx);
         }
-        return true;
-    }
-
-    public click() {
-        if (this.video.paused) {
-            this.video.play();
-        } else {
-            this.video.pause();
-        }
+        this.box.reset();
+        this.video.play();
     }
     
     public setContext(ctx: CanvasRenderingContext2D) {

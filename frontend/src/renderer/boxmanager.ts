@@ -40,7 +40,7 @@ export class Box {
         }
     }
 
-    private reset() {
+    public reset() {
         this.empty = true;
         this.coordinates = [0, 0, 0, 0];
         window.clearInterval(this.helpTextInterval);
@@ -93,7 +93,6 @@ export class Box {
      * @param param0 a point [x, y] in the box's coordinate space
      */
     public grab([x, y]: [number, number]): boolean {
-        this.empty = false;
         this.dragging = true;
         this.lastCoordinates = this.coordinates;
         this.dragStartTime = new Date().getTime();
@@ -138,6 +137,7 @@ export class Box {
         if (!this.dragging) {
             return false;
         }
+        this.empty = false;
 
         x = Math.max(0, Math.min(x, this.areaWidth));
         y = Math.max(0, Math.min(y, this.areaHeight));
@@ -163,21 +163,23 @@ export class Box {
     }
 
     // release calls onSubmit if the stroke was an 
-    public release(): [boolean, boolean] {
+    public release(): [boolean, boolean, boolean] {
         this.dragging = false;
 
         const wasTap = this.dragDistance < 5 && (new Date().getTime() - this.dragStartTime) < 200;
-        const [ x, y ] = this.lastPosition;
-        const { top, bottom, left, right } = this.describe();
-        const wasInside = left - this.border < x && x < right + this.border 
-                        && top - this.border < y && y < bottom + this.border;
+        let wasInside = false;
 
+        let wasEmpty = this.empty;
         if (wasTap) {
             this.coordinates = this.lastCoordinates;
-            this.reset();
+            this.lastCoordinates = this.coordinates;
+
+            const [ x, y ] = this.lastPosition;
+            const { top, bottom, left, right } = this.describe();
+            wasInside = left - this.border < x && x < right + this.border && top - this.border < y && y < bottom + this.border;
         }
 
-        return [ wasTap, wasInside ];
+        return [ wasTap, wasInside, wasEmpty ];
     }
 
 }
