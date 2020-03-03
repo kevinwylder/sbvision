@@ -7,7 +7,7 @@ import {
 } from 'react-router-dom';
 
 import './style.css';
-import { VideoDisplay } from './components/video/VideoDisplay';
+import { VideoDisplay } from './components/video/VideoManager';
 import { Listing } from './components/list/Listing';
 import { RotationMatcher } from './components/rotation/RotationMatcher';
 import { RotatingSkateboard } from './components/RotatingSkateboard';
@@ -19,9 +19,8 @@ export function NavigationBar() {
     return <Router>
         <div className="nav-bar">
             <Link to="/" className="nav-bar-tab"><RotatingSkateboard/></Link>
+            <Link to="/" className="nav-bar-tab"><div>About</div></Link>
             <Link to="/videos" className="nav-bar-tab"><div>Videos</div></Link>
-            <Link to="/rotations" className="nav-bar-tab"><div>Rotations</div></Link>
-            <Link to="/verifications" className="nav-bar-tab"><div>Verifications</div></Link>
             <Link to="/api-docs" className="nav-bar-tab"><div>API</div></Link>
         </div>
             <Switch>

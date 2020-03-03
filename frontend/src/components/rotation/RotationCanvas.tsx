@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { renderSkateboard, Quaternion, rotateSkateboard, tiltSkateboard } from '../../skateboard';
+import { renderSkateboard, Quaternion, rotateSkateboard, tiltSkateboard } from '../../renderer/skateboard';
 import { Frame, addRotation } from '../../api';
 
 interface RotationCanvasProps {

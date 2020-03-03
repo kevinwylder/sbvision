@@ -1,5 +1,5 @@
 import { session } from './session';
-import { Bound, Frame } from './api';
+import { Bound, Frame } from './frame';
 
 export function uploadFrame(videoId: number, elem: HTMLVideoElement): Promise<Frame> {
     let frame = Math.ceil(elem.currentTime * 1000);
@@ -20,7 +20,7 @@ export function uploadFrame(videoId: number, elem: HTMLVideoElement): Promise<Fr
         }
     }
     if (!okay) {
-        return Promise.reject("Frame is too dark");
+        return Promise.reject("Frame is too dark to upload");
     }
     return fetch(canvas.toDataURL("image/png")) // convert data to array
     .then(res => res.arrayBuffer())
@@ -39,10 +39,15 @@ export function uploadFrame(videoId: number, elem: HTMLVideoElement): Promise<Fr
     .then(res => res.json())
 }
 
-export function uploadBounds(frameId: number, bounds: {x: number, y: number, width: number, height: number}): Promise<Bound> {
+export function addBounds(frameId: number, bounds: {x: number, y: number, width: number, height: number}): Promise<Bound> {
     return fetch(`/app/contribute/bounds?frame=${frameId}`, {
         method: "POST",
-        body: JSON.stringify(bounds),
+        body: JSON.stringify({
+            x: Math.round(bounds.x),
+            y: Math.round(bounds.y),
+            width: Math.round(bounds.width),
+            height: Math.round(bounds.height),
+        }),
         headers: session,
     })
     .then(res => res.json())

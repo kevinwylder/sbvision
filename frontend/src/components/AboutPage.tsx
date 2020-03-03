@@ -35,7 +35,7 @@ export function AboutPage() {
             feedback, or even suggest tips to improve the chances of landing the trick.
         </p>
 
-        <h2> How I Can Help? </h2>
+        <h2> How to Help </h2>
 
         <p>
             We need to review skateboarding clips to collect a dataset for this to be possible. There are
@@ -43,25 +43,19 @@ export function AboutPage() {
         </p>
 
         <ol>
-            <li>Bounding Boxes: A box is drawn around a skateboard in a video frame</li>
-            <li>Rotation Match: The orientation of the skateboard is found using a mouse</li>
-            <li>Data Verification: Each bounding box and orientation is reviewed for quality</li>
+            <li>Bounding Boxes: Pause any <Link to="/videos"> video </Link>to draw a box around skateboards. </li>
+            <li>Rotation Match: Head over to <Link to="/rotations"> the rotation matcher </Link> to mark the rotation of the skateboard </li>
+            <li>Data Verification: (Coming Soon!) Each bounding box and orientation needs to be reviewed for quality </li>
         </ol>
 
         <p>
             You can also help us out by providing suggestions, and submitting bug reports on <a href="https://github.com/kevinwylder/sbvision/issues">github</a>
         </p>
 
-        <h2> Where does the Source Material come from? </h2>
-
-        <p>
-
-        </p>
-
         <h2> Can I Use The Dataset? </h2>
 
         <p>
-            The data is publicly available, check out our documentation on how to ex
+            Yes! Please do! The data is publicly available, check out <Link to="/api-docs"> our documentation </Link> on how to get the dataset. We're also working on a python package to wrap the http api and download local datasets
         </p>
 
     </div>
