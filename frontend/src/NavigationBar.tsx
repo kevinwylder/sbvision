@@ -7,9 +7,9 @@ import {
 } from 'react-router-dom';
 
 import './style.css';
-import { VideoDisplay } from './components/video/VideoManager';
+import { VideoDisplay } from './components/VideoManager';
 import { Listing } from './components/list/Listing';
-import { RotationMatcher } from './components/rotation/RotationMatcher';
+import { RotationMatcher } from './components/RotationMatcher';
 import { RotatingSkateboard } from './components/RotatingSkateboard';
 import { ApiDocs } from './components/docs/ApiDocs';
 import { AboutPage } from './components/AboutPage';

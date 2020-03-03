@@ -22,6 +22,7 @@ export class VideoWrapper {
         this.video.style.width = "1";
         this.video.style.height = "1";
         this.video.controls = true;
+        this.video.setAttribute("playsinline", "");
         this.video.loop = true;
         document.body.appendChild(this.video);
 

@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { useParams } from 'react-router-dom';
 
-import "./video.css";
-import { VideoWrapper } from '../../renderer/videowrapper';
+import { VideoWrapper } from '../renderer/videowrapper';
 
 export function VideoDisplay() {
 
@@ -105,6 +104,8 @@ export function VideoDisplay() {
             ref={canvas}
             style={{ 
                 height,
+                objectFit: "contain",
+                width: "100%",
              }}
             width={videoWidth}
             height={videoHeight}
