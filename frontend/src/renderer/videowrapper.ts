@@ -124,6 +124,7 @@ export class VideoWrapper {
                 return;
             }
         }
+        console.log("Click outside box");
         this.box.reset();
         this.video.play();
     }

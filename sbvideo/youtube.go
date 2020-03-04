@@ -83,11 +83,6 @@ func (info *YoutubeDl) Update(video *sbvision.Video) {
 	video.Type = sbvision.YoutubeVideo
 	video.Format = "video/mp4"
 
-	expireMatcher := regexp.MustCompile(`expire=(\d+)`)
-	expires := expireMatcher.FindStringSubmatch(video.URL)
-	unix, _ := strconv.ParseInt(expires[1], 10, 64)
-	video.LinkExp = time.Unix(unix, 0)
-
 	var largestFormat int64
 	for _, format := range info.Formats {
 		if format.Filesize < largestFormat {
@@ -96,6 +91,16 @@ func (info *YoutubeDl) Update(video *sbvision.Video) {
 		largestFormat = format.Filesize
 		video.URL = format.URL
 	}
+
+	expireMatcher := regexp.MustCompile(`expire=(\d+)`)
+	expires := expireMatcher.FindStringSubmatch(video.URL)
+	if len(expires) == 0 {
+		video.LinkExp = time.Now()
+	} else {
+		unix, _ := strconv.ParseInt(expires[1], 10, 64)
+		video.LinkExp = time.Unix(unix, 0)
+	}
+
 }
 
 // GetThumbnail downloads the thumbnail for the video

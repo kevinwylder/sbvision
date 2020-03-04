@@ -137,7 +137,7 @@ export function ApiDocs() {
         </div>
     </div>
 
-    <h1> Footnote on Quaternions </h1>
+    <h2> Footnote on Quaternions </h2>
 
     <div>
         This project uses quaternions to describe skateboard orientations because they have a uniform covering of the rotation space (meaning the norm of their difference is a good error function), and the web application does not suffer from Gimble Lock. 

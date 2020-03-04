@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 
 export function AboutPage() {
     return <div className="about-page">
-        <h2> About the Skateboard Visision Project </h2>
+        <h2> About the Skateboard Vision Project </h2>
         <p>
             3D Pose Estimation is a well studied field of Modern Image Processing. Using revolutionary 
             Neural Network technology and a dataset painstakingly collected on thousands of images, it 
