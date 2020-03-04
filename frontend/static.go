@@ -50,6 +50,8 @@ func (f *frontend) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		r.URL.Path = "/"
 	case "/dataset":
 		r.URL.Path = "/"
+	case "/api-docs":
+		r.URL.Path = "/"
 	}
 	f.files.ServeHTTP(w, r)
 }

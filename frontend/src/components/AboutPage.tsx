@@ -16,8 +16,8 @@ export function AboutPage() {
         <p>
             The Skateboard Vision Project hopes to extend this pose estimation process to the world of
             flip tricks. Using a similar technique, we are trying to detect the <b> Position </b> and
-            <b> Orientation </b> of skateboards, given an image and a wireframe model. To get a better
-            understanding of what this means, check out our <Link to="/dataset"> Dataset Visualization </Link>.
+            <b> Orientation </b> of skateboards, given an image and a wireframe model. {/*To get a better
+            understanding of what this means, check out our <Link to="/dataset"> Dataset Visualization </Link>. */}
         </p>
 
         <h2> Applications for the Skateboard Visison Project </h2>
@@ -52,10 +52,10 @@ export function AboutPage() {
             You can also help us out by providing suggestions, and submitting bug reports on <a href="https://github.com/kevinwylder/sbvision/issues">github</a>
         </p>
 
-        <h2> Can I Use The Dataset? </h2>
+        <h2> Like this dataset? You can have it! </h2>
 
         <p>
-            Yes! Please do! The data is publicly available, check out <Link to="/api-docs"> our documentation </Link> on how to get the dataset. We're also working on a python package to wrap the http api and download local datasets
+            The data is publicly available, check out <Link to="/api-docs"> our documentation </Link> on how to get the dataset. We're also working on a python package to wrap the http api and download local datasets.
         </p>
 
     </div>

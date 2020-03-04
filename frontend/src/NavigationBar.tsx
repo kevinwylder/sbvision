@@ -23,22 +23,22 @@ export function NavigationBar() {
             <Link to="/videos" className="nav-bar-tab"><div>Videos</div></Link>
             <Link to="/api-docs" className="nav-bar-tab"><div>API</div></Link>
         </div>
-            <Switch>
-                <Route exact path="/" >
-                    <AboutPage />
-                </Route>
-                <Route path="/video/:id">
-                    <VideoDisplay />
-                </Route>
-                <Route exact path="/videos">
-                    <Listing /> 
-                </Route>
-                <Route exact path="/rotations">
-                    <RotationMatcher/>
-                </Route>
-                <Route exact path="/api-docs">
-                    <ApiDocs/>
-                </Route>
-            </Switch>
-        </Router>
+        <Switch>
+            <Route exact path="/" >
+                <AboutPage />
+            </Route>
+            <Route path="/video/:id">
+                <VideoDisplay />
+            </Route>
+            <Route exact path="/videos">
+                <Listing /> 
+            </Route>
+            <Route exact path="/rotations">
+                <RotationMatcher/>
+            </Route>
+            <Route exact path="/api-docs">
+                <ApiDocs/>
+            </Route>
+        </Switch>
+    </Router>
 }

@@ -11,16 +11,16 @@ import (
 	"github.com/kevinwylder/sbvision/cmd"
 	"github.com/kevinwylder/sbvision/database"
 	"github.com/kevinwylder/sbvision/frontend"
+	"github.com/kevinwylder/sbvision/sbvideo"
 	"github.com/kevinwylder/sbvision/session"
-	"github.com/kevinwylder/sbvision/youtube"
 )
 
 type serverContext struct {
 	session  sbvision.SessionManager
 	assets   sbvision.KeyValueStore
-	youtube  sbvision.VideoHandler
 	frontend http.Handler
 	db       *database.SBDatabase
+	proxy    *sbvideo.Proxy
 }
 
 func main() {
@@ -44,6 +44,7 @@ func main() {
 	server := &serverContext{
 		db:      db,
 		session: session,
+		proxy:   sbvideo.NewVideoProxy(db),
 	}
 
 	if _, exists := os.LookupEnv("FRONTEND_DIR"); !exists {
@@ -60,8 +61,7 @@ func main() {
 	}
 	server.assets = assets
 
-	server.youtube = youtube.NewYoutubeHandler(db, server.assets)
-
 	fmt.Println("Starting server")
-	log.Fatal(http.ListenAndServe(os.Getenv("PORT"), server))
+	err = http.ListenAndServe(os.Getenv("PORT"), server)
+	fmt.Println(err)
 }

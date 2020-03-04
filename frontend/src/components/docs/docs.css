@@ -1,0 +1,49 @@
+.docs {
+    margin: 20px;
+}
+
+.docs h2 {
+    font-weight: 300;
+}
+
+.docs h3 {
+    font-weight: 100;
+}
+
+.highlight {
+    color: red;
+}
+
+.code {
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.docs-endpoint {
+    margin-top: 28px;
+    margin-bottom: 14px;
+    border-top: 1px solid black;
+}
+
+.docs-endpoint .fields {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: 0fr 1fr;
+    grid-gap: 15px;
+}
+
+.docs-endpoint .fields .key {
+    display: flex;
+}
+
+.docs-endpoint .fields .key span {
+    text-align: center;
+    font-weight: bold;
+}
+
+.example {
+    background-color: #eee;
+    font-family: monospace;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 4px;
+}

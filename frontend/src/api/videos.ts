@@ -4,6 +4,7 @@ export interface Video {
     type: number
     format: string
     duration: number
+    src: string
     clips: number
 }
 

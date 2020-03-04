@@ -26,7 +26,7 @@ func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ctx.handleVideoThumbnail(w, r)
 
 	case "/app/video/stream":
-		ctx.handleVideoStream(w, r)
+		ctx.proxy.ServeHTTP(w, r)
 
 	case "/app/contribute/frame":
 		ctx.handleAddFrame(w, r)

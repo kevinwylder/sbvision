@@ -1,37 +1,34 @@
 package sbvision
 
 import (
-	"net/http"
 	"time"
 )
 
 // Video is a generic video source
 type Video struct {
-	ID        int64  `json:"id"`
-	Title     string `json:"title"`
-	Format    string `json:"format"`
-	Type      int64  `json:"type"`
-	Duration  int64  `json:"duration"`
-	ClipCount int64  `json:"clips"`
+	ID        int64     `json:"id"`
+	Title     string    `json:"title"`
+	Format    string    `json:"format"`
+	Type      VideoType `json:"type"`
+	Duration  int64     `json:"duration"`
+	ClipCount int64     `json:"clips"`
+	URL       string    `json:"-"`
+	OriginURL string    `json:"-"`
+	LinkExp   time.Time `json:"-"`
 }
 
-// VideoHandler is able to acquire videos
-type VideoHandler interface {
-	// discovery phase creates a video for the given URL and stores it in the database
-	HandleDiscover(url string) (*Video, error)
-	// the streaming phase gets part of the video for the HTML5 video tag
-	HandleStream(http.ResponseWriter, *http.Request)
-}
+// VideoType describes what the subclass of the video abstraction is
+type VideoType int64
 
 const (
-	// YoutubeVideo is a video type that is streamed from youtube proxied through the server
-	YoutubeVideo int64 = 1
+	// YoutubeVideo type means that this video has a record in the youtube_videos table
+	YoutubeVideo VideoType = 1
+	// RedditVideo type means that this video has a record in the reddit_videos table
+	RedditVideo VideoType = 2
 )
 
-// YoutubeVideoInfo is the database information on a youtube video
-type YoutubeVideoInfo struct {
-	VideoID   int64
-	YoutubeID string
-	MirrorURL string
-	MirrorExp time.Time
+// VideoSource is an interface that wraps both reddit and youtube
+type VideoSource interface {
+	Update(*Video)
+	GetThumbnail(Key, KeyValueStore) error
 }

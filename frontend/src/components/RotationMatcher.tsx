@@ -23,7 +23,7 @@ export function RotationMatcher() {
     let [ boundIdx, setBoundIdx ] = React.useState(0)
     let [ hasFrames, setHasFrames ] = React.useState(true);
     React.useEffect(() => {
-        if (!frame || boundIdx >= frame.bounds.length) {
+        if (!frame || boundIdx >= ((frame.bounds == null) ? 0 : frame.bounds.length)) {
             frameManager.nextFrame()
             .then(frame => {
                 if (frame) {
@@ -50,7 +50,7 @@ export function RotationMatcher() {
     let [ quaternion, setQuaternion ] = React.useState<Quaternion>([0, Math.SQRT1_2, Math.SQRT1_2, 0]);
     let canvas = React.createRef<HTMLCanvasElement>()
     React.useEffect(() => {
-        if (!canvas.current || !image || !frame || frame.bounds.length <= boundIdx) return;
+        if (!canvas.current || !image || !frame || frame.bounds == null || frame.bounds.length <= boundIdx) return;
         let ctx = canvas.current.getContext("2d");
         if (!ctx) return;
         let { x, y, width, height } = frame.bounds[boundIdx];
@@ -80,7 +80,7 @@ export function RotationMatcher() {
 
 
     const handleClick = () => {
-        if (!frame) return;
+        if (!frame || frame.bounds == null) return;
         let [ r, i, j, k ] = quaternion;
         frameManager.addRotation(frame.bounds[boundIdx].id, {r, i, j, k})
         .then(() => {

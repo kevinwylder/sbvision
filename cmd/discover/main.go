@@ -1,25 +1,29 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
+
+	"github.com/kevinwylder/sbvision"
 
 	"github.com/kevinwylder/sbvision/cmd"
 	"github.com/kevinwylder/sbvision/database"
-	"github.com/kevinwylder/sbvision/youtube"
-
-	"github.com/kevinwylder/sbvision"
+	"github.com/kevinwylder/sbvision/sbvideo"
 )
 
 func main() {
-
-	flags := flag.NewFlagSet("discover", flag.ExitOnError)
-	url := flags.String("url", "", "A URL to discover videos on")
-	if err := flags.Parse(os.Args); err != nil {
-		flags.PrintDefaults()
+	if len(os.Args) < 2 {
+		log.Fatal("USAGE: discover [url]")
+	}
+	discover, err := url.Parse(os.Args[1])
+	if err != nil {
 		log.Fatal(err)
+	}
+
+	video := &sbvision.Video{
+		OriginURL: os.Args[1],
 	}
 
 	db, err := database.ConnectToDatabase(os.Getenv("DB_CREDS"))
@@ -32,20 +36,36 @@ func main() {
 		defer os.RemoveAll(tmpdir)
 	}
 
-	// Route to index a video
-	var video sbvision.VideoDiscoverRequest
-	video.Type = 1
-	video.URL = *url
+	fmt.Println("Getting info")
+	var info sbvision.VideoSource
 
-	youtube := youtube.NewYoutubeHandler(db, assets)
-
-	// Only youtube is supported at this time, here is the "polymorphic dispatch"
-	v, err := youtube.HandleDiscover(&video)
-	if err != nil {
-		log.Fatal("YoutubeHandler download error ", err.Error())
-		return
+	switch discover.Host {
+	case "www.youtube.com":
+		info, err = sbvideo.GetYoutubeDl(video.OriginURL)
+	case "www.reddit.com":
+		info, err = sbvideo.GetRedditPost(video.OriginURL)
+	default:
+		log.Fatal("Cannot discover videos at", discover.Host)
 	}
 
-	fmt.Println("Successfully found", v)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	info.Update(video)
+
+	fmt.Println("Adding video to db")
+	err = db.AddVideo(video)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Getting thumbnail")
+	err = info.GetThumbnail(video.Thumbnail(), assets)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("success")
 
 }

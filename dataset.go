@@ -10,7 +10,7 @@ type FramePage struct {
 // Frame is a frame of a video
 type Frame struct {
 	ID      int64   `json:"id"`
-	VideoID int64   `json:"video"`
+	VideoID int64   `json:"-"`
 	Time    int64   `json:"time"`
 	Bounds  []Bound `json:"bounds"`
 }
@@ -18,7 +18,7 @@ type Frame struct {
 // Bound is an area on a frame
 type Bound struct {
 	ID        int64      `json:"id"`
-	FrameID   int64      `json:"frameId"`
+	FrameID   int64      `json:"-"`
 	Width     int64      `json:"width"`
 	Height    int64      `json:"height"`
 	X         int64      `json:"x"`
@@ -28,8 +28,8 @@ type Bound struct {
 
 // Rotation is the angle that a user has voted for a bound
 type Rotation struct {
-	BoundID int64   `json:"boundId"`
-	ID      int64   `json:"id"`
+	BoundID int64   `json:"-"`
+	ID      int64   `json:"-"`
 	R       float64 `json:"r"`
 	I       float64 `json:"i"`
 	J       float64 `json:"j"`

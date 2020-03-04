@@ -3,22 +3,19 @@ import { session } from "./session";
 export interface Frame {
     id: number
     time: number
-    bounds: Bound[]
+    bounds: Bound[]|null
 }
 
 export interface Bound {
     id: number
-    frameId: number
     x: number
     y: number
     width: number
     height: number
-    rotations: Rotation[]
+    rotations: Rotation[]|null
 }
 
 export interface Rotation {
-    boundId: number
-    id: number
     r: number
     i: number
     j: number

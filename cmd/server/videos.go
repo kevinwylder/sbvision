@@ -9,16 +9,6 @@ import (
 	"github.com/kevinwylder/sbvision"
 )
 
-func (ctx *serverContext) handleVideoStream(w http.ResponseWriter, r *http.Request) {
-	switch r.Form.Get("type") {
-	case "1":
-		ctx.youtube.HandleStream(w, r)
-
-	default:
-		http.Error(w, "Unsupported video type", 400)
-	}
-}
-
 func (ctx *serverContext) handleVideoPage(w http.ResponseWriter, r *http.Request) {
 	var videos []sbvision.Video
 	var total int64

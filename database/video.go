@@ -3,9 +3,25 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/kevinwylder/sbvision"
 )
+
+func (sb *SBDatabase) prepareUpdateVideo() (err error) {
+	sb.updateVideo, err = sb.db.Prepare(`
+UPDATE videos
+SET url = ?, link_expires = FROM_UNIXTIME(?)
+WHERE id = ?;
+	`)
+	return
+}
+
+// UpdateVideo updates the url and expiration in the database for this video
+func (sb *SBDatabase) UpdateVideo(video *sbvision.Video) error {
+	_, err := sb.updateVideo.Exec(video.URL, video.LinkExp.Unix(), video.ID)
+	return err
+}
 
 func (sb *SBDatabase) prepareGetVideoCount() (err error) {
 	sb.getVideoCount, err = sb.db.Prepare(` SELECT COUNT(*) FROM videos `)
@@ -25,14 +41,23 @@ func (sb *SBDatabase) GetVideoCount() (int64, error) {
 
 func (sb *SBDatabase) prepareAddVideo() (err error) {
 	sb.addVideo, err = sb.db.Prepare(`
-INSERT INTO videos (title, type, format, duration) VALUES ( ?, ?, ?, ? );
+INSERT INTO videos (title, type, format, duration, url, source_url, link_expires) VALUES ( ?, ?, ?, ?, ?, ?, FROM_UNIXTIME(?) );
 	`)
 	return
 }
 
 // AddVideo adds the video to the database
 func (sb *SBDatabase) AddVideo(video *sbvision.Video) error {
-	result, err := sb.addVideo.Exec(video.Title, video.Type, video.Format, video.Duration)
+	result, err := sb.addVideo.Exec(
+		video.Title,
+		video.Type,
+		video.Format,
+		video.Duration,
+		video.URL,
+		video.OriginURL,
+		video.LinkExp.Unix(),
+	)
+
 	if err != nil {
 		return fmt.Errorf("\n\tError adding video: %s", err.Error())
 	}
@@ -52,6 +77,9 @@ SELECT
 	videos.type,
 	videos.format,
 	videos.duration,
+	videos.url,
+	videos.source_url,
+	UNIX_TIMESTAMP(videos.link_expires),
 	COUNT(*),
 	MAX(bounds.id)
 FROM videos
@@ -85,6 +113,9 @@ SELECT
 	videos.type,
 	videos.format,
 	videos.duration,
+	videos.url,
+	videos.source_url,
+	UNIX_TIMESTAMP(videos.link_expires),
 	COUNT(*),
 	MAX(bounds.id)
 FROM videos
@@ -118,7 +149,7 @@ func (sb *SBDatabase) GetVideos(offset, count int64) ([]sbvision.Video, error) {
 
 func parseVideoRow(src scannable, dst *sbvision.Video) error {
 	var clipCount int64
-	var clipFound sql.NullInt64
+	var clipFound, expireTimestamp sql.NullInt64
 
 	err := src.Scan(
 		&dst.ID,
@@ -126,11 +157,21 @@ func parseVideoRow(src scannable, dst *sbvision.Video) error {
 		&dst.Type,
 		&dst.Format,
 		&dst.Duration,
+		&dst.URL,
+		&dst.OriginURL,
+		&expireTimestamp,
 		&clipCount,
 		&clipFound,
 	)
+
 	if err != nil {
 		return err
+	}
+
+	if expireTimestamp.Valid {
+		dst.LinkExp = time.Unix(expireTimestamp.Int64, 0)
+	} else {
+		dst.LinkExp = time.Now().AddDate(1, 0, 0)
 	}
 
 	if !clipFound.Valid {

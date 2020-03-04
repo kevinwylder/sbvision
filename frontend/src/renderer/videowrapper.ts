@@ -63,7 +63,7 @@ export class VideoWrapper {
         getVideoById(videoID)
         .then(videoInfo => {
             var source = document.createElement('source');
-            source.src = `/app/video/stream?type=1&id=${videoInfo.id}`;
+            source.src = `/app/video/stream?id=${videoInfo.id}`;
             source.type = videoInfo.format;
             this.video.appendChild(source);
             this.video.load();
