@@ -1,1 +1,0 @@
-ALTER TABLE `bounds` ADD COLUMN `reject` INT(11) NULL DEFAULT NULL AFTER `height`;

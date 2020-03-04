@@ -1,4 +1,3 @@
-
 CREATE TABLE `sessions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `start` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
