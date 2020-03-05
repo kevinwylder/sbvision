@@ -1,6 +1,7 @@
 package amazon
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -39,47 +40,30 @@ func NewS3BucketManager(bucket string, cache sbvision.KeyValueStore) (*S3Bucket,
 
 // PutAsset puts the given data in the bucket
 func (sb *S3Bucket) PutAsset(key sbvision.Key, data io.Reader) error {
-	if sb.cache == nil {
-		// upload the file
-		_, err := sb.uploader.Upload(&s3manager.UploadInput{
-			Body:   data,
-			Bucket: sb.bucket,
-			Key:    aws.String(string(key)),
-		})
+	if sb.cache != nil {
+		err := sb.cache.PutAsset(key, data)
 		if err != nil {
-			return fmt.Errorf("\n\tCould not upload asset to s3 bucket without cache: %s", err)
+			return fmt.Errorf("\n\tCould not store asset in cache: %s", err)
 		}
-		return nil
+		data, err = sb.cache.GetAsset(key)
+		if err != nil {
+			return fmt.Errorf("\n\tCould not read cached asset: %s", err)
+		}
+	}
+	var buffer bytes.Buffer
+	_, err := io.Copy(&buffer, data)
+	if err != nil {
+		return fmt.Errorf("\n\tCould not read data into buffer: %s", err)
+	}
+	_, err = sb.uploader.Upload(&s3manager.UploadInput{
+		Body:   &buffer,
+		Bucket: sb.bucket,
+		Key:    aws.String(string(key)),
+	})
+	if err != nil {
+		return fmt.Errorf("\n\tCould not upload asset to s3 bucket: %s", err)
 	}
 
-	pr, pw := io.Pipe()
-	tee := io.TeeReader(data, pw)
-	sync := make(chan error)
-	defer close(sync)
-
-	go func() {
-		_, err := sb.uploader.Upload(&s3manager.UploadInput{
-			Body:   tee,
-			Bucket: sb.bucket,
-			Key:    aws.String(string(key)),
-		})
-		sync <- err
-	}()
-
-	go func() {
-		defer pr.Close()
-		err := sb.cache.PutAsset(key, pr)
-		sync <- err
-	}()
-
-	err1 := <-sync
-	err2 := <-sync
-	if err1 != nil {
-		return fmt.Errorf("\n\tCould not upload image to s3 with cache: %s", err1)
-	}
-	if err2 != nil {
-		return fmt.Errorf("\n\tCould not put asset in cache: %s", err2)
-	}
 	return nil
 }
 
