@@ -67,7 +67,7 @@ func ensureCropped(assets sbvision.KeyValueStore, frame *sbvision.Frame) {
 			}
 			err = assets.PutAsset(frame.Bounds[i].Key(), &buffer)
 			if err != nil {
-				fmt.Println("Error storing cropped bound", frame.Bounds[i].ID)
+				fmt.Println("Error storing cropped bound", frame.Bounds[i].ID, err)
 			}
 			fmt.Println("Cropped ", frame.Bounds[i].ID)
 		} else {

@@ -6,7 +6,7 @@ export class VisualizationManager {
     private ws: WebSocket;
 
     constructor(onImage: (elem: HTMLImageElement, rot: Quaternion) => void) {
-        this.ws = new WebSocket(`ws://${window.location.host}/app/visualization`);
+        this.ws = new WebSocket(`ws${window.location.protocol == "https:" ? "s" : ""}://${window.location.host}/app/visualization`);
         this.ws.onmessage = (ev: MessageEvent) => {
             let img = new Image();
             let { s, r } = JSON.parse(ev.data)
