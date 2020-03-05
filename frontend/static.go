@@ -48,7 +48,7 @@ func (f *frontend) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		r.URL.Path = "/"
 	case "/rotations":
 		r.URL.Path = "/"
-	case "/dataset":
+	case "/explore":
 		r.URL.Path = "/"
 	case "/api-docs":
 		r.URL.Path = "/"

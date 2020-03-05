@@ -77,7 +77,7 @@ export function renderSkateboard(ctx: CanvasRenderingContext2D, rotation: Quater
     let dx = (box[0] + box[2]) / 2;
     let dy = (box[1] + box[3]) / 2;
 
-    if (zDepth > 0) {
+    if (zDepth >= 0) {
         trucks.forEach(([p0, p1, p2]) => {
             let [ x0, y0 ] = perspective[p0];
             let [ x1, y1 ] = perspective[p1];

@@ -26,6 +26,8 @@ type SBDatabase struct {
 	dataWhereVideo      *sql.Stmt
 	dataWhereFrame      *sql.Stmt
 	dataWhereNoRotation *sql.Stmt
+	dataWhereHasBound   *sql.Stmt
+	dataNearestRotation *sql.Stmt
 
 	// in video.go
 	addVideo      *sql.Stmt
@@ -63,6 +65,8 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 		sb.prepareDataWhereVideo,
 		sb.prepareDataWhereFrame,
 		sb.prepareDataWhereNoRotation,
+		sb.prepareDataNearestRotation,
+		sb.prepareDataWhereHasBound,
 
 		// in video.go
 		sb.prepareAddVideo,

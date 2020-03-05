@@ -36,11 +36,12 @@ func (ctx *serverContext) handleAPIImage(w http.ResponseWriter, r *http.Request)
 	})
 
 	if dispatchErr != nil {
-		http.Error(w, err.Error(), 400)
+		http.Error(w, dispatchErr.Error(), 400)
 		return
 	}
 
 	if err != nil {
+		fmt.Println(err)
 		http.Error(w, "image not found", 404)
 		return
 	}

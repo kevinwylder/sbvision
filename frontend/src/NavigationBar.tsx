@@ -13,6 +13,7 @@ import { RotationMatcher } from './components/RotationMatcher';
 import { RotatingSkateboard } from './components/RotatingSkateboard';
 import { ApiDocs } from './components/docs/ApiDocs';
 import { AboutPage } from './components/AboutPage';
+import { DataVisualization } from './components/Visualization';
 
 export function NavigationBar() {
 
@@ -21,6 +22,7 @@ export function NavigationBar() {
             <Link to="/" className="nav-bar-tab"><RotatingSkateboard/></Link>
             <Link to="/" className="nav-bar-tab"><div>About</div></Link>
             <Link to="/videos" className="nav-bar-tab"><div>Videos</div></Link>
+            <Link to="/explore" className="nav-bar-tab"><div>Explore</div></Link>
             <Link to="/api-docs" className="nav-bar-tab"><div>API</div></Link>
         </div>
         <Switch>
@@ -35,6 +37,9 @@ export function NavigationBar() {
             </Route>
             <Route exact path="/rotations">
                 <RotationMatcher/>
+            </Route>
+            <Route exact path="/explore">
+                <DataVisualization />
             </Route>
             <Route exact path="/api-docs">
                 <ApiDocs/>

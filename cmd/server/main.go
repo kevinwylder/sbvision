@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/gorilla/websocket"
+
 	"github.com/kevinwylder/sbvision"
 	"github.com/kevinwylder/sbvision/cmd"
 	"github.com/kevinwylder/sbvision/database"
@@ -19,6 +21,7 @@ type serverContext struct {
 	session  sbvision.SessionManager
 	assets   sbvision.KeyValueStore
 	frontend http.Handler
+	upgrader websocket.Upgrader
 	db       *database.SBDatabase
 	proxy    *sbvideo.Proxy
 }
@@ -45,6 +48,10 @@ func main() {
 		db:      db,
 		session: session,
 		proxy:   sbvideo.NewVideoProxy(db),
+		upgrader: websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 20 * 1024,
+		},
 	}
 
 	if _, exists := os.LookupEnv("FRONTEND_DIR"); !exists {

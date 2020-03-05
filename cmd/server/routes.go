@@ -37,6 +37,9 @@ func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/app/contribute/rotation":
 		ctx.handleAddRotation(w, r)
 
+	case "/app/visualization":
+		ctx.handleVisualizationSocket(w, r)
+
 	case "/api/frames":
 		ctx.handleGetFrames(w, r)
 

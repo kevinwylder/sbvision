@@ -63,6 +63,50 @@ func (sb *SBDatabase) DataWhereNoRotation(offset int64) (*sbvision.FramePage, er
 	return result, nil
 }
 
+func (sb *SBDatabase) prepareDataWhereHasBound() (err error) {
+	sb.dataWhereHasBound, err = sb.prepareFramesWhere("bounds.id IS NOT NULL")
+	return
+}
+
+// DataWhereHasBound returns a page of all the data where a bound is known
+func (sb *SBDatabase) DataWhereHasBound(offset int64) (*sbvision.FramePage, error) {
+	results, err := sb.dataWhereHasBound.Query(offset)
+	if err != nil {
+		return nil, err
+	}
+	return parseFrames(results, offset)
+}
+
+func (sb *SBDatabase) prepareDataNearestRotation() (err error) {
+	sb.dataNearestRotation, err = sb.db.Prepare(fmt.Sprintf(`
+SELECT %s
+FROM %s
+WHERE rotations.id IS NOT NULL
+ORDER BY 
+	(rotations.r - ?) * (rotations.r - ?) +
+	(rotations.i - ?) * (rotations.i - ?) +
+	(rotations.j - ?) * (rotations.j - ?) +
+	(rotations.k - ?) * (rotations.k - ?) ASC
+LIMIT ?`, frameColumns, frameJoin))
+	return
+}
+
+// DataNearestRotation looks up the closest rotation to the given quaternion
+func (sb *SBDatabase) DataNearestRotation(rot *sbvision.Rotation, count int64) (*sbvision.Frame, error) {
+	result, err := sb.dataNearestRotation.Query(rot.R, rot.R, rot.I, rot.I, rot.J, rot.J, rot.K, rot.K, count)
+	if err != nil {
+		return nil, fmt.Errorf("\n\tError looking up nearby rotation: %s", err.Error())
+	}
+	page, err := parseFrames(result, 0)
+	if err != nil {
+		return nil, fmt.Errorf("\n\tError parsing frame")
+	}
+	if len(page.Frames) == 0 {
+		return nil, fmt.Errorf("\n\tNo data found")
+	}
+	return &page.Frames[0], nil
+}
+
 /**
  * Below are the "generic" parts of extracting a video frame.
 **/
@@ -138,6 +182,7 @@ func parseFrames(results *sql.Rows, offset int64) (*sbvision.FramePage, error) {
 				ID:      frameID,
 				VideoID: videoID,
 				Time:    frameTime,
+				Bounds:  make([]sbvision.Bound, 0),
 			})
 			frame = &page.Frames[len(page.Frames)-1]
 			resultCount += frameCount
@@ -152,12 +197,13 @@ func parseFrames(results *sql.Rows, offset int64) (*sbvision.FramePage, error) {
 		}
 		if bound == nil || bound.ID != boundID.Int64 {
 			frame.Bounds = append(frame.Bounds, sbvision.Bound{
-				ID:      boundID.Int64,
-				FrameID: frame.ID,
-				Height:  height.Int64,
-				Width:   width.Int64,
-				X:       x.Int64,
-				Y:       y.Int64,
+				ID:        boundID.Int64,
+				FrameID:   frame.ID,
+				Height:    height.Int64,
+				Width:     width.Int64,
+				X:         x.Int64,
+				Y:         y.Int64,
+				Rotations: make([]sbvision.Rotation, 0),
 			})
 			bound = &frame.Bounds[len(frame.Bounds)-1]
 		}

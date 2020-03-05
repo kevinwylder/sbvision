@@ -60,7 +60,7 @@ export function ApiDocs() {
                     if <span className="code">isTruncated</span>, use this value as the <span className="code">offset</span> for the next request to this video endpoint
                 </div>
                 <div className="key"><span>frames <i>(array)</i></span></div> <div>
-                    an array of objects in time sorted order. Each object represents a frame that has been uploaded for this video. When the video is paused by the application player, the frame is uploaded and tagged. Duplicate frames are avoided by hashing the image data. If no frames are available, this field is <span className="code">null</span>
+                    an array of objects in time sorted order. Each object represents a frame that has been uploaded for this video. When the video is paused by the application player, the frame is uploaded and tagged. Duplicate frames are avoided by hashing the image data.
                 
                 <div className="fields">
                     <div className="key"><span>id</span></div>
@@ -73,7 +73,7 @@ export function ApiDocs() {
                     </div>
                     <div className="key"><span>bounds <i>(array)</i></span></div>
                     <div>
-                        All the bounding boxes that have been identified in this frame. Boxes are described in terms of pixels relative to the image resource.
+                        All the bounding boxes that have been identified in this frame. Boxes are described in terms of pixels relative to the upper left corner of the image resource.
 
                     <div className="fields">
                         <div className="key"><span>id</span></div>
@@ -82,23 +82,23 @@ export function ApiDocs() {
                         </div>
                         <div className="key"><span>x</span></div>
                         <div>
-                            The x offset from the upper left corner this bounding box starts at, in pixels
+                            The number of pixels from the left side of the image to the left side of the bounding box.
                         </div>
                         <div className="key"><span>y</span></div>
                         <div>
-                            The y offset from the upper left corner this bounding box starts at, in pixels
+                            The number of pixels from the top of the image to the top of the bounding box.
                         </div>
                         <div className="key"><span>width</span></div>
                         <div>
-                            The width in pixels of the bounding box
+                            The width of the bounding box in pixels 
                         </div>
                         <div className="key"><span>height</span></div>
                         <div>
-                            The height in pixels of the bounding box
+                            The height of the bounding box in pixels
                         </div>
                         <div className="key"><span>rotations <i>(array)</i></span></div>
                         <div>
-                            All the skateboard orientations that have been provided for this bounding box, represented as a <a href="https://eater.net/quaternions">unit quaternion</a>. If no rotations have been provided, this array is null.
+                            All the skateboard orientations that have been provided for this bounding box, represented as a <a href="https://eater.net/quaternions">unit quaternion</a>. It is possible that many orientations have been provided for the same bounding box.
                             
                             <div className="fields">
                                 <div className="key"><span>r</span></div>
