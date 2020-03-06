@@ -27,12 +27,12 @@ export function DataVisualization() {
                           (imgQ[1] - quaternion[1]) * (imgQ[1] - quaternion[1]) + 
                           (imgQ[2] - quaternion[2]) * (imgQ[2] - quaternion[2]) + 
                           (imgQ[3] - quaternion[3]) * (imgQ[3] - quaternion[3]);
-                console.log(err);
                 ctx.fillStyle = `rgba(255, 255, 255, ${err})`;
                 ctx.fillRect(0, 0, 500, 500);
             }
             renderSkateboard(ctx, quaternion, [500, 0, 1000, 500]);
         }
+        draw();
 
         let websocket = new VisualizationManager((image, imageQ) => {
             img = image;
@@ -55,7 +55,35 @@ export function DataVisualization() {
         canvas.current.onwheel = (e: WheelEvent) => { 
             e.preventDefault();
             quaternion = tiltSkateboard(e.deltaY, quaternion);
+            websocket.setRotation(quaternion);
             draw();
+        }
+
+        canvas.current.ontouchstart = () => {
+            lastPosition = [0, 0];
+        }
+        canvas.current.ontouchmove = (e: TouchEvent) => {
+            e.preventDefault();
+            if (e.touches.length > 1) {
+                let y = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                if (lastPosition[1] != 0) {
+                    let dy = y - lastPosition[1];
+                    quaternion = tiltSkateboard(dy, quaternion);
+                    websocket.setRotation(quaternion);
+                    draw();
+                } 
+                lastPosition = [0, y];
+            } else {
+                if (lastPosition[1] != 0) {
+                    let [ x, y ] = lastPosition;
+                    let dx = e.touches[0].clientX - x;
+                    let dy = e.touches[0].clientY - y;
+                    quaternion = rotateSkateboard(dx, dy, quaternion);
+                    websocket.setRotation(quaternion);
+                    draw();
+                }
+                lastPosition = [e.touches[0].clientX, e.touches[0].clientY];
+            }
         }
 
         return () => {

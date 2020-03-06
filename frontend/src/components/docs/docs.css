@@ -41,6 +41,7 @@
 }
 
 .example {
+    overflow: scroll;
     background-color: #eee;
     font-family: monospace;
     padding-top: 10px;

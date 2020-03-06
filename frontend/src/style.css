@@ -3,6 +3,10 @@ body{
     padding: 0px;
 }
 
+a {
+    color:purple,
+}
+
 .nav-bar {
     display: flex;
     height: 50px;

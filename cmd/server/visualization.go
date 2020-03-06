@@ -30,7 +30,6 @@ func (ctx *serverContext) handleVisualizationSocket(w http.ResponseWriter, r *ht
 	conn, err := ctx.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println(err)
-		http.Error(w, "Error starting websocket", 400)
 		return
 	}
 

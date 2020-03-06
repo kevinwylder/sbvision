@@ -110,5 +110,6 @@ export function VideoDisplay() {
             width={videoWidth}
             height={videoHeight}
         />
+        {videoWidth == 0 ? "Loading..." : ""}
     </div> 
 }

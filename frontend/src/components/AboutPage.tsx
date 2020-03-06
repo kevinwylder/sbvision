@@ -6,26 +6,17 @@ export function AboutPage() {
     return <div className="about-page">
         <h2> About the Skateboard Vision Project </h2>
         <p>
-            3D Pose Estimation is a well studied field of Modern Image Processing. Using revolutionary 
-            Neural Network technology and a dataset painstakingly collected on thousands of images, it 
-            is now possible to very quickly detect physical wireframes of humans in images. 
-            <a href="https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5"> Here </a> 
-            is a good example of what this looks like.
-        </p>
-
-        <p>
-            The Skateboard Vision Project hopes to extend this pose estimation process to the world of
-            flip tricks. Using a similar technique, we are trying to detect the <b> Position </b> and
-            <b> Orientation </b> of skateboards, given an image and a wireframe model. {/*To get a better
-            understanding of what this means, check out our <Link to="/dataset"> Dataset Visualization </Link>. */}
+            We are collecting a dataset of skateboard images to train a classifier to identify skateboards, and what orientation
+            they are in. Once the model is robust at detecting skateboards in images, we will move to video clips to identify
+            tricks. To really understand the dataset, check out our <Link to="/explore">dataset visualization</Link>.
         </p>
 
         <h2> Applications for the Skateboard Visison Project </h2>
 
         <p> 
-            This project will be able to extract physical descriptions from real videos. With enough data,
-            we can enable a skateboard version of <a href="https://www.youtube.com/watch?v=o_DhNqHazKY"> this project </a>
-            to create a hyper-realistic skateboarding video game.
+            This project, if successful, will be able to extract physical context out of skateboarding videos. With the help of
+            <a href="https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5"> Pose Estimation </a>
+            we could enable a skateboard version of <a href="https://www.youtube.com/watch?v=o_DhNqHazKY"> this project </a> to create a hyper-realistic skateboarding video game.
         </p>
 
         <p>
@@ -45,7 +36,8 @@ export function AboutPage() {
         <ol>
             <li>Bounding Boxes: Pause any <Link to="/videos"> video </Link>to draw a box around skateboards. </li>
             <li>Rotation Match: Head over to <Link to="/rotations"> the rotation matcher </Link> to mark the rotation of the skateboard </li>
-            <li>Data Verification: (Coming Soon!) Each bounding box and orientation needs to be reviewed for quality </li>
+            <li>Data Verification: Each bounding box and orientation needs to be reviewed for quality. Soon, we'll add 
+                functionality to delete bad frames from the dataset with the visualizor </li>
         </ol>
 
         <p>
@@ -55,7 +47,8 @@ export function AboutPage() {
         <h2> Like this dataset? You can have it! </h2>
 
         <p>
-            The data is publicly available, check out <Link to="/api-docs"> our documentation </Link> on how to get the dataset. We're also working on a python package to wrap the http api and download local datasets.
+            The data is publicly available, check out <Link to="/api-docs"> our documentation </Link> on how to get the dataset. 
+            We're also working on a python package to wrap the http api and download local datasets.
         </p>
 
     </div>
