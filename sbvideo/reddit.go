@@ -9,8 +9,19 @@ import (
 	"github.com/kevinwylder/sbvision"
 )
 
+type redditPage struct {
+	Kind string `json:"kind"`
+	Data struct {
+		Children []struct {
+			Kind string     `json:"kind"`
+			Data RedditPost `json:"data"`
+		} `json:"children"`
+	} `json:"data"`
+}
+
 // RedditPost are reddit comments as they come from the website
 type RedditPost struct {
+	ID        string `json:"id"`
 	Title     string `json:"title"`
 	Thumbnail string `json:"thumbnail"`
 	Media     struct {
@@ -22,32 +33,51 @@ type RedditPost struct {
 	} `json:"media"`
 }
 
+// GetRedditSkateboardingPosts reads the frontpage of /r/skateboarding and returns all the comments links
+func GetRedditSkateboardingPosts() ([]string, error) {
+	req, err := http.NewRequest("GET", "https://www.reddit.com/r/skateboarding.json", nil)
+	if err != nil {
+		return nil, fmt.Errorf("\n\tError opening /r/skateboarding: %s", err)
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x86; rv:59.0) Gecko/20100101 Firefox/59.0")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("\n\tError doing /r/skateboarding request: %s", err)
+	}
+
+	defer res.Body.Close()
+	decoder := json.NewDecoder(res.Body)
+	var page redditPage
+	err = decoder.Decode(&page)
+	if err != nil {
+		return nil, fmt.Errorf("\n\tError decoding body: %s", err)
+	}
+
+	var posts []string
+	for i := range page.Data.Children {
+		url := fmt.Sprintf("https://www.reddit.com/r/skateboarding/comments/%s.json", page.Data.Children[i].Data.ID)
+		posts = append([]string{url}, posts...)
+	}
+	return posts, nil
+}
+
 // GetRedditPost reads the url of the reddit comments and gets the json info
 func GetRedditPost(url string) (*RedditPost, error) {
-	client := &http.Client{}
-
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tError opening reddit web request: %s", err.Error())
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0")
 
-	res, err := client.Do(req)
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tError doing reddit web request: %s", err.Error())
 	}
 
 	defer res.Body.Close()
 	decoder := json.NewDecoder(res.Body)
-	var data []struct {
-		Kind string `json:"kind"`
-		Data struct {
-			Children []struct {
-				Kind string     `json:"kind"`
-				Data RedditPost `json:"data"`
-			} `json:"children"`
-		} `json:"data"`
-	}
+	var data []redditPage
 	err = decoder.Decode(&data)
 
 	// check for formatting
@@ -68,7 +98,6 @@ func GetRedditPost(url string) (*RedditPost, error) {
 
 // Update puts data from reddit comments into the video
 func (info *RedditPost) Update(video *sbvision.Video) {
-	fmt.Println(info, video)
 	video.Title = info.Title
 	video.Duration = info.Media.RedditVideo.Duration
 	video.Type = sbvision.RedditVideo
