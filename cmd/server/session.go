@@ -13,6 +13,10 @@ func (ctx *serverContext) handleNewSession(w http.ResponseWriter, r *http.Reques
 		Time: time.Now().Unix(),
 		IP:   r.RemoteAddr,
 	}
+	forwarded := r.Header.Get("Forwarded")
+	if forwarded != "" {
+		session.IP = forwarded
+	}
 	err := ctx.db.AddSession(session)
 	if err != nil {
 		fmt.Println("Create session error: ", err.Error())
