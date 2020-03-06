@@ -115,7 +115,7 @@ export class VideoWrapper {
             if (frame && this.box) {
                 addBounds(frame.id, this.box.bounds())
                 .then(() => { 
-                    this.video.currentTime += 0.1; 
+                    this.forward();
                 })
                 .catch(err => {
                     console.log(err);
@@ -127,6 +127,16 @@ export class VideoWrapper {
         console.log("Click outside box");
         this.box.reset();
         this.video.play();
+    }
+
+    public forward() {
+        this.video.currentTime += 0.02; 
+        this.render();
+    }
+
+    public back() {
+        this.video.currentTime -= 0.02; 
+        this.render();
     }
     
     public setContext(ctx: CanvasRenderingContext2D) {

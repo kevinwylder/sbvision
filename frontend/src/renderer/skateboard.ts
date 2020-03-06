@@ -71,6 +71,7 @@ export function renderSkateboard(ctx: CanvasRenderingContext2D, rotation: Quater
     let perspective = translated.map(([x, y, z]) => [-1.5 * x / z, -1.5 * y / z, z]);
 
     ctx.lineCap = "round";
+    ctx.lineWidth = 2;
     ctx.fillStyle = "white";
     ctx.fillRect(box[0], box[1], box[2]-box[0], box[3]-box[1]);
     let scale = 2 * Math.abs(box[0] - box[2]) / 2;
@@ -82,7 +83,7 @@ export function renderSkateboard(ctx: CanvasRenderingContext2D, rotation: Quater
             let [ x0, y0 ] = perspective[p0];
             let [ x1, y1 ] = perspective[p1];
             let [ x2, y2 ] = perspective[p2];
-            ctx.fillStyle = "#C9C9C9";
+            ctx.fillStyle = "#c9c9c9";
             ctx.beginPath();
             ctx.moveTo(x0 * scale + dx, y0 * scale + dy);
             ctx.lineTo(x1 * scale + dx, y1 * scale + dy);

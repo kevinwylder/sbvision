@@ -140,7 +140,7 @@ func (sb *SBDatabase) prepareFramesWhere(where string) (*sql.Stmt, error) {
 SELECT %s
 FROM %s
 WHERE %s
-ORDER BY frames.video_id, frames.time, bounds.id, rotations.id
+ORDER BY frames.video_id DESC, frames.time, bounds.id, rotations.id
 LIMIT ?, %d`, frameColumns, frameJoin, where, parseLimit))
 }
 

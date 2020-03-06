@@ -28,6 +28,22 @@ export function VideoDisplay() {
             setVideoHeight(height);
             setRenderer(renderer);
         });
+
+        const keyListener = function(e: KeyboardEvent) {
+            console.log(e.key);
+            switch (e.key) {
+                case "ArrowLeft":
+                    renderer.back();
+                    break;
+                case "ArrowRight":
+                    renderer.forward();
+                    break;
+            }
+        }
+
+        window.addEventListener("keydown", keyListener);
+
+        return () => window.removeEventListener("keydown", keyListener);
     }, [])
 
     // route events to the renderer

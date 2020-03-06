@@ -8,7 +8,7 @@ import { ListPagenation } from './ListPagenation';
 
 export function Listing() {
 
-    const PAGE_SIZE = 7;
+    const PAGE_SIZE = 15;
     // fields for video select
     let [ offset, setOffset ] = React.useState(0);
     let [ maxVideos, setMaxVideos ] = React.useState(0);
