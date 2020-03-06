@@ -31,7 +31,7 @@ export function ListRow({video}: VideoRowProps) {
                 <div className="list-row-stats">
                     <div> { timeString(video.duration) } </div> 
                     <div> Analyzed {video.clips} frames </div>
-                    <div> Youtube </div>
+                    <div> { video.type == 1 ? "Youtube" : "/r/skateboarding" } </div>
                 </div>
             </div>
         </div>
