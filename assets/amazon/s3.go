@@ -25,7 +25,7 @@ type S3Bucket struct {
 // NewS3BucketManager is a constructor for the image bucket
 func NewS3BucketManager(bucket string, cache sbvision.KeyValueStore) (*S3Bucket, error) {
 	session, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-west-2"),
+		Region: aws.String("us-west-1"),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCould not create AWS session: %s", err.Error())
