@@ -1,9 +1,9 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import { NavigationBar } from "./NavigationBar";
+import { Main } from "./NavigationBar";
 
 ReactDOM.render(
-    <NavigationBar />,
+    <Main />,
     document.getElementById("root")
 )

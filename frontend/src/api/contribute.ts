@@ -52,3 +52,12 @@ export function addBounds(frameId: number, bounds: {x: number, y: number, width:
     })
     .then(res => res.json())
 }
+
+export function addRotation(boundId: number, quaternion: {r: number, i: number, j: number, k: number}) {
+    return fetch(`/app/contribute/rotation?bound=${boundId}`,{
+        method: "POST",
+        headers: session,
+        body: JSON.stringify(quaternion),
+    })
+    .then(res => res.json())
+}

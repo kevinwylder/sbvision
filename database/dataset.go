@@ -8,7 +8,7 @@ import (
 )
 
 func (sb *SBDatabase) prepareDataWhereVideo() (err error) {
-	sb.dataWhereVideo, err = sb.prepareFramesWhere("frames.video_id = ?")
+	sb.dataWhereVideo, err = sb.prepareFramesWhere("frames.video_id = ? AND bounds.id IS NOT NULL")
 	return
 }
 
@@ -33,48 +33,16 @@ frames.image_hash = ? AND ABS(frames.time - ?) < 1000 AND frames.video_id = ?
 }
 
 // DataWhereFrame looks up a frame and returns annotated data about it
-func (sb *SBDatabase) DataWhereFrame(hash int64, time int64, videoID int64, offset int64) (*sbvision.FramePage, error) {
-	rows, err := sb.dataWhereFrame.Query(hash, time, videoID, offset)
+func (sb *SBDatabase) DataWhereFrame(hash int64, time int64, videoID int64) (*sbvision.FramePage, error) {
+	rows, err := sb.dataWhereFrame.Query(hash, time, videoID, 0)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tError querying SBDatabase.DataWhereFrame: %s", err.Error())
 	}
-	result, err := parseFrames(rows, offset)
+	result, err := parseFrames(rows, 0)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tError parsing SBDatabase.DataWhereFrame: %s", err.Error())
 	}
 	return result, nil
-}
-
-func (sb *SBDatabase) prepareDataWhereNoRotation() (err error) {
-	sb.dataWhereNoRotation, err = sb.prepareFramesWhere("rotations.id IS NULL AND bounds.id IS NOT NULL")
-	return
-}
-
-// DataWhereNoRotation gets a page of data where there is a bound but no rotation
-func (sb *SBDatabase) DataWhereNoRotation(offset int64) (*sbvision.FramePage, error) {
-	rows, err := sb.dataWhereNoRotation.Query(offset)
-	if err != nil {
-		return nil, fmt.Errorf("\n\tError querying SBDatabase.DataWhereNoRotation: %s", err.Error())
-	}
-	result, err := parseFrames(rows, offset)
-	if err != nil {
-		return nil, fmt.Errorf("\n\tError parsing SBDatabase.DataWhereNoRotation: %s", err.Error())
-	}
-	return result, nil
-}
-
-func (sb *SBDatabase) prepareDataWhereHasBound() (err error) {
-	sb.dataWhereHasBound, err = sb.prepareFramesWhere("bounds.id IS NOT NULL")
-	return
-}
-
-// DataWhereHasBound returns a page of all the data where a bound is known
-func (sb *SBDatabase) DataWhereHasBound(offset int64) (*sbvision.FramePage, error) {
-	results, err := sb.dataWhereHasBound.Query(offset)
-	if err != nil {
-		return nil, err
-	}
-	return parseFrames(results, offset)
 }
 
 func (sb *SBDatabase) prepareDataNearestRotation() (err error) {
@@ -146,7 +114,9 @@ LIMIT ?, %d`, frameColumns, frameJoin, where, parseLimit))
 
 func parseFrames(results *sql.Rows, offset int64) (*sbvision.FramePage, error) {
 
-	page := &sbvision.FramePage{}
+	page := &sbvision.FramePage{
+		Frames: make([]sbvision.Frame, 0),
+	}
 
 	var frameID, frameTime, videoID int64
 	var boundID, x, y, width, height, rotationID sql.NullInt64

@@ -46,10 +46,13 @@ func (ctx *serverContext) handleAddFrame(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	framePage, err := ctx.db.DataWhereFrame(hash, frameNum, video, 0)
+	framePage, err := ctx.db.DataWhereFrame(hash, frameNum, video)
+	if err != nil {
+		fmt.Println(err)
+	}
 	var frame *sbvision.Frame
 
-	if framePage == nil {
+	if framePage != nil && len(framePage.Frames) > 0 {
 		frame = &framePage.Frames[0]
 	} else {
 		frame = &sbvision.Frame{

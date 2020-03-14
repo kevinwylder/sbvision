@@ -6,7 +6,6 @@ const ANNOTATION_FRAME_RATE = 1000 / 24;
 /**
  * FrameList keeps a list of frames sorted by time 
  */
-
 export class FrameList {
 
     private index = 0;
@@ -17,7 +16,6 @@ export class FrameList {
             frames = [];
         }
         this.frames = frames.sort((a, b) => a.time - b.time);
-        console.log(this.frames);
     }
 
     // getFrame looks up the object stored for the time
@@ -78,20 +76,25 @@ export class FrameList {
         }
     }
 
-    public drawFrame(ctx: CanvasRenderingContext2D, time: number) {
-        let annotation = this.getFrame(time);
-        if (annotation?.bounds) {
-            annotation.bounds.forEach((bound) => {
-                if (bound.rotations?.length) {
-                    let { r, i, j, k } = bound.rotations[0];
-                    renderSkateboard(ctx, [r, i, j, k], [bound.x, bound.y, bound.x + bound.width, bound.y + bound.height]);
-                } else {
-                    ctx.lineWidth = 4;
-                    ctx.strokeStyle = "#FF0000";
-                    ctx.strokeRect(bound.x, bound.y, bound.width, bound.height);
-                }
-            });
+    public next(): Frame|undefined {
+        if (this.index < this.frames.length) {
+            return this.frames[++this.index];
         }
+        return undefined;
+    }
+
+    public curr(): Frame|undefined {
+        if (this.index < this.frames.length) {
+            return this.frames[this.index];
+        }
+        return undefined;
+    }
+
+    public prev(): Frame|undefined {
+        if (this.index > 0) {
+            return this.frames[--this.index];
+        }
+        return undefined;
     }
 
 }

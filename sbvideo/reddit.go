@@ -108,9 +108,13 @@ func (info *RedditPost) Update(video *sbvision.Video) {
 
 // GetThumbnail gets the thumbnail from this posts and stores it in the key value store
 func (info *RedditPost) GetThumbnail(key sbvision.Key, assets sbvision.KeyValueStore) error {
-	res, err := http.Get(info.Thumbnail)
+	req, err := http.NewRequest("GET", info.Thumbnail, nil)
 	if err != nil {
 		return fmt.Errorf("\n\tError getting thumbnail: %s", err.Error())
+	}
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("\n\tError doing thumbnail request: %s", err.Error())
 	}
 	defer res.Body.Close()
 	err = assets.PutAsset(key, res.Body)

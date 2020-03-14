@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/kevinwylder/sbvision"
 	"github.com/kevinwylder/sbvision/database"
@@ -20,8 +19,10 @@ type visualizor struct {
 	assets  sbvision.KeyValueStore
 	db      *database.SBDatabase
 
+	rchan    chan struct{}
 	rmutex   sync.Mutex
 	rotation sbvision.Rotation
+	fchan    chan struct{}
 	fmutex   sync.Mutex
 	frame    sbvision.Frame
 }
@@ -53,11 +54,17 @@ func (v *visualizor) read() {
 		v.rmutex.Lock()
 		err := v.conn.ReadJSON(&v.rotation)
 		v.rmutex.Unlock()
+
 		if err != nil {
-			fmt.Println("websocket read", err)
 			v.stopped = true
 			v.conn.Close()
 			return
+		}
+
+		if v.rchan != nil {
+			t := v.rchan
+			v.rchan = nil
+			close(t)
 		}
 	}
 }
@@ -74,7 +81,8 @@ func (v *visualizor) lookup() {
 			v.rotation.J == lookup.J &&
 			v.rotation.K == lookup.K {
 
-			time.Sleep(time.Millisecond * 50)
+			v.rchan = make(chan struct{})
+			<-v.rchan
 			continue
 		}
 
@@ -84,7 +92,6 @@ func (v *visualizor) lookup() {
 
 		frame, err := v.db.DataNearestRotation(&lookup, 1)
 		if err != nil {
-			fmt.Println("websocket lookup", err)
 			v.stopped = true
 			v.conn.Close()
 			return
@@ -93,6 +100,12 @@ func (v *visualizor) lookup() {
 		v.fmutex.Lock()
 		v.frame = *frame
 		v.fmutex.Unlock()
+
+		if v.fchan != nil {
+			t := v.fchan
+			v.fchan = nil
+			close(t)
+		}
 	}
 }
 
@@ -105,7 +118,8 @@ func (v *visualizor) write() {
 		}
 
 		if id == v.frame.ID {
-			time.Sleep(time.Millisecond * 50)
+			v.fchan = make(chan struct{})
+			<-v.fchan
 			continue
 		}
 
@@ -126,7 +140,6 @@ func (v *visualizor) write() {
 		}
 		writer, err := v.conn.NextWriter(websocket.TextMessage)
 		if err != nil {
-			fmt.Println("websocket write", err)
 			v.stopped = true
 			v.conn.Close()
 			return

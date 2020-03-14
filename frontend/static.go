@@ -42,11 +42,11 @@ func (f *frontend) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// catch and redirect all routing requests
 	if strings.HasPrefix(r.URL.Path, "/video/") {
 		r.URL.Path = "/"
+	} else if strings.HasPrefix(r.URL.Path, "/rotation/") {
+		r.URL.Path = "/"
 	}
 	switch r.URL.Path {
 	case "/videos":
-		r.URL.Path = "/"
-	case "/rotations":
 		r.URL.Path = "/"
 	case "/explore":
 		r.URL.Path = "/"

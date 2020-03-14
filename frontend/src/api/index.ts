@@ -1,4 +1,4 @@
 export { Video, getVideos, getVideoById } from './videos'
-export { addBounds, uploadFrame } from './contribute';
-export { getFrames, RotationlessFramePager, Frame } from './frame';
+export { addBounds, uploadFrame, addRotation } from './contribute';
+export { getFrames, Frame, Bound } from './frame';
 export { VisualizationManager } from './visualization';

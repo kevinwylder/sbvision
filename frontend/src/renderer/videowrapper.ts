@@ -2,6 +2,7 @@ import { getFrames, getVideoById, addBounds, uploadFrame } from "../api";
 import { Box } from "./boxmanager";
 import { FrameList } from "./framesearch";
 import { PlayButton } from "./playbutton";
+import { renderSkateboard } from "./skateboard";
 
 export class VideoWrapper {
 
@@ -166,7 +167,18 @@ export class VideoWrapper {
         if (!this.ctx || !this.frames) {
             return;
         }
-        this.frames.drawFrame(this.ctx, this.video.currentTime * 1000);
+        let annotation = this.frames.getFrame(this.video.currentTime * 1000);
+        for (let i = 0; annotation?.bounds && i < annotation.bounds.length; i++) {
+            let bound = annotation.bounds[i];
+            if (bound.rotations?.length) {
+                let { r, i, j, k } = bound.rotations[0];
+                renderSkateboard(this.ctx, [r, i, j, k], [bound.x, bound.y, bound.x + bound.width, bound.y + bound.height]);
+            } else {
+                this.ctx.lineWidth = 4;
+                this.ctx.strokeStyle = "#FF0000";
+                this.ctx.strokeRect(bound.x, bound.y, bound.width, bound.height);
+            }
+        }
     }
 
 }

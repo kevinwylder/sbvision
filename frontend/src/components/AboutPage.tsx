@@ -35,7 +35,7 @@ export function AboutPage() {
 
         <ol>
             <li>Bounding Boxes: Pause any <Link to="/videos"> video </Link>to draw a box around skateboards. </li>
-            <li>Rotation Match: Head over to <Link to="/rotations"> the rotation matcher </Link> to mark the rotation of the skateboard </li>
+            <li>Rotation Match: Click on the rotating skateboard in the upper left corner of the screen to enter the frame review screen. There, you can add rotations to existing bounds </li>
             <li>Data Verification: Each bounding box and orientation needs to be reviewed for quality. Soon, we'll add 
                 functionality to delete bad frames from the dataset with the visualizor </li>
         </ol>

@@ -1,4 +1,7 @@
 
+/**
+ * This class manages the box being drawn over the video
+ */
 export class Box {
 
     private helpTextInterval = 0;

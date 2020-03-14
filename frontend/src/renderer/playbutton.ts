@@ -1,7 +1,5 @@
 
 // PlayButton just draws a play button an thumbnail for the image before the video has played
-// it handles a race condition on loading the thumbnail vs starting to play the video
-// it also removes canvas rendering calls from the VideoWrapper
 export class PlayButton {
     
     private hasPlayed = false;
