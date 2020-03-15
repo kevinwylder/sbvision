@@ -1,5 +1,5 @@
 import { session } from './session';
-import { Bound, Frame } from './frame';
+import { Bound, Frame, Rotation } from './frame';
 
 export function uploadFrame(videoId: number, elem: HTMLVideoElement): Promise<Frame> {
     let frame = Math.ceil(elem.currentTime * 1000);
@@ -53,11 +53,11 @@ export function addBounds(frameId: number, bounds: {x: number, y: number, width:
     .then(res => res.json())
 }
 
-export function addRotation(boundId: number, quaternion: {r: number, i: number, j: number, k: number}) {
+export function addRotation(boundId: number, {r, i, j, k}: Rotation): Promise<Rotation[]> {
     return fetch(`/app/contribute/rotation?bound=${boundId}`,{
         method: "POST",
         headers: session,
-        body: JSON.stringify(quaternion),
+        body: JSON.stringify([{r, i, j, k}, {r: -k, i: j, j: -i, k: r}]),
     })
     .then(res => res.json())
 }

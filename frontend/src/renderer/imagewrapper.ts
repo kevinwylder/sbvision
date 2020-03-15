@@ -1,6 +1,7 @@
-import { getFrames, Frame, addRotation } from "../api";
+import { getFrames, Frame, addRotation, toRot, toQuat } from "../api";
 import { FrameList } from './framesearch';
-import { renderSkateboard, Quaternion, rotateSkateboard, tiltSkateboard } from "./skateboard";
+import { renderSkateboard, Quaternion, rotateSkateboard, tiltSkateboard, qMultiply } from "./skateboard";
+import { Rotation } from "../api/frame";
 
 export interface ImageWrapperFrameStatus {
     frame: Frame|undefined
@@ -36,7 +37,6 @@ export class ImageWrapper {
         this.rotation = [ 1, 0, 0, 0 ];
         getFrames(videoID)
         .then(frames => {
-            console.log(frames);
             this.frames = new FrameList(frames);
             let frame = this.frames.curr();
             if (frame) {

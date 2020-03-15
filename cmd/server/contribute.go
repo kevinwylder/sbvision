@@ -179,22 +179,23 @@ func (ctx *serverContext) handleAddRotation(w http.ResponseWriter, r *http.Reque
 
 	decoder := json.NewDecoder(r.Body)
 
-	rotation := &sbvision.Rotation{}
-	err = decoder.Decode(rotation)
+	var rotations []sbvision.Rotation
+	err = decoder.Decode(&rotations)
 	if err != nil {
 		http.Error(w, "Could not parse json", 400)
 		return
 	}
-	rotation.BoundID = boundID[0]
-
-	err = ctx.db.AddRotation(rotation, session)
-	if err != nil {
-		fmt.Println("Error storing rotation", err)
-		http.Error(w, "Error storing rotation", 500)
-		return
+	for _, rotation := range rotations {
+		rotation.BoundID = boundID[0]
+		err = ctx.db.AddRotation(&rotation, session)
+		if err != nil {
+			fmt.Println("Error storing rotation", err)
+			http.Error(w, "Error storing rotation", 500)
+			return
+		}
 	}
 
-	data, err := json.Marshal(rotation)
+	data, err := json.Marshal(rotations)
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, "Could not marshal json", 500)
