@@ -53,11 +53,11 @@ export function addBounds(frameId: number, bounds: {x: number, y: number, width:
     .then(res => res.json())
 }
 
-export function addRotation(boundId: number, {r, i, j, k}: Rotation): Promise<Rotation[]> {
+export function addRotation(boundId: number, r: Rotation): Promise<Rotation[]> {
     return fetch(`/app/contribute/rotation?bound=${boundId}`,{
         method: "POST",
         headers: session,
-        body: JSON.stringify([{r, i, j, k}, {r: -k, i: j, j: -i, k: r}]),
+        body: JSON.stringify(r),
     })
     .then(res => res.json())
 }
