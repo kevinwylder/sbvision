@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Bound } from '../../api';
-import { renderSkateboard, Quaternion } from '../../renderer/skateboard';
+import { renderSkateboard, Quaternion } from '../../renderer';
 
 interface boundListProps {
     bounds: Bound[]
@@ -40,7 +40,7 @@ function BoundRow(props: boundRowProps) {
 
 function RotationList(props: { rotations: Quaternion[] }) {
     return <div className="verify-bound-rotations">
-            { props.rotations.map((r, i) => <StaticSkateboard rotation={r} key={i}/>)}
+            { props.rotations.map((r, i) => <><StaticSkateboard rotation={r} key={i}/></>)}
         </div>
 }
 

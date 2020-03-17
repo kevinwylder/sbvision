@@ -1,5 +1,4 @@
-import { Frame } from "../api";
-import { renderSkateboard } from "./skateboard";
+import { Frame } from "../../api";
 
 const ANNOTATION_FRAME_RATE = 1000 / 24;
 
@@ -74,27 +73,6 @@ export class FrameList {
         } else {
             this.frames.splice(idx + 1, 0, frame);
         }
-    }
-
-    public next(): Frame|undefined {
-        if (this.index < this.frames.length) {
-            return this.frames[++this.index];
-        }
-        return undefined;
-    }
-
-    public curr(): Frame|undefined {
-        if (this.index < this.frames.length) {
-            return this.frames[this.index];
-        }
-        return undefined;
-    }
-
-    public prev(): Frame|undefined {
-        if (this.index > 0) {
-            return this.frames[--this.index];
-        }
-        return undefined;
     }
 
 }

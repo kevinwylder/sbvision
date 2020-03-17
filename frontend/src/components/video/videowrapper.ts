@@ -1,8 +1,8 @@
-import { getFrames, getVideoById, addBounds, uploadFrame } from "../api";
+import { getFrames, getVideoById, addBounds, uploadFrame } from "../../api";
 import { Box } from "./boxmanager";
 import { FrameList } from "./framesearch";
 import { PlayButton } from "./playbutton";
-import { renderSkateboard } from "./skateboard";
+import { renderSkateboard } from "../../renderer";
 
 export class VideoWrapper {
 

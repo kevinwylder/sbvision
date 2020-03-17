@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { renderSkateboard, eToQ, qMultiply } from '../renderer/skateboard';
+import { eToQ, qMultiply } from '../renderer/quaternion';
+import { renderSkateboard } from '../renderer';
 
 export function RotatingSkateboard() {
 

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useParams } from 'react-router-dom';
 
-import { VideoWrapper } from '../renderer/videowrapper';
+import { VideoWrapper } from './videowrapper';
 
 export function VideoDisplay() {
 

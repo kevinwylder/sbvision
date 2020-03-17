@@ -2,7 +2,7 @@ import * as React from 'react';
 import './verify.css';
 
 import { useParams } from 'react-router-dom';
-import { ImageWrapperFrameStatus, ImageWrapper } from '../../renderer/imagewrapper';
+import { ImageWrapperFrameStatus, ImageWrapper } from './imagewrapper';
 import { BoundsList } from './BoundRow';
 
 export function RotationMatcher() {

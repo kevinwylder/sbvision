@@ -1,7 +1,5 @@
-import { getFrames, Frame, addRotation, toRot, toQuat } from "../api";
-import { FrameList } from './framesearch';
-import { renderSkateboard, Quaternion, rotateSkateboard, tiltSkateboard, qMultiply } from "./skateboard";
-import { Rotation } from "../api/frame";
+import { getFrames, Frame, addRotation } from "../../api";
+import { renderSkateboard, Quaternion, rotateSkateboard, tiltSkateboard } from "../../renderer";
 
 export interface ImageWrapperFrameStatus {
     frame: Frame|undefined
@@ -13,7 +11,8 @@ export interface ImageWrapperFrameStatus {
  */
 export class ImageWrapper {
 
-    private frames: FrameList|undefined;
+    private frames: Frame[] = [];
+    private idx: number = 0;
     private frame: Frame|undefined;
     private selectedBound: number = 0;
 
@@ -37,13 +36,8 @@ export class ImageWrapper {
         this.rotation = [ 1, 0, 0, 0 ];
         getFrames(videoID)
         .then(frames => {
-            this.frames = new FrameList(frames);
-            let frame = this.frames.curr();
-            if (frame) {
-                this.setFrame(frame);
-            } else {
-                this.draw();
-            }
+            this.frames = frames;
+            this.updateFrame();
         })
         .catch(err => console.log(err));
     }
@@ -63,67 +57,29 @@ export class ImageWrapper {
             return;
         }
         if (!this.selectedBound) {
-            // find nearest bound
+            // compute the position on the image from the css position
             let { clientX, clientY } = e;
             let { top, left, width } = this.canvas.getBoundingClientRect();
             let ratio = this.image.width / width;
             let px = (clientX - left) * ratio;
             let py = (clientY - top) * ratio;
-            let minDistance = Infinity;
-            let nearestBound = 0;
-            for (let {id, x, y, width, height, rotations} of this.frame.bounds) {
-                if (Math.abs(x - px) < minDistance) {
-                    nearestBound = id;
-                    minDistance = Math.abs(x - px);
-                }
-                if (Math.abs(x + width - px) < minDistance) {
-                    nearestBound = id;
-                    minDistance = Math.abs(x + width - px);
-                }
-                if (Math.abs(y - py) < minDistance) {
-                    nearestBound = id;
-                    minDistance = Math.abs(y - py);
-                }
-                if (Math.abs(y + height - py) < minDistance) {
-                    nearestBound = id;
-                    minDistance = Math.abs(y + height - py);
-                }
-            }
-            this.selectedBound = nearestBound;
-            this.onFrameUpdate({
-                frame: this.frame, 
-                selectedBound: this.selectedBound,
-            });
-            this.draw();
+            this.selectNearestBound(px, py);
             return;
         }
-        let rotation = {
-            r: this.rotation[0],
-            i: this.rotation[1],
-            j: this.rotation[2],
-            k: this.rotation[3],
-        };
-        addRotation(this.selectedBound, rotation)
-        .catch(err => console.log(err));
-        let nextBound = 0;
+
+        let rotation = { r: this.rotation[0], i: this.rotation[1], j: this.rotation[2], k: this.rotation[3] };
+
+        // push this rotation to the current bound
         for (let bound of this.frame.bounds) {
             if (bound.id == this.selectedBound) {
                 bound.rotations.push(rotation);
             }
-            if (bound.rotations.length == 0) {
-                nextBound = bound.id;
-            }
         }
-        if (nextBound == 0) {
-            this.next();
-        } else {
-            this.onFrameUpdate({
-                frame: this.frame,
-                selectedBound: nextBound,
-            })
-            this.selectedBound = nextBound;
-            this.draw();
-        }
+
+        addRotation(this.selectedBound, rotation)
+        .catch(err => console.log(err));
+
+        this.selectNextBound();
     }
 
     public remove() {
@@ -131,21 +87,13 @@ export class ImageWrapper {
     }
 
     public next() {
-        if (this.frames) {
-            let frame = this.frames.next();
-            if (frame) {
-                this.setFrame(frame);
-            }
-        }
+        this.idx ++;
+        this.updateFrame();
     }
 
     public prev() {
-        if (this.frames) {
-            let frame = this.frames.prev();
-            if (frame) {
-                this.setFrame(frame);
-            }
-        }
+        this.idx --;
+        this.updateFrame();
     }
 
     public setBound(boundID: number) {
@@ -157,17 +105,26 @@ export class ImageWrapper {
         })
     }
 
-    private setFrame(frame: Frame) {
-        this.frame = frame;
+    public destroy() {
+        this.image.remove();
+    }
+
+    private updateFrame() {
+        if (this.idx < 0 || this.idx >= this.frames.length) {
+            this.frame = undefined;
+            this.idx = 0;
+            this.draw();
+        } else {
+            this.frame = this.frames[this.idx];
+            this.image.src = `/api/image?frame=${this.frame.id}`;
+        }
         this.selectedBound = 0;
-        for (let bound of frame?.bounds || []) {
+        // pick the first rotationless
+        for (let bound of this.frame?.bounds || []) {
             if (bound.rotations.length == 0) {
                 this.selectedBound = bound.id;
                 break;
             }
-        }
-        if (frame) {
-            this.image.src = `/api/image?frame=${frame.id}`;
         }
         this.onFrameUpdate({
             frame: this.frame,
@@ -208,8 +165,44 @@ export class ImageWrapper {
         }
     }
 
-    public destroy() {
-        this.image.remove();
+
+    private selectNearestBound(px: number, py: number) {
+        if (!this.frame) {
+            return;
+        }
+        let minDistance = Infinity;
+        let nearestBound = 0;
+        for (let {id, x, y, width, height, rotations} of this.frame.bounds) {
+            if (Math.abs(x - px) < minDistance) {
+                nearestBound = id;
+                minDistance = Math.abs(x - px);
+            }
+            if (Math.abs(x + width - px) < minDistance) {
+                nearestBound = id;
+                minDistance = Math.abs(x + width - px);
+            }
+            if (Math.abs(y - py) < minDistance) {
+                nearestBound = id;
+                minDistance = Math.abs(y - py);
+            }
+            if (Math.abs(y + height - py) < minDistance) {
+                nearestBound = id;
+                minDistance = Math.abs(y + height - py);
+            }
+        }
+        this.setBound(nearestBound);
     }
 
+    private selectNextBound() {
+        if (!this.frame) {
+            return;
+        }
+        for (let bound of this.frame.bounds) {
+            if (bound.rotations.length == 0) {
+                this.setBound(bound.id);
+                return
+            }
+        }
+        this.next();
+    }
 }

@@ -1,4 +1,4 @@
-import { Quaternion } from "../renderer/skateboard";
+import { Quaternion } from "../renderer";
 
 export interface Frame {
     id: number
