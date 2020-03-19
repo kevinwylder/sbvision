@@ -82,7 +82,7 @@ func (sb *S3Bucket) GetAsset(key sbvision.Key) (io.ReadCloser, error) {
 	// download the file
 	file, err := ioutil.TempFile("", "")
 	if err != nil {
-		return nil, fmt.Errorf("\n\tError opening tmp file (%s) for s3 download: %s", file.Name(), err.Error())
+		return nil, fmt.Errorf("\n\tError opening tmp file for s3 download: %s", err.Error())
 	}
 
 	_, err = sb.downloader.Download(file, &s3.GetObjectInput{
