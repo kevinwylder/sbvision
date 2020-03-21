@@ -72,6 +72,10 @@ export class VideoWrapper {
         })
     }
 
+    public mobileClick() {
+        this.video.play();
+    }
+
     public grab(pos: [number, number]) {
         this.box?.grab(pos);
         this.render();

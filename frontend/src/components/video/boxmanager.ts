@@ -6,7 +6,6 @@ export class Box {
 
     private helpTextInterval = 0;
     private empty: boolean = true;
-    private dragStartTime: number = 0;
     private dragDistance: number = 0;
     private lastPosition: number[] = [0, 0];
     private grabbed: number[] = [];
@@ -98,7 +97,6 @@ export class Box {
     public grab([x, y]: [number, number]): boolean {
         this.dragging = true;
         this.lastCoordinates = this.coordinates;
-        this.dragStartTime = new Date().getTime();
         this.dragDistance = 0
         this.lastPosition = [x, y];
 
@@ -169,7 +167,7 @@ export class Box {
     public release(): [boolean, boolean, boolean] {
         this.dragging = false;
 
-        const wasTap = this.dragDistance < 5 && (new Date().getTime() - this.dragStartTime) < 200;
+        const wasTap = this.dragDistance < 5;
         let wasInside = false;
 
         let wasEmpty = this.empty;

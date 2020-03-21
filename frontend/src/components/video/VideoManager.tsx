@@ -85,19 +85,7 @@ export function VideoDisplay() {
             }
         }
         canvas.current.ontouchstart = (e) => {
-            if (renderer?.grab(convertCoordinates(e.targetTouches[0]))) {
-                e.preventDefault();
-            }
-        }
-        canvas.current.ontouchmove = (e) => {
-            if (renderer?.drag(convertCoordinates(e.targetTouches[0]))) {
-                e.preventDefault();
-            }
-        }
-        canvas.current.ontouchend = (e) => {
-            if (renderer?.up()) {
-                e.preventDefault();
-            }
+            renderer?.mobileClick();
         }
 
 
