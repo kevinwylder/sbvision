@@ -90,12 +90,16 @@ func (sb *S3Bucket) GetAsset(key sbvision.Key) (io.ReadCloser, error) {
 		Bucket: sb.bucket,
 	})
 	if err != nil {
+		file.Close()
 		os.Remove(file.Name())
 		return nil, fmt.Errorf("\n\tCould not download key (%s) from s3: %s", key, err.Error())
 	}
 
 	if sb.cache != nil {
-		defer os.Remove(file.Name())
+		defer func() {
+			file.Close()
+			os.Remove(file.Name())
+		}()
 		err := sb.cache.PutAsset(key, file)
 		if err != nil {
 			return nil, fmt.Errorf("\n\tDownloaded key (%s) from S3 lost by cache write: %s", key, err)

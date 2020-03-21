@@ -133,14 +133,15 @@ func (v *visualizor) write() {
 			fmt.Println("Asset error", err)
 			continue
 		}
-		defer reader.Close()
 
 		if v.stopped {
+			reader.Close()
 			return
 		}
 		writer, err := v.conn.NextWriter(websocket.TextMessage)
 		if err != nil {
 			v.stopped = true
+			reader.Close()
 			v.conn.Close()
 			return
 		}
@@ -149,6 +150,7 @@ func (v *visualizor) write() {
 		_, err = writer.Write([]byte(fmt.Sprintf(`{"r":[%f,%f,%f,%f],"s":"data:image/png;base64,`, r.R, r.I, r.J, r.K)))
 		if err != nil {
 			fmt.Println("Write err", err)
+			reader.Close()
 			writer.Close()
 			continue
 		}
@@ -156,6 +158,7 @@ func (v *visualizor) write() {
 		b64writer := base64.NewEncoder(base64.StdEncoding, writer)
 		_, err = io.Copy(b64writer, reader)
 		b64writer.Close()
+		reader.Close()
 		if err != nil {
 			fmt.Println("Write error", err)
 			writer.Close()
