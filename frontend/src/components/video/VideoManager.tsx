@@ -84,7 +84,11 @@ export function VideoDisplay() {
                 e.preventDefault();
             }
         }
+
         canvas.current.ontouchstart = (e) => {
+            e.preventDefault();
+        }
+        canvas.current.ontouchend = (e) => {
             renderer?.mobileClick();
         }
 
