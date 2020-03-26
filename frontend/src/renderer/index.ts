@@ -1,4 +1,3 @@
-export { Quaternion, rotateSkateboard, tiltSkateboard } from './quaternion';
 import { SkateboardRenderer } from './webgl';
 
 // setup the renderSkateboard to use '2d' ctx until 'webgl2' gl loads

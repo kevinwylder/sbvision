@@ -1,9 +1,5 @@
-export type Vector = [ number, number, number ];
-
-export type Quaternion = [ number, number, number, number ];
-
-export type EulerAngle = [ number, number, number, number ];
-
+import { Quaternion } from ".";
+import { EulerAngle, Vector } from ".";
 
 function qConjugate(a: Quaternion): Quaternion {
     return [a[0], -a[1], -a[2], -a[3]];

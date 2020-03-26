@@ -1,4 +1,4 @@
-import { Quaternion } from "../renderer";
+import { Quaternion } from "../math";
 
 export interface Frame {
     id: number
