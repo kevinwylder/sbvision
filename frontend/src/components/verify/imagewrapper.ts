@@ -1,5 +1,6 @@
 import { getFrames, Frame, addRotation } from "../../api";
-import { renderSkateboard, Quaternion, rotateSkateboard, tiltSkateboard } from "../../renderer";
+import { renderSkateboard } from "../../renderer";
+import { Quaternion, rotateSkateboard, tiltSkateboard } from '../../math';
 
 export interface ImageWrapperFrameStatus {
     frame: Frame|undefined

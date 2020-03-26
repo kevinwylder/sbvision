@@ -1,7 +1,8 @@
 import * as React from 'react';
 
 import { Bound } from '../../api';
-import { renderSkateboard, Quaternion } from '../../renderer';
+import { renderSkateboard } from '../../renderer';
+import { Quaternion } from '../../math';
 
 interface boundListProps {
     bounds: Bound[]

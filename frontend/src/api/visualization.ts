@@ -1,5 +1,5 @@
 import { Rotation } from "./frame";
-import { Quaternion } from "../renderer";
+import { Quaternion } from "../math";
 
 export class VisualizationManager {
 
