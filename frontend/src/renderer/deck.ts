@@ -143,21 +143,7 @@ function generatePerm({height, width, perimeterStepFactor, perimeterZNormalSize,
     return verts;
 }
 
-export function skateboardGeometry(gl: WebGL2RenderingContext): [WebGLBuffer, WebGLBuffer, number, WebGLBuffer, number] {
-    const sb: sbDeckParams = {
-        thickness: 0.021,
-        width: 1.9,
-        height: .5,
-        perimeterStepFactor: .02,
-        perimeterZNormalSize: .2,
-        tailEllipseExponent: 2.4,
-        tailLiftX: .6,
-        tailLiftFactor: .6,
-        tailStretchFactor: 1.4,
-        railTailTransition: bezier(1, 1, .17, 0),
-        railLiftFactor: .34,
-        railLiftX: .5,
-    };
+export function skateboardGeometry(gl: WebGL2RenderingContext, sb: sbDeckParams): [WebGLBuffer, WebGLBuffer, number, WebGLBuffer, number] {
     let d = skateboardTopology(sb);
     let p = skateboardPerimeter(sb);
     let [ deck, deckIndexes ] = generateDeck(sb, d, p);

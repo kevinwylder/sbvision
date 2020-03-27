@@ -8,4 +8,5 @@ try {
     renderSkateboard = (...params) => renderer.drawSkateboard(...params);
 } catch (e) {
     console.log(e);
+    console.log("Defaulting to 2d renderer");
 }

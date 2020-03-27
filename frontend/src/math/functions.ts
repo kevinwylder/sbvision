@@ -14,3 +14,13 @@ export function bezier(b0: number, b1: number, b2: number, b3: number): Graphabl
 export const rationalEase: Graphable111 = (x) => {
     return [ (1 / (x + 1) + x - 1), (-1 / ((x + 1) * (x + 1)) + 1) ];
 }
+
+export function exponentNorm(exponent: number): Graphable111 {
+    return (t) => {
+        let p = Math.pow(t, exponent);
+        return [
+            Math.pow( 1 - p, 1 / exponent),
+            Math.pow( 1 - p, 1 / exponent - 1) * Math.pow(t, exponent - 1),
+        ]
+    }
+}
