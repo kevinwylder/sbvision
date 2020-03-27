@@ -1,53 +1,65 @@
-import { Graphable111 } from "../math";
 
 interface sbWheelParams {
-    wheelRadius: Graphable111
+    wheelRadius: number
     wheelLength: number 
     wheelMeshRes: number
     wheelScale: number
+    wheelNormTaper: number
 }
 
-function wheelPoints({wheelRadius, wheelLength, wheelMeshRes, wheelScale} : sbWheelParams) {
+function wheelCap({wheelRadius, wheelMeshRes, wheelNormTaper} : sbWheelParams) {
+    let points: number[] = []
+    for (let side = -1; side <= 1; side += 2) {
+        points.push(
+            0, 0, 0,
+            0, side, 0
+        );
+        let r = wheelNormTaper;
+        let n = Math.sqrt(1 + r * r);
+        r /= -n;
+        for (let ti = 0; ti <= wheelMeshRes; ti++) {
+            let theta = ti * Math.PI * 2 / wheelMeshRes;
+            points.push(
+                wheelRadius * Math.cos(theta), 0,        wheelRadius * Math.sin(theta),
+                r * Math.cos(theta),           side / n, r * Math.sin(theta)
+            )
+        }
+    }
+    return points;
+}
+
+function wheelPoints({wheelRadius, wheelLength, wheelMeshRes, wheelNormTaper} : sbWheelParams) {
     let points: number[] = [];
     let indexes: number[] = [];
-    for (let yi = 0; yi <= wheelMeshRes; yi++) {
-        let y = (2 * yi / wheelMeshRes - 1);
-        for (let ti = 0; ti < wheelMeshRes; ti++) {
+    for (let yi = -1; yi <= 1; yi += 2) {
+        let dy = -wheelNormTaper;
+        let n = Math.sqrt(1 + dy * dy)
+        dy /= n * yi;
+        let y = yi * wheelLength;
+        for (let ti = 0; ti <= wheelMeshRes; ti++) {
             let theta = ti * Math.PI * 2 / wheelMeshRes;
-            let [ r, dr ] = wheelRadius(Math.abs(y));
-            if (Math.abs(dr) > 10) {
-                points.push(
-                    r * Math.cos(theta), wheelScale * y, r * Math.sin(theta),
-                    0,                   -Math.sign(y),   0
-                )
-            } else {
-                r *= wheelScale;
-                dr *= Math.sign(y);
-                let n = Math.sqrt(1 + dr * dr);
-                points.push(
-                    r * Math.cos(theta),  wheelScale * y, r * Math.sin(theta),
-                    -Math.cos(theta) / n, -dr / n,       -Math.sin(theta) / n,
-                )
-            }
-            if (yi) {
+            points.push(
+                wheelRadius * Math.cos(theta), y,      wheelRadius * Math.sin(theta),
+                -Math.cos(theta) / n,          dy / n, -Math.sin(theta) / n
+            )
+            if (yi == 1) {
                 indexes.push(
-                    yi * wheelMeshRes + ti, (yi - 1) * wheelMeshRes + ti
+                    ti, ti + wheelMeshRes + 1,
                 )
             }
         }
     }
-    console.log(points, indexes);
     return [ points, indexes ];
 }
 
-export function wheelGeometry(gl: WebGL2RenderingContext, params: sbWheelParams): [WebGLBuffer, WebGLBuffer, number] {
+export function wheelGeometry(gl: WebGL2RenderingContext, params: sbWheelParams): [WebGLBuffer, WebGLBuffer, number, WebGLBuffer, number] {
     let [ points, verts ] = wheelPoints(params);
 
-    let pointBuffer = gl.createBuffer();
-    if (!pointBuffer) {
+    let wheelPointBuffer = gl.createBuffer();
+    if (!wheelPointBuffer) {
         throw new Error("Could not create wheel point buffer");
     }
-    gl.bindBuffer(gl.ARRAY_BUFFER, pointBuffer);
+    gl.bindBuffer(gl.ARRAY_BUFFER, wheelPointBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
@@ -59,5 +71,14 @@ export function wheelGeometry(gl: WebGL2RenderingContext, params: sbWheelParams)
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(verts), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
-    return [pointBuffer, vertBuffer, verts.length]
+    let cap = wheelCap(params);
+    let wheelCapBuffer = gl.createBuffer();
+    if (!wheelCapBuffer) {
+        throw new Error("Could not create wheel cap buffer");
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, wheelCapBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cap), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+    return [wheelPointBuffer, vertBuffer, verts.length, wheelCapBuffer, cap.length / 12];
 }

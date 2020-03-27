@@ -24,10 +24,11 @@ export class SkateboardRenderer {
         railLiftX: .5,
         wheelX: .52,
         wheelZ: -.12,
+        wheelNormTaper: .2,
         wheelScale: 0.05,
-        wheelLength: .14,
-        wheelRadius: exponentNorm(8),
-        wheelMeshRes: 24,
+        wheelLength: .04,
+        wheelRadius: 0.05,
+        wheelMeshRes: 12,
     };
 
     private canvas: HTMLCanvasElement;
@@ -48,6 +49,9 @@ export class SkateboardRenderer {
     private wheelVertsBuffer: WebGLBuffer = 0;
     private wheelElmtsBuffer: WebGLBuffer = 0;
     private wheelBufferSize: number = 0;
+
+    private wheelCapBuffer: WebGLBuffer = 0;
+    private wheelCapSize: number = 0;
 
     constructor() {
         this.canvas = document.createElement("canvas");
@@ -79,7 +83,6 @@ export class SkateboardRenderer {
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
         this.gl.clear(this.gl.DEPTH_BUFFER_BIT);
 
-
         // set the rotation quaternion
         this.gl.uniform4fv(this.rotationLoc, rotation);
 
@@ -103,8 +106,8 @@ export class SkateboardRenderer {
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, this.boardPermBufferSize);
 
         // draw the wheels
-        let { wheelX, wheelScale, height, wheelZ } = this.deckParameters;
-        let wheelY = height / 2 - wheelScale;
+        let { wheelX, wheelLength, height, wheelZ } = this.deckParameters;
+        let wheelY = height / 2 - wheelLength;
         this.bindBuffer(this.wheelVertsBuffer, this.wheelElmtsBuffer);
         this.gl.uniform1i(this.materialLoc, WHEEL);
         this.gl.uniform3fv(this.translationLoc, [-wheelX, -wheelY, wheelZ]);
@@ -115,6 +118,27 @@ export class SkateboardRenderer {
         this.gl.drawElements(this.gl.TRIANGLE_STRIP, this.wheelBufferSize, this.gl.UNSIGNED_SHORT, 0);
         this.gl.uniform3fv(this.translationLoc, [-wheelX,  wheelY, wheelZ]);
         this.gl.drawElements(this.gl.TRIANGLE_STRIP, this.wheelBufferSize, this.gl.UNSIGNED_SHORT, 0);
+
+        // draw wheel caps
+        this.bindBuffer(this.wheelCapBuffer, null);
+        let outer = height / 2;
+        let inner = height / 2 - 2 * wheelLength;
+        this.gl.uniform3fv(this.translationLoc, [-wheelX, -outer, wheelZ]);
+        this.gl.drawArrays(this.gl.TRIANGLE_FAN, this.wheelCapSize, this.wheelCapSize);
+        this.gl.uniform3fv(this.translationLoc, [-wheelX, -inner, wheelZ]);
+        this.gl.drawArrays(this.gl.TRIANGLE_FAN, 0, this.wheelCapSize);
+        this.gl.uniform3fv(this.translationLoc, [-wheelX, outer, wheelZ]);
+        this.gl.drawArrays(this.gl.TRIANGLE_FAN, 0, this.wheelCapSize);
+        this.gl.uniform3fv(this.translationLoc, [-wheelX, inner, wheelZ]);
+        this.gl.drawArrays(this.gl.TRIANGLE_FAN, this.wheelCapSize, this.wheelCapSize);
+        this.gl.uniform3fv(this.translationLoc, [wheelX, outer, wheelZ]);
+        this.gl.drawArrays(this.gl.TRIANGLE_FAN, 0, this.wheelCapSize);
+        this.gl.uniform3fv(this.translationLoc, [wheelX, inner, wheelZ]);
+        this.gl.drawArrays(this.gl.TRIANGLE_FAN, this.wheelCapSize, this.wheelCapSize);
+        this.gl.uniform3fv(this.translationLoc, [wheelX, -outer, wheelZ]);
+        this.gl.drawArrays(this.gl.TRIANGLE_FAN, this.wheelCapSize, this.wheelCapSize);
+        this.gl.uniform3fv(this.translationLoc, [wheelX, -inner, wheelZ]);
+        this.gl.drawArrays(this.gl.TRIANGLE_FAN, 0, this.wheelCapSize);
 
         // transfer to 2d context
         ctx.drawImage(this.canvas, box[0], box[1]);
@@ -132,7 +156,9 @@ export class SkateboardRenderer {
         [
             this.wheelVertsBuffer,
             this.wheelElmtsBuffer,
-            this.wheelBufferSize
+            this.wheelBufferSize,
+            this.wheelCapBuffer,
+            this.wheelCapSize,
         ] = wheelGeometry(this.gl, this.deckParameters);
     }
     
@@ -264,23 +290,26 @@ void main() {
     vec3 light = normalize(lightPos);
 
     float diffuse = max(dot(norm, light), 0.0);
+    vec3 reflection = -light - 2.0 * dot(-light, norm) * norm;
 
     vec3 materialColor = vec3(0, 0, 0);
     if (materialType == ${DECK_GRAPHIC}) {
-        materialColor = vec3(diffuse * .4 + .6, 0, 0);
+        float base = dot(reflection, camera);
+        if (base > 0.0) base = 0.0;
+        float specularColor = pow(-base, 90.0);
+        materialColor = vec3(min(diffuse + specularColor, 1.0) * .4 + .6, specularColor, specularColor);
 
     } else if (materialType == ${BOARD_RAIL}) {
         materialColor = vec3(0.97, 0.87, 0.4) * (diffuse + .5);
 
     } else if (materialType == ${GRIP_TAPE}) {
-        vec3 reflection = -light - 2.0 * dot(-light, norm) * norm;
         float base = dot(reflection, camera);
         if (base > 0.0) base = 0.0;
         float specularColor = pow(-base, 90.0);
         materialColor = vec3(1, 1, 1) * specularColor;
 
     } else if (materialType == ${WHEEL}) {
-        materialColor = vec3(1, 1, 1) * diffuse;
+        materialColor = vec3(1, 1, 1) * (0.5 * diffuse + 0.5);
 
     }
 
