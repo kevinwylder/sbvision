@@ -1,4 +1,4 @@
-import { Graphable111, Graphable213, rationalEase, bezier } from "../math";
+import { Graphable111, Graphable213, rationalEase, bezier, compose, scale, translate, identity, cross, one, absolute } from "../math";
 
 interface sbDeckParams {
     width: number
@@ -23,37 +23,19 @@ const skateboardTopology: (p: sbDeckParams) => Graphable213 = ({
     railLiftFactor,
     railTailTransition
 }) => (x, y) => {
-    let sign = Math.sign(x);
-    x = Math.abs(x)
-    if (x > tailLiftX) {
-        x -= tailLiftX;
-        x *= tailStretchFactor;
-        let [ z, dz ] = rationalEase(x);
-        z *= tailLiftFactor;
-        dz *= tailLiftFactor * sign;
-        let n = Math.sqrt(1 + dz * dz);
-        return [ z, [-dz / n, 0.0, 1.0 / n] ];
-    } else if (x < railLiftX) {
-        let [ z, dz ] = rationalEase(Math.abs(y));
-        z *= railLiftFactor;
-        dz *= railLiftFactor * Math.sign(y);
-        let n = Math.sqrt(1 + dz * dz);
-        return [ z, [ 0.0, -dz / n, 1.0 / n ] ];
+    let fx: Graphable111;
+    let fy: Graphable111;
+    if (Math.abs(x) > tailLiftX) {
+        fx = scale( compose(rationalEase, scale( translate(absolute, -tailLiftX), tailStretchFactor)), tailLiftFactor)
+        fy = one;
+    } else if (Math.abs(x) < railLiftX) {
+        fx = one;
+        fy = scale(compose(rationalEase, absolute), railLiftFactor)
     } else {
-        let [ t, dt ] = railTailTransition((x - railLiftX) / (tailLiftX - railLiftX));
-        let dtdx = dt / (tailLiftX - railLiftX);
-
-        let [ w, dwdy ] = rationalEase(Math.abs(y));
-        w *= railLiftFactor;
-        dwdy *= railLiftFactor * Math.sign(y);
-
-        let z = t * w;
-        let dzdx = dtdx * w;
-        let dzdy = dwdy * t;
-
-        let n = Math.sqrt( 1 + dzdx * dzdx + dzdy * dzdy );
-        return [ z, [ -dzdx / n, -dzdy / n, 1.0 / n ] ];
+        fx = compose(railTailTransition, scale(translate(absolute, -railLiftX), 1.0 / (tailLiftX - railLiftX) ))
+        fy = scale(compose(rationalEase, absolute), railLiftFactor)
     }
+    return cross(fx, fy)(x, y);
 }
 
 export const skateboardPerimeter: (p: sbDeckParams) => Graphable111 = ({

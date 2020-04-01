@@ -1,6 +1,7 @@
 import { Quaternion, bezier, exponentNorm } from "../math";
 import { skateboardGeometry } from "./deck";
 import { wheelGeometry } from "./wheel";
+import { describeBox } from "../math/layout";
 
 const DECK_GRAPHIC = 0;
 const GRIP_TAPE = 1;
@@ -65,7 +66,7 @@ export class SkateboardRenderer {
         this.gl = gl;
         gl.enable(gl.DEPTH_TEST);
         gl.enable(gl.DITHER);
-        gl.clearColor(1, 1, 1, 0);
+        gl.clearColor(1, 1, 1, 1);
         gl.depthMask(true);
         gl.depthFunc(gl.LEQUAL);
         gl.depthRange(0.0, 1.0);
@@ -75,11 +76,14 @@ export class SkateboardRenderer {
         this.setupBuffers();
     }
 
-    public drawSkateboard(ctx: CanvasRenderingContext2D, rotation: Quaternion, box: [number, number, number, number]) {
+    public drawSkateboard(ctx: CanvasRenderingContext2D, rotation: Quaternion, [x0, x1, x2, x3]: [number, number, number, number]) {
+        let { left, top, width, height } = describeBox([x0, x1, x2, x3]);
+        let long = Math.max(height, width);
+
         // setup the desired rendering size
-        this.canvas.width = box[2] - box[0];
-        this.canvas.height = box[3] - box[1];
-        this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+        this.canvas.width = long;
+        this.canvas.height = long;
+        this.gl.viewport(0, 0, long, long);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
         this.gl.clear(this.gl.DEPTH_BUFFER_BIT);
 
@@ -106,8 +110,8 @@ export class SkateboardRenderer {
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, this.boardPermBufferSize);
 
         // draw the wheels
-        let { wheelX, wheelLength, height, wheelZ } = this.deckParameters;
-        let wheelY = height / 2 - wheelLength;
+        let { wheelX, wheelLength, wheelZ } = this.deckParameters;
+        let wheelY = this.deckParameters.height / 2 - wheelLength;
         this.bindBuffer(this.wheelVertsBuffer, this.wheelElmtsBuffer);
         this.gl.uniform1i(this.materialLoc, WHEEL);
         this.gl.uniform3fv(this.translationLoc, [-wheelX, -wheelY, wheelZ]);
@@ -121,8 +125,8 @@ export class SkateboardRenderer {
 
         // draw wheel caps
         this.bindBuffer(this.wheelCapBuffer, null);
-        let outer = height / 2;
-        let inner = height / 2 - 2 * wheelLength;
+        let outer = this.deckParameters.height / 2;
+        let inner = this.deckParameters.height / 2 - 2 * wheelLength;
         this.gl.uniform3fv(this.translationLoc, [-wheelX, -outer, wheelZ]);
         this.gl.drawArrays(this.gl.TRIANGLE_FAN, this.wheelCapSize, this.wheelCapSize);
         this.gl.uniform3fv(this.translationLoc, [-wheelX, -inner, wheelZ]);
@@ -141,7 +145,9 @@ export class SkateboardRenderer {
         this.gl.drawArrays(this.gl.TRIANGLE_FAN, 0, this.wheelCapSize);
 
         // transfer to 2d context
-        ctx.drawImage(this.canvas, box[0], box[1]);
+        let x = Math.max(0, (height - width) / 2);
+        let y = Math.max(0, (width - height) / 2);
+        ctx.drawImage(this.canvas, x, y, width, height, left, top, width, height);
     }
 
     private setupBuffers() {
