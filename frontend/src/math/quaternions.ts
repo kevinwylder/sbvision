@@ -24,6 +24,10 @@ export function qMultiply(a: Quaternion, b: Quaternion): Quaternion {
     ]
 }
 
+export function qDiff(a: Quaternion, b: Quaternion): Quaternion {
+    return qMultiply(qConjugate(b), a);
+}
+
 export function qRotate(pos: Vector, by: Quaternion): Vector { 
     let d2 = by.map(t => t * t).reduce((p, n) => p + n, 0)
     let [ _, i, j, k ] = qMultiply(qMultiply(by, [0, pos[0], pos[1], pos[2]]), qConjugate(by))
@@ -50,4 +54,19 @@ export function tiltSkateboard(m: number, rotation: Quaternion): Quaternion {
     }
     let delta = eToQ([0, 1, 0, m / 100]);
     return qMultiply(rotation, delta);
+}
+
+// returns a random unit quaternion
+export function qRandom(): Quaternion {
+    while (true) {
+        let q0 = Math.random();
+        let q1 = Math.random();
+        let q2 = Math.random();
+        let q3 = Math.random();
+        let d = q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3;
+        if (d < 0) {
+            d = Math.sqrt(d);
+            return [ q0 / d, q1 / d, q2 / d, q3 / d ];
+        }
+    }
 }
