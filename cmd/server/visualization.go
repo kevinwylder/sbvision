@@ -18,6 +18,7 @@ type visualizor struct {
 	conn    *websocket.Conn
 	assets  sbvision.KeyValueStore
 	db      *database.SBDatabase
+	cache   databaseCache
 
 	rchan    chan struct{}
 	rmutex   sync.Mutex
@@ -46,20 +47,23 @@ func (ctx *serverContext) handleVisualizationSocket(w http.ResponseWriter, r *ht
 }
 
 func (v *visualizor) read() {
+	var localRotation sbvision.Rotation
 	for {
 		if v.stopped {
 			return
 		}
 
-		v.rmutex.Lock()
-		err := v.conn.ReadJSON(&v.rotation)
-		v.rmutex.Unlock()
+		err := v.conn.ReadJSON(&localRotation)
 
 		if err != nil {
 			v.stopped = true
 			v.conn.Close()
 			return
 		}
+
+		v.rmutex.Lock()
+		v.rotation = localRotation
+		v.rmutex.Unlock()
 
 		if v.rchan != nil {
 			t := v.rchan
@@ -71,6 +75,7 @@ func (v *visualizor) read() {
 
 func (v *visualizor) lookup() {
 	var lookup sbvision.Rotation
+	v.cache.minProduct = 2
 	for {
 		if v.stopped {
 			return
@@ -90,15 +95,33 @@ func (v *visualizor) lookup() {
 		lookup = v.rotation
 		v.rmutex.Unlock()
 
-		frame, err := v.db.DataNearestRotation(&lookup, 1)
-		if err != nil {
-			v.stopped = true
-			v.conn.Close()
-			return
+		nearest := v.cache.check(&lookup)
+		if nearest == nil {
+			err := v.cache.load(v.db, &lookup)
+			if err != nil {
+				fmt.Println(err)
+				v.stopped = true
+				v.conn.Close()
+				return
+			}
+			nearest = v.cache.check(&lookup)
+			if nearest == nil {
+				fmt.Println("Could not find rotation in cache after refresh!")
+				continue
+			}
 		}
 
 		v.fmutex.Lock()
-		v.frame = *frame
+		v.frame = sbvision.Frame{
+			Bounds: []sbvision.Bound{
+				sbvision.Bound{
+					ID: nearest.BoundID,
+					Rotations: []sbvision.Rotation{
+						*nearest,
+					},
+				},
+			},
+		}
 		v.fmutex.Unlock()
 
 		if v.fchan != nil {
@@ -117,7 +140,7 @@ func (v *visualizor) write() {
 			return
 		}
 
-		if id == v.frame.ID {
+		if v.frame.Bounds == nil || id == v.frame.Bounds[0].ID {
 			v.fchan = make(chan struct{})
 			<-v.fchan
 			continue
@@ -125,7 +148,7 @@ func (v *visualizor) write() {
 
 		v.fmutex.Lock()
 		key = v.frame.Bounds[0].Key()
-		id = v.frame.ID
+		id = v.frame.Bounds[0].ID
 		v.fmutex.Unlock()
 
 		reader, err := v.assets.GetAsset(key)
@@ -171,4 +194,40 @@ func (v *visualizor) write() {
 			fmt.Println("Write err", err)
 		}
 	}
+}
+
+type databaseCache struct {
+	rotations  [100]sbvision.Rotation
+	search     sbvision.Rotation
+	minProduct float64
+}
+
+func dot(a, b *sbvision.Rotation) float64 {
+	return a.R*b.R + a.I*b.I + a.J*b.J + a.K*b.K
+}
+
+func (cache *databaseCache) load(db *database.SBDatabase, rotation *sbvision.Rotation) error {
+	err := db.DataNearestRotation(rotation, cache.rotations[:])
+	if err != nil {
+		return err
+	}
+	cache.search = *rotation
+	cache.minProduct = dot(&cache.rotations[99], rotation)
+	return nil
+}
+
+func (cache *databaseCache) check(search *sbvision.Rotation) *sbvision.Rotation {
+	if dot(search, &cache.search) < cache.minProduct {
+		return nil
+	}
+	var closest *sbvision.Rotation
+	var best float64 = -1
+	for i := range cache.rotations {
+		product := dot(search, &cache.rotations[i])
+		if product > best {
+			best = product
+			closest = &cache.rotations[i]
+		}
+	}
+	return closest
 }

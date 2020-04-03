@@ -45,36 +45,6 @@ func (sb *SBDatabase) DataWhereFrame(hash int64, time int64, videoID int64) (*sb
 	return result, nil
 }
 
-func (sb *SBDatabase) prepareDataNearestRotation() (err error) {
-	sb.dataNearestRotation, err = sb.db.Prepare(fmt.Sprintf(`
-SELECT %s
-FROM %s
-WHERE rotations.id IS NOT NULL
-ORDER BY 
-	(rotations.r - ?) * (rotations.r - ?) +
-	(rotations.i - ?) * (rotations.i - ?) +
-	(rotations.j - ?) * (rotations.j - ?) +
-	(rotations.k - ?) * (rotations.k - ?) ASC
-LIMIT ?`, frameColumns, frameJoin))
-	return
-}
-
-// DataNearestRotation looks up the closest rotation to the given quaternion
-func (sb *SBDatabase) DataNearestRotation(rot *sbvision.Rotation, count int64) (*sbvision.Frame, error) {
-	result, err := sb.dataNearestRotation.Query(rot.R, rot.R, rot.I, rot.I, rot.J, rot.J, rot.K, rot.K, count)
-	if err != nil {
-		return nil, fmt.Errorf("\n\tError looking up nearby rotation: %s", err.Error())
-	}
-	page, err := parseFrames(result, 0)
-	if err != nil {
-		return nil, fmt.Errorf("\n\tError parsing frame")
-	}
-	if len(page.Frames) == 0 {
-		return nil, fmt.Errorf("\n\tNo data found")
-	}
-	return &page.Frames[0], nil
-}
-
 /**
  * Below are the "generic" parts of extracting a video frame.
 **/

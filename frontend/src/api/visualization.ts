@@ -15,6 +15,12 @@ export class VisualizationManager {
                 onImage(img, r);
             }
         }
+        this.ws.onerror = () => {
+            window.location.reload();
+        }
+        this.ws.onopen = () => {
+            this.setRotation([1, 0, 0, 0]);
+        }
     }
 
     public setRotation(r: Quaternion)  {
