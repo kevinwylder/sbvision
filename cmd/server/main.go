@@ -12,7 +12,6 @@ import (
 	"github.com/kevinwylder/sbvision"
 	"github.com/kevinwylder/sbvision/cmd"
 	"github.com/kevinwylder/sbvision/database"
-	"github.com/kevinwylder/sbvision/frontend"
 	"github.com/kevinwylder/sbvision/sbvideo"
 	"github.com/kevinwylder/sbvision/session"
 )
@@ -20,7 +19,6 @@ import (
 type serverContext struct {
 	session  sbvision.SessionManager
 	assets   sbvision.KeyValueStore
-	frontend http.Handler
 	upgrader websocket.Upgrader
 	db       *database.SBDatabase
 	proxy    *sbvideo.Proxy
@@ -54,14 +52,6 @@ func main() {
 		},
 	}
 
-	if _, exists := os.LookupEnv("FRONTEND_DIR"); !exists {
-		log.Fatal("Missing FRONTEND_DIR env variable")
-	}
-	server.frontend, err = frontend.ServeFrontend(os.Getenv("FRONTEND_DIR"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	assets, cleanup := cmd.GetLocalAssets()
 	if cleanup != "" {
 		defer os.RemoveAll(cleanup)
@@ -69,6 +59,6 @@ func main() {
 	server.assets = assets
 
 	fmt.Println("Starting server")
-	err = http.ListenAndServe(os.Getenv("PORT"), server)
+	err = http.ListenAndServe(":"+os.Getenv("PORT"), server)
 	fmt.Println(err)
 }
