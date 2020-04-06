@@ -47,8 +47,7 @@ func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ctx.handleAPIImage(w, r)
 
 	default:
-		// fallthrough to the frontend
-		ctx.frontend.ServeHTTP(w, r)
+		http.Error(w, "Not Found", 404)
 
 	}
 
