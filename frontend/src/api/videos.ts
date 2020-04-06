@@ -1,3 +1,5 @@
+import { API_URL } from "./url";
+
 export interface Video {
     id: number
     title: string
@@ -14,7 +16,7 @@ interface GetVideosResponse {
 }
 
 export function getVideos(offset: number, limit: number): Promise<GetVideosResponse> {
-    return fetch(`/app/video/list?offset=${offset}&count=${limit}`)
+    return fetch(`${API_URL}/app/video/list?offset=${offset}&count=${limit}`)
     .then(res => {
         if (res.status != 200) {
             return res.text()
@@ -26,7 +28,7 @@ export function getVideos(offset: number, limit: number): Promise<GetVideosRespo
 }
 
 export function getVideoById(id: number) : Promise<Video> {
-    return fetch(`/app/video/list?id=${id}`)
+    return fetch(`${API_URL}/app/video/list?id=${id}`)
     .then(res => res.json())
     .then(({videos}) => videos[0]);
 }

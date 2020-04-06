@@ -1,12 +1,13 @@
-import { Rotation } from "./frame";
 import { Quaternion } from "../math";
+import { API_URL } from "./url";
 
 export class VisualizationManager {
 
     private ws: WebSocket;
 
     constructor(onImage: (elem: HTMLImageElement, rot: Quaternion) => void) {
-        this.ws = new WebSocket(`ws${window.location.protocol == "https:" ? "s" : ""}://${window.location.host}/app/visualization`);
+        let [ protocol, domain ] = API_URL.split("://");
+        this.ws = new WebSocket(`ws${protocol == "https:" ? "s" : ""}://${domain}/app/visualization`);
         this.ws.onmessage = (ev: MessageEvent) => {
             let img = new Image();
             let { s, r } = JSON.parse(ev.data)

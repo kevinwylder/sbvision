@@ -1,3 +1,4 @@
+import { API_URL } from "./url";
 
 export let session: {
     Session: string
@@ -5,7 +6,7 @@ export let session: {
 
 function getSession() {
     console.log("Getting session header")
-    fetch("/app/session")
+    fetch(`${API_URL}/app/session`)
     .then(res => res.status == 200 ? res.text() : Promise.reject(res.text())) 
     .then(s => {
         session = {

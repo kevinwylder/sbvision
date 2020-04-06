@@ -1,4 +1,5 @@
 import { Quaternion } from "../math";
+import { API_URL } from "./url";
 
 export interface Frame {
     id: number
@@ -36,7 +37,7 @@ export function toQuat({r, i, j, k}: Rotation): Quaternion {
 }
 
 export function getFrames(videoId: number): Promise<Frame[]> {
-    return fetch(`/api/frames?video=${videoId}`)
+    return fetch(`${API_URL}/api/frames?video=${videoId}`)
     .then(res => res.json())
     .then(({frames}) => frames);
 }

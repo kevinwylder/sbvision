@@ -1,3 +1,4 @@
+import { API_URL } from './url';
 import { session } from './session';
 import { Bound, Frame, Rotation } from './frame';
 
@@ -30,7 +31,7 @@ export function uploadFrame(videoId: number, elem: HTMLVideoElement): Promise<Fr
         form.append("image", new Blob([new Uint8Array(data)]));
         return form;
     })
-    .then(body => fetch(`/app/contribute/frame?video=${videoId}&frame=${frame}`,
+    .then(body => fetch(`${API_URL}/app/contribute/frame?video=${videoId}&frame=${frame}`,
     { // send form data to the server
         method: "POST",
         body,
@@ -40,7 +41,7 @@ export function uploadFrame(videoId: number, elem: HTMLVideoElement): Promise<Fr
 }
 
 export function addBounds(frameId: number, bounds: {x: number, y: number, width: number, height: number}): Promise<Bound> {
-    return fetch(`/app/contribute/bounds?frame=${frameId}`, {
+    return fetch(`${API_URL}/app/contribute/bounds?frame=${frameId}`, {
         method: "POST",
         body: JSON.stringify({
             x: Math.round(bounds.x),
@@ -54,7 +55,7 @@ export function addBounds(frameId: number, bounds: {x: number, y: number, width:
 }
 
 export function addRotation(boundId: number, r: Rotation): Promise<Rotation[]> {
-    return fetch(`/app/contribute/rotation?bound=${boundId}`,{
+    return fetch(`${API_URL}/app/contribute/rotation?bound=${boundId}`,{
         method: "POST",
         headers: session,
         body: JSON.stringify(r),
