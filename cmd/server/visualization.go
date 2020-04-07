@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/kevinwylder/sbvision"
@@ -26,6 +27,13 @@ type visualizor struct {
 	fchan    chan struct{}
 	fmutex   sync.Mutex
 	frame    sbvision.Frame
+}
+
+func wsOriginChecker(r *http.Request) bool {
+	if os.Getenv("ALLOW_ORIGIN") == "*" {
+		return true
+	}
+	return r.Header.Get("Origin") == os.Getenv("ALLOW_ORIGIN")
 }
 
 func (ctx *serverContext) handleVisualizationSocket(w http.ResponseWriter, r *http.Request) {

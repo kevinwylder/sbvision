@@ -49,6 +49,7 @@ func main() {
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 20 * 1024,
+			CheckOrigin:     wsOriginChecker,
 		},
 	}
 
