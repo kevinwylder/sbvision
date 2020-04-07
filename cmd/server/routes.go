@@ -3,13 +3,17 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 )
 
 func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.URL.Path)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == http.MethodOptions {
+		w.Header().Set("Access-Control-Allow-Headers", "*")
+		w.WriteHeader(200)
+		return
+	}
 
-	w.Header().Set("Access-Control-Allow-Origin", os.Getenv("ALLOW_ORIGIN"))
+	log.Println(r.URL.Path)
 
 	err := r.ParseForm()
 	if err != nil {
