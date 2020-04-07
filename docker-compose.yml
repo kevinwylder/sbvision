@@ -8,7 +8,6 @@ services:
     environment:
       DB_CREDS: "root:password@tcp(database)/sbvision"
       ASSET_DIR: "/data"
-      ALLOW_ORIGIN: "*"
       PORT: "3000"
 
     volumes:

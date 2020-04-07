@@ -6,8 +6,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/kevinwylder/sbvision"
 )
 
 func (ctx *serverContext) handleGetFrames(w http.ResponseWriter, r *http.Request) {
@@ -48,20 +46,14 @@ func (ctx *serverContext) handleAPIImage(w http.ResponseWriter, r *http.Request)
 			keys:        []string{"bound"},
 			description: "The cropped image for the given bounds id",
 			handler: func(ids []int64) {
-				bound := &sbvision.Bound{
-					ID: ids[0],
-				}
-				image, err = ctx.assets.GetAsset(bound.Key())
+				image, err = ctx.assets.GetBound(ids[0])
 			},
 		},
 		idDispatch{
 			keys:        []string{"frame"},
 			description: "The whole image for the given frame ID",
 			handler: func(ids []int64) {
-				frame := &sbvision.Frame{
-					ID: ids[0],
-				}
-				image, err = ctx.assets.GetAsset(frame.Key())
+				image, err = ctx.assets.GetFrame(ids[0])
 			},
 		},
 	})

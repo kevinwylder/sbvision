@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"sync"
 
 	"github.com/kevinwylder/sbvision"
@@ -17,23 +16,17 @@ import (
 type visualizor struct {
 	stopped bool
 	conn    *websocket.Conn
-	assets  sbvision.KeyValueStore
+	assets  sbvision.MediaStorage
 	db      *database.SBDatabase
 	cache   databaseCache
 
-	rchan    chan struct{}
-	rmutex   sync.Mutex
-	rotation sbvision.Rotation
-	fchan    chan struct{}
-	fmutex   sync.Mutex
-	frame    sbvision.Frame
-}
+	ingoing sbvision.Rotation
+	inchan  chan struct{}
+	inmutex sync.Mutex
 
-func wsOriginChecker(r *http.Request) bool {
-	if os.Getenv("ALLOW_ORIGIN") == "*" {
-		return true
-	}
-	return r.Header.Get("Origin") == os.Getenv("ALLOW_ORIGIN")
+	outgoing sbvision.Rotation
+	outchan  chan struct{}
+	outmutex sync.Mutex
 }
 
 func (ctx *serverContext) handleVisualizationSocket(w http.ResponseWriter, r *http.Request) {
@@ -69,13 +62,13 @@ func (v *visualizor) read() {
 			return
 		}
 
-		v.rmutex.Lock()
-		v.rotation = localRotation
-		v.rmutex.Unlock()
+		v.inmutex.Lock()
+		v.ingoing = localRotation
+		v.inmutex.Unlock()
 
-		if v.rchan != nil {
-			t := v.rchan
-			v.rchan = nil
+		if v.inchan != nil {
+			t := v.inchan
+			v.inchan = nil
 			close(t)
 		}
 	}
@@ -89,19 +82,19 @@ func (v *visualizor) lookup() {
 			return
 		}
 
-		if v.rotation.R == lookup.R &&
-			v.rotation.I == lookup.I &&
-			v.rotation.J == lookup.J &&
-			v.rotation.K == lookup.K {
+		if v.ingoing.R == lookup.R &&
+			v.ingoing.I == lookup.I &&
+			v.ingoing.J == lookup.J &&
+			v.ingoing.K == lookup.K {
 
-			v.rchan = make(chan struct{})
-			<-v.rchan
+			v.inchan = make(chan struct{})
+			<-v.inchan
 			continue
 		}
 
-		v.rmutex.Lock()
-		lookup = v.rotation
-		v.rmutex.Unlock()
+		v.inmutex.Lock()
+		lookup = v.ingoing
+		v.inmutex.Unlock()
 
 		nearest := v.cache.check(&lookup)
 		if nearest == nil {
@@ -119,47 +112,36 @@ func (v *visualizor) lookup() {
 			}
 		}
 
-		v.fmutex.Lock()
-		v.frame = sbvision.Frame{
-			Bounds: []sbvision.Bound{
-				sbvision.Bound{
-					ID: nearest.BoundID,
-					Rotations: []sbvision.Rotation{
-						*nearest,
-					},
-				},
-			},
-		}
-		v.fmutex.Unlock()
+		v.outmutex.Lock()
+		v.outgoing = *nearest
+		v.outmutex.Unlock()
 
-		if v.fchan != nil {
-			t := v.fchan
-			v.fchan = nil
+		if v.outchan != nil {
+			t := v.outchan
+			v.outchan = nil
 			close(t)
 		}
 	}
 }
 
 func (v *visualizor) write() {
-	var key sbvision.Key
-	var id int64
+	var rotation sbvision.Rotation
 	for {
 		if v.stopped {
 			return
 		}
 
-		if v.frame.Bounds == nil || id == v.frame.Bounds[0].ID {
-			v.fchan = make(chan struct{})
-			<-v.fchan
+		if rotation == v.outgoing {
+			v.outchan = make(chan struct{})
+			<-v.outchan
 			continue
 		}
 
-		v.fmutex.Lock()
-		key = v.frame.Bounds[0].Key()
-		id = v.frame.Bounds[0].ID
-		v.fmutex.Unlock()
+		v.outmutex.Lock()
+		rotation = v.outgoing
+		v.outmutex.Unlock()
 
-		reader, err := v.assets.GetAsset(key)
+		reader, err := v.assets.GetBound(rotation.BoundID)
 		if err != nil {
 			fmt.Println("Asset error", err)
 			continue
@@ -177,8 +159,7 @@ func (v *visualizor) write() {
 			return
 		}
 
-		r := v.frame.Bounds[0].Rotations[0]
-		_, err = writer.Write([]byte(fmt.Sprintf(`{"r":[%f,%f,%f,%f],"s":"data:image/png;base64,`, r.R, r.I, r.J, r.K)))
+		_, err = writer.Write([]byte(fmt.Sprintf(`{"r":[%f,%f,%f,%f],"s":"data:image/png;base64,`, rotation.R, rotation.I, rotation.J, rotation.K)))
 		if err != nil {
 			fmt.Println("Write err", err)
 			reader.Close()

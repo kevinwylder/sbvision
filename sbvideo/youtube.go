@@ -3,6 +3,7 @@ package sbvideo
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -104,15 +105,10 @@ func (info *YoutubeDl) Update(video *sbvision.Video) {
 }
 
 // GetThumbnail downloads the thumbnail for the video
-func (info *YoutubeDl) GetThumbnail(key sbvision.Key, assets sbvision.KeyValueStore) error {
+func (info *YoutubeDl) GetThumbnail() (io.ReadCloser, error) {
 	res, err := http.Get(info.Thumbnail)
 	if err != nil {
-		return fmt.Errorf("\n\tError getting thumbnail: %s", err.Error())
+		return nil, fmt.Errorf("\n\tError getting thumbnail: %s", err.Error())
 	}
-	defer res.Body.Close()
-	err = assets.PutAsset(key, res.Body)
-	if err != nil {
-		return fmt.Errorf("\n\tError storing video thumbnail: %s", err.Error())
-	}
-	return nil
+	return res.Body, nil
 }

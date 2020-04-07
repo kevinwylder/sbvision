@@ -74,7 +74,7 @@ func (ctx *serverContext) handleAddFrame(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		err = ctx.assets.PutAsset(frame.Key(), file)
+		err = ctx.assets.PutFrame(frame.ID, file)
 		if err != nil {
 			fmt.Println("Error putting asset", err)
 			http.Error(w, "Error storing asset", 500)
@@ -128,7 +128,7 @@ func (ctx *serverContext) handleAddBounds(w http.ResponseWriter, r *http.Request
 	}
 
 	go func() {
-		image, err := ctx.assets.GetAsset(frame.Key())
+		image, err := ctx.assets.GetFrame(frameid[0])
 		if err != nil {
 			return
 		}
@@ -147,7 +147,7 @@ func (ctx *serverContext) handleAddBounds(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		err = ctx.assets.PutAsset(frame.Bounds[0].Key(), buffer)
+		err = ctx.assets.PutBound(frame.Bounds[0].ID, buffer)
 		if err != nil {
 			fmt.Println(err)
 		}

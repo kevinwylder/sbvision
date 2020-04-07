@@ -7,10 +7,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/kevinwylder/sbvision/media"
+
 	"github.com/gorilla/websocket"
 
 	"github.com/kevinwylder/sbvision"
-	"github.com/kevinwylder/sbvision/cmd"
 	"github.com/kevinwylder/sbvision/database"
 	"github.com/kevinwylder/sbvision/sbvideo"
 	"github.com/kevinwylder/sbvision/session"
@@ -18,7 +19,7 @@ import (
 
 type serverContext struct {
 	session  sbvision.SessionManager
-	assets   sbvision.KeyValueStore
+	assets   sbvision.MediaStorage
 	upgrader websocket.Upgrader
 	db       *database.SBDatabase
 	proxy    *sbvideo.Proxy
@@ -49,15 +50,13 @@ func main() {
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 20 * 1024,
-			CheckOrigin:     wsOriginChecker,
+			CheckOrigin:     func(r *http.Request) bool { return true },
 		},
 	}
 
-	assets, cleanup := cmd.GetLocalAssets()
-	if cleanup != "" {
-		defer os.RemoveAll(cleanup)
+	if server.assets, err = media.NewAssetDirectory(os.Getenv("ASSET_DIR")); err != nil {
+		log.Fatal(err)
 	}
-	server.assets = assets
 
 	fmt.Println("Starting server")
 	err = http.ListenAndServe(":"+os.Getenv("PORT"), server)

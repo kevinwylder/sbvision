@@ -85,11 +85,7 @@ func (ctx *serverContext) handleVideoThumbnail(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	video := &sbvision.Video{
-		ID: ids[0],
-	}
-
-	data, err := ctx.assets.GetAsset(video.Thumbnail())
+	data, err := ctx.assets.GetThumbnail(ids[0])
 	if err != nil {
 		fmt.Println("Could not get image", err)
 		http.Error(w, "could not get image", 404)

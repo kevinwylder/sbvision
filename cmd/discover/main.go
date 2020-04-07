@@ -8,8 +8,8 @@ import (
 
 	"github.com/kevinwylder/sbvision"
 
-	"github.com/kevinwylder/sbvision/cmd"
 	"github.com/kevinwylder/sbvision/database"
+	"github.com/kevinwylder/sbvision/media"
 	"github.com/kevinwylder/sbvision/sbvideo"
 )
 
@@ -28,12 +28,12 @@ func main() {
 
 	db, err := database.ConnectToDatabase(os.Getenv("DB_CREDS"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(err, "check the DB_CREDS environment variable")
 	}
 
-	assets, tmpdir := cmd.GetLocalAssets()
-	if tmpdir != "" {
-		defer os.RemoveAll(tmpdir)
+	assets, err := media.NewAssetDirectory(os.Getenv("ASSET_DIR"))
+	if err != nil {
+		log.Fatal(err, "check the ASSET_DIR environment variable")
 	}
 
 	fmt.Println("Getting info")
@@ -61,9 +61,15 @@ func main() {
 	}
 
 	fmt.Println("Getting thumbnail")
-	err = info.GetThumbnail(video.Thumbnail(), assets)
+	data, err := info.GetThumbnail()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error getting thumbnail", err)
+	}
+
+	fmt.Println("Storing thumbnail")
+	err = assets.PutThumbnail(video.ID, data)
+	if err != nil {
+		log.Fatal("Error storing thumbnail", err)
 	}
 
 	fmt.Println("success")

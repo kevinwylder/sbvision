@@ -1,6 +1,7 @@
 package sbvision
 
 import (
+	"io"
 	"time"
 )
 
@@ -30,5 +31,5 @@ const (
 // VideoSource is an interface that wraps both reddit and youtube
 type VideoSource interface {
 	Update(*Video)
-	GetThumbnail(Key, KeyValueStore) error
+	GetThumbnail() (io.ReadCloser, error)
 }
