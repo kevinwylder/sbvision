@@ -31,7 +31,8 @@ func NewVideoProxy(database Database) *Proxy {
 		database: database,
 	}
 	proxy.reverse = &httputil.ReverseProxy{
-		Director: proxy.director,
+		Director:       proxy.director,
+		ModifyResponse: proxy.modifyResponse,
 	}
 	return proxy
 }
@@ -94,4 +95,10 @@ func (proxy *Proxy) director(r *http.Request) {
 	r.Header.Set("X-Forwarded-For", r.RemoteAddr)
 	r.Host = url.Host
 	r.URL = url
+}
+
+func (proxy *Proxy) modifyResponse(r *http.Response) error {
+	r.Header.Del("location")
+	r.Header.Del("Access-Control-Allow-Origin")
+	return nil
 }
