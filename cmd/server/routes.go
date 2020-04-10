@@ -23,35 +23,26 @@ func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch r.URL.Path {
 
-	case "/app/session":
-		ctx.handleNewSession(w, r)
-
-	case "/app/video/list":
+	case "/video/list":
 		ctx.handleVideoPage(w, r)
 
-	case "/app/video/thumbnail":
+	case "/video/thumbnail":
 		ctx.handleVideoThumbnail(w, r)
 
-	case "/app/video/stream":
+	case "/video/stream":
 		ctx.proxy.ServeHTTP(w, r)
 
-	case "/app/contribute/frame":
-		ctx.handleAddFrame(w, r)
-
-	case "/app/contribute/bounds":
-		ctx.handleAddBounds(w, r)
-
-	case "/app/contribute/rotation":
-		ctx.handleAddRotation(w, r)
-
-	case "/app/visualization":
-		ctx.handleVisualizationSocket(w, r)
-
-	case "/api/frames":
+	case "/frames":
 		ctx.handleGetFrames(w, r)
 
-	case "/api/image":
+	case "/image":
 		ctx.handleAPIImage(w, r)
+
+	case "/user":
+		ctx.handleGetUserInfo(w, r)
+
+	case "/visualization":
+		ctx.handleVisualizationSocket(w, r)
 
 	default:
 		http.Error(w, "Not Found", 404)

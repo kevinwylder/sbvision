@@ -1,9 +1,10 @@
 FROM golang:1.12
 
-RUN go get -u github.com/aws/aws-sdk-go/...
 RUN go get -u github.com/go-sql-driver/mysql
 RUN go get github.com/gorilla/websocket
 RUN go get github.com/codegangsta/gin
+RUN go get github.com/dgrijalva/jwt-go
+RUN go get github.com/lestrrat-go/jwx/jwk
 
 RUN apt-get update && apt-get install -y \
     curl

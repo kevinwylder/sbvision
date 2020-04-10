@@ -14,18 +14,20 @@ import (
 type SBDatabase struct {
 	db *sql.DB
 
-	// in session.go
-	addSession *sql.Stmt
-
 	// in contribute.go
 	addFrame    *sql.Stmt
 	addBounds   *sql.Stmt
 	addRotation *sql.Stmt
 
 	// in dataset.go
-	dataWhereVideo      *sql.Stmt
-	dataWhereFrame      *sql.Stmt
+	dataWhereVideo *sql.Stmt
+
+	// in search.go
 	dataNearestRotation *sql.Stmt
+
+	// in user.go
+	addUser *sql.Stmt
+	getUser *sql.Stmt
 
 	// in video.go
 	addVideo      *sql.Stmt
@@ -51,9 +53,6 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 	sb := &SBDatabase{db: db}
 
 	var prepFunctions = [](func() error){
-		// in session.go
-		sb.prepareAddSession,
-
 		// in contribute.go
 		sb.prepareAddFrame,
 		sb.prepareAddBounds,
@@ -61,8 +60,13 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 
 		// in dataset.go
 		sb.prepareDataWhereVideo,
-		sb.prepareDataWhereFrame,
+
+		// in search.go
 		sb.prepareDataNearestRotation,
+
+		// in user.go
+		sb.prepareAddUser,
+		sb.prepareGetUser,
 
 		// in video.go
 		sb.prepareAddVideo,

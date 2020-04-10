@@ -28,14 +28,7 @@ func (ctx *serverContext) handleGetFrames(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	data, err := json.Marshal(page)
-	if err != nil {
-		fmt.Println("Error formatting video frame data", err)
-		http.Error(w, "Could not format response", 500)
-		return
-	}
-
-	w.Write(data)
+	json.NewEncoder(w).Encode(page)
 }
 
 func (ctx *serverContext) handleAPIImage(w http.ResponseWriter, r *http.Request) {

@@ -15,8 +15,8 @@ VALUES (?, ?, ?, ?);
 }
 
 // AddFrame adds the given frame to the database and fills in the autoincrement
-func (sb *SBDatabase) AddFrame(frame *sbvision.Frame, session *sbvision.Session, hash int64) error {
-	result, err := sb.addFrame.Exec(frame.VideoID, frame.Time, hash, session.ID)
+func (sb *SBDatabase) AddFrame(frame *sbvision.Frame, user *sbvision.User, hash int64) error {
+	result, err := sb.addFrame.Exec(frame.VideoID, frame.Time, hash, user.ID)
 	if err != nil {
 		return fmt.Errorf("\n\tError adding frame: %s", err.Error())
 	}
@@ -35,8 +35,8 @@ INSERT INTO bounds (session_id, frame_id, x, y, width, height) VALUES (?, ?, ?, 
 }
 
 // AddBounds stores the bounds in the database and updateas the bounds pointer with the new ID
-func (sb *SBDatabase) AddBounds(bounds *sbvision.Bound, session *sbvision.Session) error {
-	result, err := sb.addBounds.Exec(session.ID, bounds.FrameID, bounds.X, bounds.Y, bounds.Width, bounds.Height)
+func (sb *SBDatabase) AddBounds(bounds *sbvision.Bound, user *sbvision.User) error {
+	result, err := sb.addBounds.Exec(user.ID, bounds.FrameID, bounds.X, bounds.Y, bounds.Width, bounds.Height)
 	if err != nil {
 		return fmt.Errorf("\n\tError executing addBounds: %s", err.Error())
 	}
@@ -59,12 +59,12 @@ INSERT INTO rotations (bounds_id, session_id, r, i, j, k) VALUES
 }
 
 // AddRotation adds the rotation to the database and fills out it's id
-func (sb *SBDatabase) AddRotation(rotation *sbvision.Rotation, session *sbvision.Session) error {
+func (sb *SBDatabase) AddRotation(rotation *sbvision.Rotation, user *sbvision.User) error {
 	result, err := sb.addRotation.Exec(
-		rotation.BoundID, session.ID, rotation.R, rotation.I, rotation.J, rotation.K,
-		rotation.BoundID, session.ID, rotation.K, -rotation.J, rotation.I, -rotation.R,
-		rotation.BoundID, session.ID, -rotation.K, rotation.J, -rotation.I, rotation.R,
-		rotation.BoundID, session.ID, -rotation.R, -rotation.I, -rotation.J, -rotation.K,
+		rotation.BoundID, user.ID, rotation.R, rotation.I, rotation.J, rotation.K,
+		rotation.BoundID, user.ID, rotation.K, -rotation.J, rotation.I, -rotation.R,
+		rotation.BoundID, user.ID, -rotation.K, rotation.J, -rotation.I, rotation.R,
+		rotation.BoundID, user.ID, -rotation.R, -rotation.I, -rotation.J, -rotation.K,
 	)
 	if err != nil {
 		return fmt.Errorf("\n\tError executing add rotation: %s", err.Error())

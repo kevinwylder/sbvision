@@ -25,30 +25,6 @@ func (sb *SBDatabase) DataWhereVideo(videoID int64, offset int64) (*sbvision.Fra
 	return result, nil
 }
 
-func (sb *SBDatabase) prepareDataWhereFrame() (err error) {
-	sb.dataWhereFrame, err = sb.prepareFramesWhere(`
-frames.image_hash = ? AND ABS(frames.time - ?) < 1000 AND frames.video_id = ?
-`)
-	return
-}
-
-// DataWhereFrame looks up a frame and returns annotated data about it
-func (sb *SBDatabase) DataWhereFrame(hash int64, time int64, videoID int64) (*sbvision.FramePage, error) {
-	rows, err := sb.dataWhereFrame.Query(hash, time, videoID, 0)
-	if err != nil {
-		return nil, fmt.Errorf("\n\tError querying SBDatabase.DataWhereFrame: %s", err.Error())
-	}
-	result, err := parseFrames(rows, 0)
-	if err != nil {
-		return nil, fmt.Errorf("\n\tError parsing SBDatabase.DataWhereFrame: %s", err.Error())
-	}
-	return result, nil
-}
-
-/**
- * Below are the "generic" parts of extracting a video frame.
-**/
-
 const parseLimit int64 = 500
 
 const frameColumns = `

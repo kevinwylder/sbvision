@@ -7,22 +7,21 @@ import (
 	"os"
 	"time"
 
+	"github.com/kevinwylder/sbvision"
+	"github.com/kevinwylder/sbvision/auth"
+	"github.com/kevinwylder/sbvision/database"
 	"github.com/kevinwylder/sbvision/media"
+	"github.com/kevinwylder/sbvision/media/video"
 
 	"github.com/gorilla/websocket"
-
-	"github.com/kevinwylder/sbvision"
-	"github.com/kevinwylder/sbvision/database"
-	"github.com/kevinwylder/sbvision/sbvideo"
-	"github.com/kevinwylder/sbvision/session"
 )
 
 type serverContext struct {
-	session  sbvision.SessionManager
 	assets   sbvision.MediaStorage
 	upgrader websocket.Upgrader
+	auth     *auth.JWTVerifier
 	db       *database.SBDatabase
-	proxy    *sbvideo.Proxy
+	proxy    *video.Proxy
 }
 
 func main() {
@@ -38,19 +37,16 @@ func main() {
 		}
 	}
 
-	session, err := session.NewRSASessionManager()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	server := &serverContext{
-		db:      db,
-		session: session,
-		proxy:   sbvideo.NewVideoProxy(db),
+		db:    db,
+		proxy: video.NewVideoProxy(db),
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 20 * 1024,
 			CheckOrigin:     func(r *http.Request) bool { return true },
+		},
+		auth: &auth.JWTVerifier{
+			ClaimsURL: "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_dHWlJDm4T/.well-known/jwks.json",
 		},
 	}
 

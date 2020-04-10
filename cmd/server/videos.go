@@ -61,21 +61,13 @@ func (ctx *serverContext) handleVideoPage(w http.ResponseWriter, r *http.Request
 	}
 
 	// wrap the list in a json object
-	data, err := json.Marshal(&struct {
+	json.NewEncoder(w).Encode(&struct {
 		Videos []sbvision.Video `json:"videos"`
 		Total  int64            `json:"total"`
 	}{
 		Videos: videos,
 		Total:  total,
 	})
-
-	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "could not get video list", 500)
-		return
-	}
-
-	w.Write(data)
 }
 
 func (ctx *serverContext) handleVideoThumbnail(w http.ResponseWriter, r *http.Request) {

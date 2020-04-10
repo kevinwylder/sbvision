@@ -1,4 +1,4 @@
-package sbvideo
+package video
 
 import (
 	"fmt"

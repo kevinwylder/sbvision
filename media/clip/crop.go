@@ -1,4 +1,4 @@
-package sbimage
+package clip
 
 import (
 	"fmt"
