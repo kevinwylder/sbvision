@@ -24,11 +24,6 @@ func (sd *AssetDirectory) PutBound(id int64, data io.Reader) error {
 	return sd.putAsset(sd.bound(id), data)
 }
 
-// PutFrame stores the data against the given data id
-func (sd *AssetDirectory) PutFrame(id int64, data io.Reader) error {
-	return sd.putAsset(sd.frame(id), data)
-}
-
 // PutThumbnail stores the data against the given data id
 func (sd *AssetDirectory) PutThumbnail(id int64, data io.Reader) error {
 	return sd.putAsset(sd.thumbnail(id), data)

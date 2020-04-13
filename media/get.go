@@ -7,11 +7,6 @@ func (sd *AssetDirectory) GetThumbnail(id int64) (*os.File, error) {
 	return os.Open(sd.thumbnail(id))
 }
 
-// GetFrame opens the frame file
-func (sd *AssetDirectory) GetFrame(id int64) (*os.File, error) {
-	return os.Open(sd.frame(id))
-}
-
 // GetBound opens the bound file
 func (sd *AssetDirectory) GetBound(id int64) (*os.File, error) {
 	return os.Open(sd.bound(id))

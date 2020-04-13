@@ -6,7 +6,7 @@ services:
     ports:
       - "1080:1080"
     environment:
-      DB_CREDS: "root:password@tcp(database)/sbvision"
+      DB_CREDS: "root:password@tcp(database)/skateboardvision"
       ASSET_DIR: "/data"
       PORT: "3000"
 
