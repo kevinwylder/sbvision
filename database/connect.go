@@ -14,14 +14,6 @@ import (
 type SBDatabase struct {
 	db *sql.DB
 
-	// in contribute.go
-	addFrame    *sql.Stmt
-	addBounds   *sql.Stmt
-	addRotation *sql.Stmt
-
-	// in dataset.go
-	dataWhereVideo *sql.Stmt
-
 	// in search.go
 	dataNearestRotation *sql.Stmt
 
@@ -31,7 +23,6 @@ type SBDatabase struct {
 
 	// in video.go
 	addVideo      *sql.Stmt
-	updateVideo   *sql.Stmt
 	getVideoByID  *sql.Stmt
 	getVideoPage  *sql.Stmt
 	getVideoCount *sql.Stmt
@@ -53,13 +44,6 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 	sb := &SBDatabase{db: db}
 
 	var prepFunctions = [](func() error){
-		// in contribute.go
-		sb.prepareAddFrame,
-		sb.prepareAddBounds,
-		sb.prepareAddRotation,
-
-		// in dataset.go
-		sb.prepareDataWhereVideo,
 
 		// in search.go
 		sb.prepareDataNearestRotation,

@@ -1,11 +1,10 @@
-package video
+package sources
 
 import (
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/kevinwylder/sbvision"
 )
@@ -23,7 +22,7 @@ type redditPage struct {
 // RedditPost are reddit comments as they come from the website
 type RedditPost struct {
 	ID        string `json:"id"`
-	Title     string `json:"title"`
+	PostTitle string `json:"title"`
 	Thumbnail string `json:"thumbnail"`
 	Media     struct {
 		RedditVideo struct {
@@ -97,14 +96,19 @@ func GetRedditPost(url string) (*RedditPost, error) {
 	return &data[0].Data.Children[0].Data, nil
 }
 
-// Update puts data from reddit comments into the video
-func (info *RedditPost) Update(video *sbvision.Video) {
-	video.Title = info.Title
-	video.Duration = info.Media.RedditVideo.Duration
-	video.Type = sbvision.RedditVideo
-	video.Format = "video/mp4"
-	video.LinkExp = time.Now().AddDate(0, 1, 0)
-	video.URL = info.Media.RedditVideo.URL
+// Title gets the post title
+func (info *RedditPost) Title() string {
+	return info.PostTitle
+}
+
+// Type is the type of the source
+func (info *RedditPost) Type() sbvision.VideoType {
+	return sbvision.RedditVideo
+}
+
+// URL returns the url of the video
+func (info *RedditPost) URL() string {
+	return info.Media.RedditVideo.URL
 }
 
 // GetThumbnail gets the thumbnail from this posts and stores it in the key value store

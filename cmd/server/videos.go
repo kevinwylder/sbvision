@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/kevinwylder/sbvision/media/sources"
+
 	"github.com/kevinwylder/sbvision"
 )
 
@@ -89,4 +91,43 @@ func (ctx *serverContext) handleVideoThumbnail(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		fmt.Println("Error writing image response", err)
 	}
+}
+
+func (ctx *serverContext) handleVideoStream(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (ctx *serverContext) handleVideoDiscovery(w http.ResponseWriter, r *http.Request) {
+	user, err := ctx.auth.User(r.Header.Get("Identity"))
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Unauthorized", 401)
+		return
+	}
+
+	var request struct {
+		URL string `json:"url"`
+	}
+	err = json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		http.Error(w, "Bad request", 400)
+		return
+	}
+
+	source, err := sources.FindVideoSource(request.URL)
+	if err != nil {
+		http.Error(w, "Error getting video: "+err.Error(), 400)
+		return
+	}
+
+	ticket, err := ctx.discoveryQueue.Enqueue(user, source)
+	if err != nil {
+		http.Error(w, "Queue is full, come back later", 503)
+		return
+	}
+	json.NewEncoder(w).Encode(ticket)
+}
+
+func (ctx *serverContext) handleVideoStatus(w http.ResponseWriter, r *http.Request) {
+
 }

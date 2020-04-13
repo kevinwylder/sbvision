@@ -34,9 +34,9 @@ func NewAssetDirectory(dir string) (*AssetDirectory, error) {
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCannot create bound directory: %s", err.Error())
 	}
-	err = os.MkdirAll(path.Join(dir, "videos"), 0755)
+	err = os.MkdirAll(path.Join(dir, "video"), 0755)
 	if err != nil {
-		return nil, fmt.Errorf("\n\tCannot create videos directory: %s", err.Error())
+		return nil, fmt.Errorf("\n\tCannot create video directory: %s", err.Error())
 	}
 	return &AssetDirectory{
 		path: dir,

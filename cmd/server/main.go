@@ -17,11 +17,11 @@ import (
 )
 
 type serverContext struct {
-	assets   sbvision.MediaStorage
-	upgrader websocket.Upgrader
-	auth     *auth.JWTVerifier
-	db       *database.SBDatabase
-	proxy    *video.Proxy
+	assets         sbvision.MediaStorage
+	upgrader       websocket.Upgrader
+	auth           *auth.JWTVerifier
+	discoveryQueue *video.ProcessQueue
+	db             *database.SBDatabase
 }
 
 func main() {
@@ -38,21 +38,19 @@ func main() {
 	}
 
 	server := &serverContext{
-		db:    db,
-		proxy: video.NewVideoProxy(db),
+		db: db,
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 20 * 1024,
 			CheckOrigin:     func(r *http.Request) bool { return true },
 		},
-		auth: &auth.JWTVerifier{
-			ClaimsURL: "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_dHWlJDm4T/.well-known/jwks.json",
-		},
+		auth: auth.NewJWTVerifier(db, "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_dHWlJDm4T/.well-known/jwks.json"),
 	}
 
 	if server.assets, err = media.NewAssetDirectory(os.Getenv("ASSET_DIR")); err != nil {
 		log.Fatal(err)
 	}
+	server.discoveryQueue = video.NewProcessQueue(server.assets, db)
 
 	fmt.Println("Starting server")
 	err = http.ListenAndServe(":"+os.Getenv("PORT"), server)

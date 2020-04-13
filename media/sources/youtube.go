@@ -1,19 +1,15 @@
-package video
+package sources
 
 import (
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"path"
-	"regexp"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/kevinwylder/sbvision"
 )
@@ -21,7 +17,7 @@ import (
 // YoutubeDl is the information youtube-dl 's .info.json file structure
 type YoutubeDl struct {
 	Thumbnail string `json:"thumbnail"`
-	Title     string `json:"title"`
+	PostTitle string `json:"title"`
 	DisplayID string `json:"display_id"`
 	Duration  int64  `json:"duration"`
 	Formats   []struct {
@@ -39,7 +35,6 @@ func GetYoutubeDl(url string) (*YoutubeDl, error) {
 		return nil, fmt.Errorf("\n\tCannot create tmp dir: %s", err.Error())
 	}
 	defer os.RemoveAll(directory)
-	log.Println("Downloading video info", url, "to", directory)
 
 	// run the youtube-dl command to get the info
 	cmd := exec.Command("youtube-dl", url, "--write-info-json", "--skip-download")
@@ -77,31 +72,28 @@ func GetYoutubeDl(url string) (*YoutubeDl, error) {
 	return &info, nil
 }
 
-// Update puts this info into a video struct
-func (info *YoutubeDl) Update(video *sbvision.Video) {
-	video.Title = info.Title
-	video.Duration = info.Duration
-	video.Type = sbvision.YoutubeVideo
-	video.Format = "video/mp4"
+// Title is the title of the video
+func (info *YoutubeDl) Title() string {
+	return info.PostTitle
+}
 
+// Type is YoutubeVideo
+func (info *YoutubeDl) Type() sbvision.VideoType {
+	return sbvision.YoutubeVideo
+}
+
+// URL is the media url
+func (info *YoutubeDl) URL() string {
 	var largestFormat int64
+	var url string
 	for _, format := range info.Formats {
 		if format.Filesize < largestFormat {
 			continue
 		}
 		largestFormat = format.Filesize
-		video.URL = format.URL
+		url = format.URL
 	}
-
-	expireMatcher := regexp.MustCompile(`expire=(\d+)`)
-	expires := expireMatcher.FindStringSubmatch(video.URL)
-	if len(expires) == 0 {
-		video.LinkExp = time.Now()
-	} else {
-		unix, _ := strconv.ParseInt(expires[1], 10, 64)
-		video.LinkExp = time.Unix(unix, 0)
-	}
-
+	return url
 }
 
 // GetThumbnail downloads the thumbnail for the video

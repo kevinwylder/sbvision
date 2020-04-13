@@ -30,7 +30,13 @@ func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ctx.handleVideoThumbnail(w, r)
 
 	case "/video/stream":
-		ctx.proxy.ServeHTTP(w, r)
+		ctx.handleVideoStream(w, r)
+
+	case "/video/add":
+		ctx.handleVideoDiscovery(w, r)
+
+	case "/video/status":
+		ctx.handleVideoStatus(w, r)
 
 	case "/frames":
 		ctx.handleGetFrames(w, r)

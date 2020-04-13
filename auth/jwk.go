@@ -9,13 +9,6 @@ import (
 	"github.com/lestrrat-go/jwx/jwk"
 )
 
-// JWTVerifier stores the claims of a pool to verify tokens
-// ClaimsURL should be the .well-known/jwk.json directory of the auth server
-type JWTVerifier struct {
-	ClaimsURL string
-	keyset    *jwk.Set
-}
-
 func (j *JWTVerifier) getKey(token *jwt.Token) (interface{}, error) {
 
 	keyID, ok := token.Header["kid"].(string)
@@ -24,7 +17,7 @@ func (j *JWTVerifier) getKey(token *jwt.Token) (interface{}, error) {
 	}
 
 	if j.keyset == nil {
-		keyset, err := jwk.FetchHTTP(j.ClaimsURL)
+		keyset, err := jwk.FetchHTTP(j.claimsURL)
 		if err != nil {
 			return nil, err
 		}

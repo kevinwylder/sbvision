@@ -15,4 +15,8 @@ type MediaStorage interface {
 
 	GetThumbnail(id int64) (*os.File, error)
 	PutThumbnail(id int64, data io.Reader) error
+
+	GetVideo(id int64) (*os.File, error)
+	PutVideo(id int64, data io.Reader) error
+	RemoveVideo(id int64) error
 }

@@ -16,3 +16,8 @@ func (sd *AssetDirectory) GetFrame(id int64) (*os.File, error) {
 func (sd *AssetDirectory) GetBound(id int64) (*os.File, error) {
 	return os.Open(sd.bound(id))
 }
+
+// GetVideo opens the associted video file
+func (sd *AssetDirectory) GetVideo(id int64) (*os.File, error) {
+	return os.Open(sd.video(id))
+}

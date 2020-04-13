@@ -21,3 +21,7 @@ func (sd *AssetDirectory) frame(id int64) string {
 func (sd *AssetDirectory) bound(id int64) string {
 	return path.Join(sd.path, fmt.Sprintf("bound/%d.png", id))
 }
+
+func (sd *AssetDirectory) video(id int64) string {
+	return path.Join(sd.path, fmt.Sprintf("video/%d.mp4", id))
+}
