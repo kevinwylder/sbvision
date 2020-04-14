@@ -37,10 +37,6 @@ func (ctx *serverContext) handleGetUserInfo(w http.ResponseWriter, r *http.Reque
 
 	case http.MethodGet:
 		user, err = ctx.db.GetUser(email)
-		if err != nil {
-			http.Error(w, "Could not find that user", 404)
-			return
-		}
 
 	}
 

@@ -1,66 +1,36 @@
 package video
 
 import (
-	"crypto/rand"
-	"encoding/base64"
-	"fmt"
 	"os"
-	"time"
+
+	"github.com/kevinwylder/sbvision/media/sources"
 
 	"github.com/kevinwylder/sbvision"
+	"github.com/kevinwylder/sbvision/media"
 )
-
-// ProcessRequest is a request to process the given video source
-type ProcessRequest struct {
-	User       *sbvision.User
-	Source     sbvision.VideoSource
-	ID         string `json:"id"`
-	Status     string `json:"status"`
-	IsComplete bool   `json:"complete"`
-	WasSuccess bool   `json:"success"`
-}
 
 // Database is the interface to persistently store a video
 type Database interface {
-	AddVideo(video *sbvision.Video) error
+	AddVideo(video *sbvision.Video, user *sbvision.User) error
 	RemoveVideo(video *sbvision.Video) error
 }
 
 // ProcessQueue is a queue of pending or processing requests
 type ProcessQueue struct {
-	assets   sbvision.MediaStorage
+	assets   *media.AssetDirectory
 	database Database
 
-	requests map[string]*ProcessRequest
+	requests map[int64]*ProcessRequest
 	queue    chan *ProcessRequest
 }
 
-// Enqueue adds this source to the list of videos to process
-func (q *ProcessQueue) Enqueue(user *sbvision.User, source sbvision.VideoSource) (*ProcessRequest, error) {
-	data := make([]byte, 10)
-	rand.Reader.Read(data)
-	request := &ProcessRequest{
-		User:   user,
-		Source: source,
-		ID:     base64.URLEncoding.EncodeToString(data),
-	}
-
-	select {
-	case q.queue <- request:
-		q.requests[request.ID] = request
-		return request, nil
-	default:
-		return nil, fmt.Errorf("Queue is full, please come back later")
-	}
-}
-
 // NewProcessQueue creates a queue wrapping the single ffmpeg process allowed
-func NewProcessQueue(assets sbvision.MediaStorage, database Database) *ProcessQueue {
+func NewProcessQueue(assets *media.AssetDirectory, database Database) *ProcessQueue {
 	queue := ProcessQueue{
 		assets:   assets,
 		database: database,
 		queue:    make(chan *ProcessRequest, 20),
-		requests: make(map[string]*ProcessRequest),
+		requests: make(map[int64]*ProcessRequest),
 	}
 	go queue.start()
 	return &queue
@@ -78,43 +48,75 @@ func (q *ProcessQueue) processRequest(request *ProcessRequest) {
 		request.finish(q)
 	}()
 
-	process, err := StartDownload(request.Source.URL())
+	request.setStatus("Starting Request")
+	var err error
+	request.source, err = sources.FindVideoSource(request.url)
+	if err != nil {
+		request.setStatus("Error finding video" + err.Error())
+		return
+	}
+
+	request.setStatus("found " + request.source.Title())
+	process, err := StartDownload(request.source.URL())
 	if err != nil {
 		request.setStatus(err.Error())
 		return
 	}
 
+	// wait for the resolution, fps, and duration to be decoded
 	progress := process.Progress()
-	for {
-		text, finished := <-progress
-		if finished {
-			break
-		} else {
-			request.setStatus("Downloading Video - " + text)
+	_, more := <-progress
+	if !more {
+		// bad sign, was there a problem with the source?
+		if err := process.Error(); err != nil {
+			request.setStatus("Error decoding source: " + err.Error())
+			return
 		}
 	}
 
-	err = process.Error()
-	if err != nil {
-		request.setStatus(err.Error())
-		return
-	}
-
 	request.setStatus("Adding to the database")
-	process.Info.Title = request.Source.Title()
-	process.Info.Type = request.Source.Type()
-	process.Info.OriginURL = request.Source.URL()
-	err = q.database.AddVideo(&process.Info)
+	process.Info.Title = request.source.Title()
+	process.Info.Type = request.source.Type()
+	err = q.database.AddVideo(&process.Info, request.user)
 	if err != nil {
 		request.setStatus("Failed to add data to the database - " + err.Error())
+		process.Cancel()
 		return
 	}
-	// remove video info if not successful
+	// remove video info from the database if not successful
 	defer func() {
 		if !request.WasSuccess {
 			q.database.RemoveVideo(&process.Info)
 		}
 	}()
+
+	request.setStatus("Getting thumbnail")
+	data, err := request.source.GetThumbnail()
+	if err != nil {
+		request.setStatus("Error getting thumbnail - " + err.Error())
+		return
+	}
+	err = q.assets.PutThumbnail(process.Info.ID, data)
+	if err != nil {
+		request.setStatus("Error storing thumbnail - " + err.Error())
+		return
+	}
+
+	// wait for the rest of the video to be encoded, send pretty info to UI
+	request.Info = &process.Info
+	for {
+		time, more := <-progress
+		if time != "" {
+			request.setStatus("Scanning Video - " + time + " of " + process.Info.Duration)
+		}
+		if !more {
+			break
+		}
+	}
+	if err = process.Error(); err != nil {
+		request.setStatus(err.Error())
+		return
+	}
 
 	request.setStatus("Storing Video")
 	file, err := os.Open(process.OutputPath)
@@ -128,44 +130,8 @@ func (q *ProcessQueue) processRequest(request *ProcessRequest) {
 		return
 	}
 	file.Close()
-	// remove video file if not successful
-	defer func() {
-		if !request.WasSuccess {
-			q.assets.RemoveVideo(process.Info.ID)
-		}
-	}()
-
-	request.setStatus("getting thumbnail")
-	data, err := request.Source.GetThumbnail()
-	if err != nil {
-		request.setStatus("Error getting thumbnail - " + err.Error())
-		return
-	}
-	err = q.assets.PutThumbnail(process.Info.ID, data)
-	if err != nil {
-		request.setStatus("Error storing thumbnail - " + err.Error())
-		return
-	}
 
 	request.setStatus("Complete")
 	request.WasSuccess = true
 
-}
-
-func (r *ProcessRequest) finish(q *ProcessQueue) {
-	r.IsComplete = true
-	defer func() {
-		time.Sleep(time.Minute)
-		delete(q.requests, r.ID)
-	}()
-}
-
-func (r *ProcessRequest) setStatus(status string) {
-	r.Status = status
-}
-
-// Find looks up the request for the given id
-func (q *ProcessQueue) Find(id string) (*ProcessRequest, bool) {
-	request, exists := q.requests[id]
-	return request, exists
 }

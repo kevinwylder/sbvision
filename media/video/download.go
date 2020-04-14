@@ -2,10 +2,11 @@ package video
 
 import (
 	"bufio"
+	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"regexp"
 
 	"github.com/kevinwylder/sbvision"
@@ -24,7 +25,7 @@ type FfmpegProcess struct {
 
 // StartDownload downloads and embeds a frame counter into the video
 func StartDownload(source string) (*FfmpegProcess, error) {
-	tmp, err := ioutil.TempFile("sbvisionvideo", source)
+	tmp, err := os.Create(path.Join(os.TempDir(), base64.URLEncoding.EncodeToString([]byte(source))))
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +36,7 @@ func StartDownload(source string) (*FfmpegProcess, error) {
 
 	process := FfmpegProcess{
 		OutputPath: tmp.Name(),
-		process:    exec.Command("ffmpeg", "-i", source, "-vf", generateFfmpegFilter(16, 4, 2), "-y", tmp.Name()),
+		process:    exec.Command("ffmpeg", "-i", source, "-vf", generateFfmpegFilter(16, 4, 2), "-y", "-f", "mp4", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "0", tmp.Name()),
 		progress:   make(chan string),
 	}
 
@@ -62,34 +63,36 @@ func (p *FfmpegProcess) Cancel() error {
 }
 
 func (p *FfmpegProcess) start() {
+	reader, err := p.process.StderrPipe()
+	if err != nil {
+		p.err = err
+		return
+	}
+
 	p.err = p.process.Start()
 	if p.err != nil {
 		close(p.progress)
 		return
 	}
 
-	reader, err := p.process.StderrPipe()
-	if err != nil {
-		p.err = err
+	go func() {
+		p.err = p.process.Wait()
 		close(p.progress)
-		return
-	}
+	}()
 
-	p.reader = bufio.NewReaderSize(reader, 1024)
+	p.reader = bufio.NewReaderSize(reader, 1024*10)
 
 	// read the stream info
 	err = p.readInfo()
 	if err != nil {
 		p.err = fmt.Errorf("%s\ndid not finish parsing video info", err.Error())
-		p.process.Wait()
-		close(p.progress)
 		return
 	}
 
 	// push the progress to the stream
 	scrapeTime := regexp.MustCompile(`time=([\d:.]+)`)
 	for {
-		line, err := p.reader.ReadBytes('\n')
+		line, err := p.reader.ReadBytes('\r')
 		if err != nil {
 			reader.Close()
 			break
@@ -100,8 +103,5 @@ func (p *FfmpegProcess) start() {
 			p.progress <- string(matches[1])
 		}
 	}
-
-	p.err = p.process.Wait()
-	close(p.progress)
 
 }

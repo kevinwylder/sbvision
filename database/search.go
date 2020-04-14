@@ -8,7 +8,7 @@ import (
 
 func (sb *SBDatabase) prepareDataNearestRotation() (err error) {
 	sb.dataNearestRotation, err = sb.db.Prepare(`
-SELECT id, bounds_id, r, i, j, k
+SELECT id, bound_id, r, i, j, k
 FROM rotations
 ORDER BY 
 	(rotations.r * ?) +

@@ -9,6 +9,7 @@ import (
 
 	"github.com/kevinwylder/sbvision"
 	"github.com/kevinwylder/sbvision/database"
+	"github.com/kevinwylder/sbvision/media"
 
 	"github.com/gorilla/websocket"
 )
@@ -16,7 +17,7 @@ import (
 type visualizor struct {
 	stopped bool
 	conn    *websocket.Conn
-	assets  sbvision.MediaStorage
+	assets  *media.AssetDirectory
 	db      *database.SBDatabase
 	cache   databaseCache
 

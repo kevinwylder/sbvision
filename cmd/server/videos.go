@@ -5,71 +5,24 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-
-	"github.com/kevinwylder/sbvision/media/sources"
-
-	"github.com/kevinwylder/sbvision"
+	"time"
 )
 
 func (ctx *serverContext) handleVideoPage(w http.ResponseWriter, r *http.Request) {
-	var videos []sbvision.Video
-	var total int64
-	var err error
-
-	dispatchErr := urlParamDispatch(r.Form, []idDispatch{
-		idDispatch{
-			description: "a page of video results",
-			keys:        []string{"offset", "count"},
-			handler: func(ids []int64) {
-				offset, count := ids[0], ids[1]
-
-				videos, err = ctx.db.GetVideos(offset, count)
-				if err != nil {
-					http.Error(w, "Error listing videos", 500)
-					return
-				}
-
-				total, err = ctx.db.GetVideoCount()
-				if err != nil {
-					http.Error(w, "Error enumerating videos", 500)
-					return
-				}
-			},
-		},
-		idDispatch{
-			description: "A single video",
-			keys:        []string{"id"},
-			handler: func(ids []int64) {
-				videoID := ids[0]
-				video, err := ctx.db.GetVideoByID(videoID)
-				if err != nil {
-					http.Error(w, "not found", 404)
-					return
-				}
-				videos = append(videos, *video)
-				total = 1
-			},
-		},
-	})
-
-	if dispatchErr != nil {
-		http.Error(w, dispatchErr.Error(), 400)
-		return
-	}
-
+	user, err := ctx.auth.User(r.Header.Get("Identity"))
 	if err != nil {
-		fmt.Println(err)
+		http.Error(w, "Unauthorized", 401)
 		return
 	}
 
-	// wrap the list in a json object
-	json.NewEncoder(w).Encode(&struct {
-		Videos []sbvision.Video `json:"videos"`
-		Total  int64            `json:"total"`
-	}{
-		Videos: videos,
-		Total:  total,
-	})
+	videos, err := ctx.db.GetVideos(user)
+	if err != nil {
+		http.Error(w, "An error occured", 500)
+		return
+	}
+
+	w.Header().Set("Cache-Control", "no-cache")
+	json.NewEncoder(w).Encode(videos)
 }
 
 func (ctx *serverContext) handleVideoThumbnail(w http.ResponseWriter, r *http.Request) {
@@ -114,13 +67,7 @@ func (ctx *serverContext) handleVideoDiscovery(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	source, err := sources.FindVideoSource(request.URL)
-	if err != nil {
-		http.Error(w, "Error getting video: "+err.Error(), 400)
-		return
-	}
-
-	ticket, err := ctx.discoveryQueue.Enqueue(user, source)
+	ticket, err := ctx.discoveryQueue.Enqueue(user, request.URL)
 	if err != nil {
 		http.Error(w, "Queue is full, come back later", 503)
 		return
@@ -129,5 +76,38 @@ func (ctx *serverContext) handleVideoDiscovery(w http.ResponseWriter, r *http.Re
 }
 
 func (ctx *serverContext) handleVideoStatus(w http.ResponseWriter, r *http.Request) {
+	user, err := ctx.auth.User(r.Form.Get("identity"))
+	if err != nil {
+		http.Error(w, "Unauthorized", 401)
+		return
+	}
 
+	request, exists := ctx.discoveryQueue.Find(user)
+	if !exists {
+		http.Error(w, "Not Found", 404)
+		return
+	}
+
+	socket, err := ctx.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		http.Error(w, "Could not open socket", 500)
+		return
+	}
+
+	events, done := request.Subscribe()
+	defer done()
+
+	ticker := time.NewTicker(time.Second * 5)
+	for {
+		var err error
+		select {
+		case <-events:
+			err = socket.WriteJSON(request)
+		case <-ticker.C:
+			err = socket.WriteJSON(request)
+		}
+		if err != nil {
+			socket.Close()
+		}
+	}
 }

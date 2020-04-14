@@ -3,7 +3,6 @@ package video
 import (
 	"regexp"
 	"strconv"
-	"strings"
 )
 
 type hook struct {
@@ -29,18 +28,17 @@ func (p *FfmpegProcess) readInfo() error {
 			},
 		},
 		hook{
-			matcher: regexp.MustCompile(`Stream #\d+:.*: Video:.*, (\d+x\d+).*, (\d+.?\d*) fps`),
+			matcher: regexp.MustCompile(`Stream #\d+:.*: Video:.*, (\d+)x(\d+).*, (\d+.?\d*) fps`),
 			handler: func(data [][]byte) {
-				resolution := strings.Split(string(data[1]), ":")
-				p.Info.Width, err = strconv.ParseInt(resolution[0], 10, 64)
+				p.Info.Width, err = strconv.ParseInt(string(data[1]), 10, 64)
 				if err != nil {
 					return
 				}
-				p.Info.Height, err = strconv.ParseInt(resolution[1], 10, 64)
+				p.Info.Height, err = strconv.ParseInt(string(data[2]), 10, 64)
 				if err != nil {
 					return
 				}
-				p.Info.FPS, err = strconv.ParseFloat(string(data[2]), 64)
+				p.Info.FPS, err = strconv.ParseFloat(string(data[3]), 64)
 			},
 		},
 	}

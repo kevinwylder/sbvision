@@ -22,10 +22,9 @@ type SBDatabase struct {
 	getUser *sql.Stmt
 
 	// in video.go
-	addVideo      *sql.Stmt
-	getVideoByID  *sql.Stmt
-	getVideoPage  *sql.Stmt
-	getVideoCount *sql.Stmt
+	addVideo    *sql.Stmt
+	getVideos   *sql.Stmt
+	removeVideo *sql.Stmt
 }
 
 // ConnectToDatabase waits for a sql connection then prepares queries for runtime
@@ -44,7 +43,6 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 	sb := &SBDatabase{db: db}
 
 	var prepFunctions = [](func() error){
-
 		// in search.go
 		sb.prepareDataNearestRotation,
 
@@ -54,10 +52,8 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 
 		// in video.go
 		sb.prepareAddVideo,
-		sb.prepareGetVideoByID,
-		sb.prepareUpdateVideo,
 		sb.prepareGetVideos,
-		sb.prepareGetVideoCount,
+		sb.prepareRemoveVideo,
 	}
 
 	for _, f := range prepFunctions {

@@ -32,16 +32,13 @@ func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/video/stream":
 		ctx.handleVideoStream(w, r)
 
-	case "/video/add":
+	case "/video/upload":
 		ctx.handleVideoDiscovery(w, r)
 
 	case "/video/status":
 		ctx.handleVideoStatus(w, r)
 
-	case "/frames":
-		ctx.handleGetFrames(w, r)
-
-	case "/image":
+	case "/bound":
 		ctx.handleAPIImage(w, r)
 
 	case "/user":

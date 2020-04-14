@@ -11,19 +11,23 @@ type User struct {
 
 // Video is a generic video source
 type Video struct {
-	ID       int64     `json:"id"`
-	Title    string    `json:"title"`
-	Format   string    `json:"format"`
-	Width    int64     `json:"width"`
-	Height   int64     `json:"height"`
-	FPS      float64   `json:"fps"`
-	Duration string    `json:"duration"`
-	Type     VideoType `json:"type"`
+	ID         int64     `json:"id"`
+	Title      string    `json:"title"`
+	Format     string    `json:"format"`
+	Width      int64     `json:"width"`
+	Height     int64     `json:"height"`
+	FPS        float64   `json:"fps"`
+	Duration   string    `json:"duration"`
+	Type       VideoType `json:"type"`
+	UploadedAt string    `json:"uploaded_at"`
 }
 
 // Clip is part of a video that has a trick
 type Clip struct {
 	ID       int64    `json:"id"`
+	VideoID  int64    `json:"video"`
+	Start    int64    `json:"start"`
+	End      int64    `json:"end"`
 	Username string   `json:"clipped_by"`
 	Tricks   []string `json:"tricks"`
 	Bounds   []Bound  `json:"bounds"`
@@ -42,6 +46,7 @@ type Bound struct {
 
 // Rotation is the angle that a user has voted for a bound
 type Rotation struct {
+	ID      int64   `json:"-"`
 	BoundID int64   `json:"-"`
 	R       float64 `json:"r"`
 	I       float64 `json:"i"`

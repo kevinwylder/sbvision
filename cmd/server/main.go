@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/kevinwylder/sbvision"
 	"github.com/kevinwylder/sbvision/auth"
 	"github.com/kevinwylder/sbvision/database"
 	"github.com/kevinwylder/sbvision/media"
@@ -17,7 +16,7 @@ import (
 )
 
 type serverContext struct {
-	assets         sbvision.MediaStorage
+	assets         *media.AssetDirectory
 	upgrader       websocket.Upgrader
 	auth           *auth.JWTVerifier
 	discoveryQueue *video.ProcessQueue
