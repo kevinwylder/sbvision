@@ -91,7 +91,7 @@ func GetRedditPost(url string) (*RedditPost, error) {
 		return nil, fmt.Errorf("\n\tEmpty top level comment")
 	}
 	if data[0].Data.Children[0].Data.Media.RedditVideo.IsGIF {
-		return nil, fmt.Errorf("\n\tUnsupported type: GIF")
+		// return nil, fmt.Errorf("\n\tUnsupported type: GIF")
 	}
 	return &data[0].Data.Children[0].Data, nil
 }
