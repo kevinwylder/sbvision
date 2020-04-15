@@ -1,8 +1,6 @@
 package video
 
 import (
-	"log"
-
 	"github.com/kevinwylder/sbvision"
 	"github.com/kevinwylder/sbvision/media"
 )
@@ -44,9 +42,7 @@ func (q *ProcessQueue) start() {
 func (q *ProcessQueue) processRequest(request *ProcessRequest) {
 	defer func() {
 		request.finish(q)
-		log.Println("Finished request")
 	}()
-	log.Println("Starting request", request.ID)
 
 	defer func() {
 		if !request.WasSuccess {

@@ -20,6 +20,7 @@ func (q *ProcessQueue) startDownload(video *sbvision.Video) *ffmpegProcess {
 		process:    exec.Command("ffmpeg", "-i", video.SourceURL, "-vf", generateFfmpegFilter(16, 4, 2), "-y", "-f", "mp4", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "0", destination),
 		progress:   make(chan string),
 	}
+	video.Format = "video/mp4"
 
 	go process.start(process.getDownloadProgress)
 

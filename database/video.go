@@ -17,6 +17,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 // AddVideo adds the video to the given user account
 func (sb *SBDatabase) AddVideo(video *sbvision.Video, user *sbvision.User) error {
 	now := time.Now().UTC().Format("2006-01-02 15:04:05")
+	if video.Type == sbvision.YoutubeVideo {
+		video.SourceURL = video.ShareURL
+	}
 	result, err := sb.addVideo.Exec(video.Title, video.Format, video.Width, video.Height, video.FPS, video.Duration, video.Type, user.ID, now, video.ShareURL, video.SourceURL)
 	if err != nil {
 		return err
@@ -24,6 +27,26 @@ func (sb *SBDatabase) AddVideo(video *sbvision.Video, user *sbvision.User) error
 	video.UploadedAt = now
 	video.ID, err = result.LastInsertId()
 	return err
+}
+func (sb *SBDatabase) prepareGetVideoByID() (err error) {
+	sb.getVideoByID, err = sb.db.Prepare(`
+SELECT id, title, format, width, height, fps, duration, type, upload_time, uploaded_by, share_url, source_url
+FROM videos 
+WHERE id = ?;
+	`)
+	return
+}
+
+// GetVideoByID gets the video and the uploader id
+func (sb *SBDatabase) GetVideoByID(id int64) (*sbvision.Video, int64, error) {
+	var video sbvision.Video
+	var uploader int64
+	result := sb.getVideoByID.QueryRow(id)
+	err := result.Scan(&video.ID, &video.Title, &video.Format, &video.Width, &video.Height, &video.FPS, &video.Duration, &video.Type, &video.UploadedAt, &uploader, &video.ShareURL, &video.SourceURL)
+	if err != nil {
+		return nil, 0, err
+	}
+	return &video, uploader, nil
 }
 
 func (sb *SBDatabase) prepareGetVideos() (err error) {

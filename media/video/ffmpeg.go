@@ -30,13 +30,15 @@ func (p *ffmpegProcess) start(parser func()) {
 		return
 	}
 
+	p.reader = bufio.NewReaderSize(reader, 1024*10)
+
 	p.err = p.process.Start()
 	if p.err != nil {
 		close(p.progress)
 		return
 	}
 
-	p.reader = bufio.NewReaderSize(reader, 1024*10)
+	go parser()
 
 	err = p.process.Wait()
 	if err != nil {
@@ -92,12 +94,6 @@ func (p *ffmpegProcess) readInfo() {
 			},
 		},
 		hook{
-			matcher: regexp.MustCompile(`Output #0, (\S+), to `),
-			handler: func(data [][]byte) {
-				p.Info.Format = "video/" + string(data[1])
-			},
-		},
-		hook{
 			matcher: regexp.MustCompile(`Stream #\d+:.*: Video:.*, (\d+)x(\d+).*, (\d+.?\d*) fps`),
 			handler: func(data [][]byte) {
 				p.Info.Width, p.err = strconv.ParseInt(string(data[1]), 10, 64)
@@ -112,13 +108,14 @@ func (p *ffmpegProcess) readInfo() {
 			},
 		},
 	}
+
 	var line []byte
 	i := 0
 	for i < len(hooks) {
 		line, p.err = p.reader.ReadBytes('\n')
 		if p.err != nil {
-			if i != 3 {
-				p.err = fmt.Errorf("Did not capture all info (%d of 3)", i)
+			if i != len(hooks) {
+				p.err = fmt.Errorf("Did not capture all info (%d of %d)", i, len(hooks))
 			}
 			return
 		}
@@ -133,5 +130,4 @@ func (p *ffmpegProcess) readInfo() {
 			i++
 		}
 	}
-
 }

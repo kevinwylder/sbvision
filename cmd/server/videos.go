@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -51,8 +53,52 @@ func (ctx *serverContext) handleVideoThumbnail(w http.ResponseWriter, r *http.Re
 	}
 }
 
-func (ctx *serverContext) handleVideoStream(w http.ResponseWriter, r *http.Request) {
+func (ctx *serverContext) handleVideoStreamInit(w http.ResponseWriter, r *http.Request) {
+	user, err := ctx.auth.User(r.FormValue("user"))
+	if err != nil {
+		http.Error(w, "Unauthorized", 401)
+		return
+	}
 
+	id, err := getIDs(r, []string{"id"})
+	if err != nil {
+		http.Error(w, "Missing video id", 400)
+		return
+	}
+
+	video, uploader, err := ctx.db.GetVideoByID(id[0])
+	if err != nil {
+		http.Error(w, "Cannot get video", 500)
+		return
+	}
+
+	if uploader != user.ID {
+		http.Error(w, "Not your video", 401)
+		return
+	}
+
+	random := make([]byte, 20)
+	rand.Read(random)
+	key := base64.URLEncoding.EncodeToString(random)
+	ctx.videoCache[key] = video
+
+	w.Header().Set("Location", "/video/stream?key="+key)
+	w.Header().Set("Cache-Control", "no-cache")
+	w.WriteHeader(307)
+}
+
+func (ctx *serverContext) handleVideoStream(w http.ResponseWriter, r *http.Request) {
+	key := r.FormValue("key")
+	if key == "" {
+		http.Error(w, "Missing key", 400)
+		return
+	}
+	video, exists := ctx.videoCache[key]
+	if !exists {
+		http.Error(w, "Not Found", 404)
+		return
+	}
+	http.ServeFile(w, r, ctx.assets.VideoPath(video))
 }
 
 func (ctx *serverContext) handleVideoDiscovery(w http.ResponseWriter, r *http.Request) {

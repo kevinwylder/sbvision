@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/kevinwylder/sbvision"
 	"github.com/kevinwylder/sbvision/auth"
 	"github.com/kevinwylder/sbvision/database"
 	"github.com/kevinwylder/sbvision/media"
@@ -20,6 +21,7 @@ type serverContext struct {
 	upgrader       websocket.Upgrader
 	auth           *auth.JWTVerifier
 	discoveryQueue *video.ProcessQueue
+	videoCache     map[string]*sbvision.Video
 	db             *database.SBDatabase
 }
 
@@ -43,7 +45,8 @@ func main() {
 			WriteBufferSize: 20 * 1024,
 			CheckOrigin:     func(r *http.Request) bool { return true },
 		},
-		auth: auth.NewJWTVerifier(db, "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_dHWlJDm4T/.well-known/jwks.json"),
+		auth:       auth.NewJWTVerifier(db, "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_dHWlJDm4T/.well-known/jwks.json"),
+		videoCache: make(map[string]*sbvision.Video),
 	}
 
 	if server.assets, err = media.NewAssetDirectory(os.Getenv("ASSET_DIR")); err != nil {

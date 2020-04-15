@@ -22,9 +22,10 @@ type SBDatabase struct {
 	getUser *sql.Stmt
 
 	// in video.go
-	addVideo    *sql.Stmt
-	getVideos   *sql.Stmt
-	removeVideo *sql.Stmt
+	addVideo     *sql.Stmt
+	getVideos    *sql.Stmt
+	getVideoByID *sql.Stmt
+	removeVideo  *sql.Stmt
 }
 
 // ConnectToDatabase waits for a sql connection then prepares queries for runtime
@@ -53,6 +54,7 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 		// in video.go
 		sb.prepareAddVideo,
 		sb.prepareGetVideos,
+		sb.prepareGetVideoByID,
 		sb.prepareRemoveVideo,
 	}
 

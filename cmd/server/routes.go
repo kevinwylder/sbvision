@@ -23,14 +23,17 @@ func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch r.URL.Path {
 
+	case "/video":
+		ctx.handleVideoStreamInit(w, r)
+
+	case "/video/stream":
+		ctx.handleVideoStream(w, r)
+
 	case "/video/list":
 		ctx.handleVideoPage(w, r)
 
 	case "/video/thumbnail":
 		ctx.handleVideoThumbnail(w, r)
-
-	case "/video/stream":
-		ctx.handleVideoStream(w, r)
 
 	case "/video/upload":
 		ctx.handleVideoDiscovery(w, r)
