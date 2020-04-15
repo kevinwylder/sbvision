@@ -16,6 +16,7 @@ import (
 
 // YoutubeDl is the information youtube-dl 's .info.json file structure
 type YoutubeDl struct {
+	url       string
 	Thumbnail string `json:"thumbnail"`
 	PostTitle string `json:"title"`
 	DisplayID string `json:"display_id"`
@@ -69,21 +70,12 @@ func GetYoutubeDl(url string) (*YoutubeDl, error) {
 	if err != nil {
 		return nil, err
 	}
+	info.url = url
 	return &info, nil
 }
 
-// Title is the title of the video
-func (info *YoutubeDl) Title() string {
-	return info.PostTitle
-}
-
-// Type is YoutubeVideo
-func (info *YoutubeDl) Type() sbvision.VideoType {
-	return sbvision.YoutubeVideo
-}
-
-// URL is the media url
-func (info *YoutubeDl) URL() string {
+// GetVideo is a constructor for Video
+func (info *YoutubeDl) GetVideo() sbvision.Video {
 	var largestFormat int64
 	var url string
 	for _, format := range info.Formats {
@@ -93,7 +85,12 @@ func (info *YoutubeDl) URL() string {
 		largestFormat = format.Filesize
 		url = format.URL
 	}
-	return url
+	return sbvision.Video{
+		Title:     info.PostTitle,
+		Type:      sbvision.YoutubeVideo,
+		SourceURL: url,
+		ShareURL:  info.url,
+	}
 }
 
 // GetThumbnail downloads the thumbnail for the video

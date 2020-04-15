@@ -6,6 +6,11 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/kevinwylder/sbvision"
+	"github.com/kevinwylder/sbvision/media/video"
+
+	"github.com/kevinwylder/sbvision/media/sources"
 )
 
 func (ctx *serverContext) handleVideoPage(w http.ResponseWriter, r *http.Request) {
@@ -58,20 +63,39 @@ func (ctx *serverContext) handleVideoDiscovery(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	var request struct {
-		URL string `json:"url"`
-	}
-	err = json.NewDecoder(r.Body).Decode(&request)
+	err = r.ParseMultipartForm(1024 * 5)
 	if err != nil {
-		http.Error(w, "Bad request", 400)
+		http.Error(w, "could not parse multipart form", 400)
 		return
 	}
 
-	ticket, err := ctx.discoveryQueue.Enqueue(user, request.URL)
+	url := r.Form.Get("url")
+	var ticket *video.ProcessRequest
+	if url != "" {
+		ticket, err = ctx.discoveryQueue.Enqueue(user, func() (sbvision.VideoSource, error) {
+			return sources.FindVideoSource(url)
+		})
+	} else {
+		title := r.Form.Get("title")
+		if title == "" {
+			http.Error(w, "either (url) or (title, video) required in form data", 400)
+			return
+		}
+		file, _, err := r.FormFile("video")
+		if err != nil {
+			http.Error(w, "video missing from form", 400)
+			return
+		}
+		ticket, err = ctx.discoveryQueue.Enqueue(user, func() (sbvision.VideoSource, error) {
+			return sources.VideoFileSource(file, title)
+		})
+
+	}
 	if err != nil {
-		http.Error(w, "Queue is full, come back later", 503)
+		http.Error(w, err.Error(), 400)
 		return
 	}
+
 	json.NewEncoder(w).Encode(ticket)
 }
 

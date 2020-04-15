@@ -11,10 +11,11 @@ import (
 
 // ProcessRequest is a request to process the given video source
 type ProcessRequest struct {
-	user    *sbvision.User
-	url     string
-	source  sbvision.VideoSource
-	onEvent chan struct{}
+	q         *ProcessQueue
+	user      *sbvision.User
+	getSource func() (sbvision.VideoSource, error)
+	source    sbvision.VideoSource
+	onEvent   chan struct{}
 
 	Info       *sbvision.Video `json:"info"`
 	ID         string          `json:"id"`
@@ -23,18 +24,23 @@ type ProcessRequest struct {
 	WasSuccess bool            `json:"success"`
 }
 
-// Enqueue adds this source to the list of videos to process
-func (q *ProcessQueue) Enqueue(user *sbvision.User, url string) (*ProcessRequest, error) {
+func randID() string {
+	data := make([]byte, 12)
+	rand.Reader.Read(data)
+	return base64.URLEncoding.EncodeToString(data)
+}
+
+// Enqueue adds this request to the queue so that it can be processed
+func (q *ProcessQueue) Enqueue(user *sbvision.User, getSource func() (sbvision.VideoSource, error)) (*ProcessRequest, error) {
 	if _, exists := q.Find(user); exists {
 		return nil, fmt.Errorf("Cannot do multiple requests at the same time by the same user")
 	}
-	data := make([]byte, 10)
-	rand.Reader.Read(data)
 	request := &ProcessRequest{
-		user:    user,
-		url:     url,
-		ID:      base64.URLEncoding.EncodeToString(data),
-		onEvent: make(chan struct{}),
+		q:         q,
+		user:      user,
+		getSource: getSource,
+		ID:        randID(),
+		onEvent:   make(chan struct{}),
 	}
 
 	select {
@@ -47,7 +53,7 @@ func (q *ProcessQueue) Enqueue(user *sbvision.User, url string) (*ProcessRequest
 	}
 }
 
-// Find looks up the request for the given email
+// Find looks up the request for the given email. (each user is only allowed once in line at a time)
 func (q *ProcessQueue) Find(user *sbvision.User) (*ProcessRequest, bool) {
 	request, exists := q.requests[user.ID]
 	if !exists || request.IsComplete {
@@ -61,7 +67,7 @@ func (r *ProcessRequest) finish(q *ProcessQueue) {
 	tmp := r.onEvent
 	r.onEvent = make(chan struct{})
 	close(tmp)
-	defer func() {
+	go func() {
 		time.Sleep(time.Minute)
 		if request, exists := q.requests[r.user.ID]; exists && request.ID == r.ID {
 			delete(q.requests, r.user.ID)
@@ -70,6 +76,7 @@ func (r *ProcessRequest) finish(q *ProcessQueue) {
 }
 
 func (r *ProcessRequest) setStatus(status string) {
+	fmt.Println("Status", status)
 	r.Status = status
 	tmp := r.onEvent
 	r.onEvent = make(chan struct{})

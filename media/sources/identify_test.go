@@ -31,7 +31,7 @@ func TestSources(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if source.Type() != sbvision.RedditVideo {
+		if source.GetVideo().Type != sbvision.RedditVideo {
 			t.Fail()
 		}
 	}
@@ -46,7 +46,7 @@ func TestSources(t *testing.T) {
 		if err != nil {
 			t.Fail()
 		}
-		if source.Type() != sbvision.YoutubeVideo {
+		if source.GetVideo().Type != sbvision.YoutubeVideo {
 			t.Fail()
 		}
 	}

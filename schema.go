@@ -20,6 +20,10 @@ type Video struct {
 	Duration   string    `json:"duration"`
 	Type       VideoType `json:"type"`
 	UploadedAt string    `json:"uploaded_at"`
+	// SourceURL is the url that the video was downloaded from, or a path if the file was uploaded
+	SourceURL string `json:"-"`
+	// ShareURL is an optional url that describes where to find the video in a web browser
+	ShareURL string `json:"-"`
 }
 
 // Clip is part of a video that has a trick
@@ -62,12 +66,12 @@ const (
 	YoutubeVideo VideoType = 1
 	// RedditVideo type means that this video has a record in the reddit_videos table
 	RedditVideo VideoType = 2
+	// UploadedVideo type means this video was uploaded
+	UploadedVideo VideoType = 3
 )
 
 // VideoSource is an interface that wraps all video sources (youtube, reddit, file upload...)
 type VideoSource interface {
-	Title() string
-	URL() string
-	Type() VideoType
+	GetVideo() Video
 	GetThumbnail() (io.ReadCloser, error)
 }

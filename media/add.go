@@ -28,8 +28,3 @@ func (sd *AssetDirectory) PutBound(id int64, data io.Reader) error {
 func (sd *AssetDirectory) PutThumbnail(id int64, data io.Reader) error {
 	return sd.putAsset(sd.thumbnail(id), data)
 }
-
-// PutVideo stores the data against the given data id
-func (sd *AssetDirectory) PutVideo(id int64, data io.Reader) error {
-	return sd.putAsset(sd.video(id), data)
-}

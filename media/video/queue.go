@@ -1,9 +1,7 @@
 package video
 
 import (
-	"os"
-
-	"github.com/kevinwylder/sbvision/media/sources"
+	"log"
 
 	"github.com/kevinwylder/sbvision"
 	"github.com/kevinwylder/sbvision/media"
@@ -46,92 +44,84 @@ func (q *ProcessQueue) start() {
 func (q *ProcessQueue) processRequest(request *ProcessRequest) {
 	defer func() {
 		request.finish(q)
+		log.Println("Finished request")
+	}()
+	log.Println("Starting request", request.ID)
+
+	defer func() {
+		if !request.WasSuccess {
+			q.database.RemoveVideo(request.Info)
+		}
 	}()
 
-	request.setStatus("Starting Request")
-	var err error
-	request.source, err = sources.FindVideoSource(request.url)
-	if err != nil {
-		request.setStatus("Error finding video" + err.Error())
+	request.setStatus("Getting source information")
+	if err := request.getSourceInformation(); err != nil {
+		request.setStatus("Error getting source information: " + err.Error())
 		return
 	}
 
-	request.setStatus("found " + request.source.Title())
-	process, err := StartDownload(request.source.URL())
-	if err != nil {
-		request.setStatus(err.Error())
+	request.setStatus("Getting video information")
+	if err := request.getVideoInformation(); err != nil {
+		request.setStatus("Error getting video info: " + err.Error())
 		return
-	}
-
-	// wait for the resolution, fps, and duration to be decoded
-	progress := process.Progress()
-	_, more := <-progress
-	if !more {
-		// bad sign, was there a problem with the source?
-		if err := process.Error(); err != nil {
-			request.setStatus("Error decoding source: " + err.Error())
-			return
-		}
 	}
 
 	request.setStatus("Adding to the database")
-	process.Info.Title = request.source.Title()
-	process.Info.Type = request.source.Type()
-	err = q.database.AddVideo(&process.Info, request.user)
-	if err != nil {
-		request.setStatus("Failed to add data to the database - " + err.Error())
-		process.Cancel()
-		return
-	}
-	// remove video info from the database if not successful
-	defer func() {
-		if !request.WasSuccess {
-			q.database.RemoveVideo(&process.Info)
-		}
-	}()
-
-	request.setStatus("Getting thumbnail")
-	data, err := request.source.GetThumbnail()
-	if err != nil {
-		request.setStatus("Error getting thumbnail - " + err.Error())
-		return
-	}
-	err = q.assets.PutThumbnail(process.Info.ID, data)
-	if err != nil {
-		request.setStatus("Error storing thumbnail - " + err.Error())
+	if err := request.addToDatabase(); err != nil {
+		request.setStatus("Failed to add to the database - " + err.Error())
 		return
 	}
 
-	// wait for the rest of the video to be encoded, send pretty info to UI
-	request.Info = &process.Info
-	for {
-		time, more := <-progress
-		if time != "" {
-			request.setStatus("Scanning Video - " + time + " of " + process.Info.Duration)
-		}
-		if !more {
-			break
-		}
-	}
-	if err = process.Error(); err != nil {
-		request.setStatus(err.Error())
+	//request.setStatus("Getting Thumbnail")
+	if err := request.getThumbnail(); err != nil {
+		request.setStatus("Failed to get thumbnail - " + err.Error())
 		return
 	}
 
-	request.setStatus("Storing Video")
-	file, err := os.Open(process.OutputPath)
-	if err != nil {
-		request.setStatus("Failed to open video file")
-		return
+	request.setStatus("Processing Video")
+	if err := request.processVideo(); err != nil {
+		request.setStatus("Error processing video - " + err.Error())
 	}
-	err = q.assets.PutVideo(process.Info.ID, file)
-	if err != nil {
-		request.setStatus("Failed to store video file")
-		return
-	}
-	file.Close()
 
 	request.setStatus("Complete")
 	request.WasSuccess = true
 
+}
+
+func (r *ProcessRequest) getSourceInformation() error {
+	source, err := r.getSource()
+	if err != nil {
+		return err
+	}
+	r.source = source
+	info := source.GetVideo()
+	r.Info = &info
+	return nil
+}
+
+func (r *ProcessRequest) getVideoInformation() error {
+	process := getInfo(r.Info)
+	for range <-process.Progress() {
+	}
+	return process.Error()
+}
+
+func (r *ProcessRequest) addToDatabase() error {
+	return r.q.database.AddVideo(r.Info, r.user)
+}
+
+func (r *ProcessRequest) getThumbnail() error {
+	data, err := r.source.GetThumbnail()
+	if err != nil {
+		return err
+	}
+	return r.q.assets.PutThumbnail(r.Info.ID, data)
+}
+
+func (r *ProcessRequest) processVideo() error {
+	process := r.q.startDownload(r.Info)
+	for status := range process.Progress() {
+		r.setStatus(status)
+	}
+	return process.Error()
 }

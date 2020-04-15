@@ -1,28 +1,34 @@
 package database
 
-import "github.com/kevinwylder/sbvision"
+import (
+	"time"
+
+	"github.com/kevinwylder/sbvision"
+)
 
 func (sb *SBDatabase) prepareAddVideo() (err error) {
 	sb.addVideo, err = sb.db.Prepare(`
-INSERT INTO videos (title, format, width, height, fps, duration, type, uploaded_by)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO videos (title, format, width, height, fps, duration, type, uploaded_by, upload_time, share_url, source_url)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 	`)
 	return
 }
 
 // AddVideo adds the video to the given user account
 func (sb *SBDatabase) AddVideo(video *sbvision.Video, user *sbvision.User) error {
-	result, err := sb.addVideo.Exec(video.Title, video.Format, video.Width, video.Height, video.FPS, video.Duration, video.Type, user.ID)
+	now := time.Now().UTC().Format("2006-01-02 15:04:05")
+	result, err := sb.addVideo.Exec(video.Title, video.Format, video.Width, video.Height, video.FPS, video.Duration, video.Type, user.ID, now, video.ShareURL, video.SourceURL)
 	if err != nil {
 		return err
 	}
+	video.UploadedAt = now
 	video.ID, err = result.LastInsertId()
 	return err
 }
 
 func (sb *SBDatabase) prepareGetVideos() (err error) {
 	sb.getVideos, err = sb.db.Prepare(`
-SELECT id, title, format, width, height, fps, duration, type, upload_time
+SELECT id, title, format, width, height, fps, duration, type, upload_time, share_url, source_url
 FROM videos 
 WHERE uploaded_by = ?;
 	`)
@@ -38,7 +44,7 @@ func (sb *SBDatabase) GetVideos(user *sbvision.User) ([]sbvision.Video, error) {
 	var videos []sbvision.Video
 	for results.Next() {
 		var video sbvision.Video
-		err = results.Scan(&video.ID, &video.Title, &video.Format, &video.Width, &video.Height, &video.FPS, &video.Duration, &video.Type, &video.UploadedAt)
+		err = results.Scan(&video.ID, &video.Title, &video.Format, &video.Width, &video.Height, &video.FPS, &video.Duration, &video.Type, &video.UploadedAt, &video.ShareURL, &video.SourceURL)
 		if err != nil {
 			return nil, err
 		}

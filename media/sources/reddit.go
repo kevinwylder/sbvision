@@ -21,6 +21,7 @@ type redditPage struct {
 
 // RedditPost are reddit comments as they come from the website
 type RedditPost struct {
+	url       string
 	ID        string `json:"id"`
 	PostTitle string `json:"title"`
 	Thumbnail string `json:"thumbnail"`
@@ -93,7 +94,18 @@ func GetRedditPost(url string) (*RedditPost, error) {
 	if data[0].Data.Children[0].Data.Media.RedditVideo.IsGIF {
 		// return nil, fmt.Errorf("\n\tUnsupported type: GIF")
 	}
+	data[0].Data.Children[0].Data.url = url
 	return &data[0].Data.Children[0].Data, nil
+}
+
+// GetVideo is a constructor for the video type
+func (info *RedditPost) GetVideo() sbvision.Video {
+	return sbvision.Video{
+		Title:     info.PostTitle,
+		Type:      sbvision.RedditVideo,
+		SourceURL: info.Media.RedditVideo.URL,
+		ShareURL:  info.url,
+	}
 }
 
 // Title gets the post title
@@ -106,9 +118,14 @@ func (info *RedditPost) Type() sbvision.VideoType {
 	return sbvision.RedditVideo
 }
 
-// URL returns the url of the video
-func (info *RedditPost) URL() string {
+// SourceURL returns the url of the video
+func (info *RedditPost) SourceURL() string {
 	return info.Media.RedditVideo.URL
+}
+
+// ShareURL is the coments url that this post came from
+func (info *RedditPost) ShareURL() string {
+	return info.url
 }
 
 // GetThumbnail gets the thumbnail from this posts and stores it in the key value store

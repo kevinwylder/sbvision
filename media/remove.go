@@ -1,8 +1,12 @@
 package media
 
-import "os"
+import (
+	"os"
+
+	"github.com/kevinwylder/sbvision"
+)
 
 // RemoveVideo removes the given video by its id
-func (sd *AssetDirectory) RemoveVideo(id int64) error {
-	return os.Remove(sd.video(id))
+func (sd *AssetDirectory) RemoveVideo(video *sbvision.Video) error {
+	return os.Remove(sd.VideoPath(video))
 }
