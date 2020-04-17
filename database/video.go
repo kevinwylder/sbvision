@@ -8,8 +8,8 @@ import (
 
 func (sb *SBDatabase) prepareAddVideo() (err error) {
 	sb.addVideo, err = sb.db.Prepare(`
-INSERT INTO videos (title, format, width, height, fps, duration, type, uploaded_by, upload_time, share_url, source_url)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO videos (title, width, height, fps, duration, type, uploaded_by, upload_time, share_url, source_url)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 	`)
 	return
 }
@@ -20,40 +20,42 @@ func (sb *SBDatabase) AddVideo(video *sbvision.Video, user *sbvision.User) error
 	if video.Type == sbvision.YoutubeVideo {
 		video.SourceURL = video.ShareURL
 	}
-	result, err := sb.addVideo.Exec(video.Title, video.Format, video.Width, video.Height, video.FPS, video.Duration, video.Type, user.ID, now, video.ShareURL, video.SourceURL)
+	result, err := sb.addVideo.Exec(video.Title, video.Width, video.Height, video.FPS, video.Duration, video.Type, user.ID, now, video.ShareURL, video.SourceURL)
 	if err != nil {
 		return err
 	}
 	video.UploadedAt = now
+	video.UploadedBy = user.Username
 	video.ID, err = result.LastInsertId()
 	return err
 }
 func (sb *SBDatabase) prepareGetVideoByID() (err error) {
 	sb.getVideoByID, err = sb.db.Prepare(`
-SELECT id, title, format, width, height, fps, duration, type, upload_time, uploaded_by, share_url, source_url
+SELECT videos.id, title, width, height, fps, duration, type, upload_time, users.username, share_url, source_url
 FROM videos 
-WHERE id = ?;
+INNER JOIN users ON users.id = videos.uploaded_by
+WHERE videos.id = ?;
 	`)
 	return
 }
 
 // GetVideoByID gets the video and the uploader id
-func (sb *SBDatabase) GetVideoByID(id int64) (*sbvision.Video, int64, error) {
+func (sb *SBDatabase) GetVideoByID(id int64) (*sbvision.Video, error) {
 	var video sbvision.Video
-	var uploader int64
 	result := sb.getVideoByID.QueryRow(id)
-	err := result.Scan(&video.ID, &video.Title, &video.Format, &video.Width, &video.Height, &video.FPS, &video.Duration, &video.Type, &video.UploadedAt, &uploader, &video.ShareURL, &video.SourceURL)
+	err := result.Scan(&video.ID, &video.Title, &video.Width, &video.Height, &video.FPS, &video.Duration, &video.Type, &video.UploadedAt, &video.UploadedBy, &video.ShareURL, &video.SourceURL)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
-	return &video, uploader, nil
+	return &video, nil
 }
 
 func (sb *SBDatabase) prepareGetVideos() (err error) {
 	sb.getVideos, err = sb.db.Prepare(`
-SELECT id, title, format, width, height, fps, duration, type, upload_time, share_url, source_url
+SELECT id, title, width, height, fps, duration, type, upload_time, share_url, source_url
 FROM videos 
-WHERE uploaded_by = ?;
+WHERE uploaded_by = ?
+ORDER BY upload_time DESC;
 	`)
 	return
 }
@@ -67,7 +69,8 @@ func (sb *SBDatabase) GetVideos(user *sbvision.User) ([]sbvision.Video, error) {
 	var videos []sbvision.Video
 	for results.Next() {
 		var video sbvision.Video
-		err = results.Scan(&video.ID, &video.Title, &video.Format, &video.Width, &video.Height, &video.FPS, &video.Duration, &video.Type, &video.UploadedAt, &video.ShareURL, &video.SourceURL)
+		err = results.Scan(&video.ID, &video.Title, &video.Width, &video.Height, &video.FPS, &video.Duration, &video.Type, &video.UploadedAt, &video.ShareURL, &video.SourceURL)
+		video.UploadedBy = user.Username
 		if err != nil {
 			return nil, err
 		}

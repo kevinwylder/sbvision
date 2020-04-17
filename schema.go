@@ -19,6 +19,7 @@ type Video struct {
 	Duration   string    `json:"duration"`
 	Type       VideoType `json:"type"`
 	UploadedAt string    `json:"uploaded_at"`
+	UploadedBy string    `json:"uploaded_by"`
 	// SourceURL is the url that the video was downloaded from, or a path if the file was uploaded
 	SourceURL string `json:"-"`
 	// ShareURL is an optional url that describes where to find the video in a web browser
