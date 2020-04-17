@@ -76,7 +76,6 @@ func (r *ProcessRequest) finish(q *ProcessQueue) {
 }
 
 func (r *ProcessRequest) setStatus(status string) {
-	fmt.Println("Status", status)
 	r.Status = status
 	tmp := r.onEvent
 	r.onEvent = make(chan struct{})

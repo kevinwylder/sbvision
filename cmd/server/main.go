@@ -21,7 +21,7 @@ type serverContext struct {
 	upgrader       websocket.Upgrader
 	auth           *auth.JWTVerifier
 	discoveryQueue *video.ProcessQueue
-	videoCache     map[string]*sbvision.Video
+	videoCache     map[int64]*sbvision.Video
 	db             *database.SBDatabase
 }
 
@@ -46,7 +46,7 @@ func main() {
 			CheckOrigin:     func(r *http.Request) bool { return true },
 		},
 		auth:       auth.NewJWTVerifier(db, "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_dHWlJDm4T/.well-known/jwks.json"),
-		videoCache: make(map[string]*sbvision.Video),
+		videoCache: make(map[int64]*sbvision.Video),
 	}
 
 	if server.assets, err = media.NewAssetDirectory(os.Getenv("ASSET_DIR")); err != nil {

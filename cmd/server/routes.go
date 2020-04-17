@@ -23,26 +23,17 @@ func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch r.URL.Path {
 
-	case "/video":
-		ctx.handleVideoStreamInit(w, r)
-
-	case "/video/stream":
-		ctx.handleVideoStream(w, r)
+	case "/video/info":
+		ctx.handleGetVideo(w, r)
 
 	case "/video/list":
 		ctx.handleVideoPage(w, r)
-
-	case "/video/thumbnail":
-		ctx.handleVideoThumbnail(w, r)
 
 	case "/video/upload":
 		ctx.handleVideoDiscovery(w, r)
 
 	case "/video/status":
 		ctx.handleVideoStatus(w, r)
-
-	case "/bound":
-		ctx.handleAPIImage(w, r)
 
 	case "/user":
 		ctx.handleGetUserInfo(w, r)
@@ -51,7 +42,7 @@ func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ctx.handleVisualizationSocket(w, r)
 
 	default:
-		http.Error(w, "Not Found", 404)
+		ctx.assets.ServeHTTP(w, r)
 
 	}
 

@@ -2,11 +2,18 @@ package media
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"path"
 )
 
-// NewAssetDirectory creates an image storage directory and ensures all the necessary directories exist
+// AssetDirectory is a folder that holds stuff and should be put on a CDN
+type AssetDirectory struct {
+	path      string
+	ServeHTTP http.HandlerFunc
+}
+
+// NewAssetDirectory creates a storage directory and ensures all the necessary directories exist
 func NewAssetDirectory(dir string) (*AssetDirectory, error) {
 	if dir == "" {
 		return nil, fmt.Errorf(`Cannot use "" for data storage`)
@@ -35,6 +42,7 @@ func NewAssetDirectory(dir string) (*AssetDirectory, error) {
 		return nil, fmt.Errorf("\n\tCannot create video directory: %s", err.Error())
 	}
 	return &AssetDirectory{
-		path: dir,
+		path:      dir,
+		ServeHTTP: http.FileServer(http.Dir(dir)).ServeHTTP,
 	}, nil
 }

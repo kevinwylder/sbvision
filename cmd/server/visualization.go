@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/kevinwylder/sbvision"
@@ -142,7 +143,7 @@ func (v *visualizor) write() {
 		rotation = v.outgoing
 		v.outmutex.Unlock()
 
-		reader, err := v.assets.GetBound(rotation.BoundID)
+		reader, err := os.Open(v.assets.Bound(rotation.BoundID))
 		if err != nil {
 			fmt.Println("Asset error", err)
 			continue

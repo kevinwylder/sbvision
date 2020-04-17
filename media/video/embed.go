@@ -1,6 +1,8 @@
 package video
 
 import (
+	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -12,15 +14,37 @@ import (
 // startDownload downloads and embeds a frame counter into the video
 func (q *ProcessQueue) startDownload(video *sbvision.Video) *ffmpegProcess {
 
-	destination := q.assets.VideoPath(video)
+	dir := q.assets.VideoPath(video.ID)
+	playlist := q.assets.VideoPlaylist(video.ID)
+	file := q.assets.VideoFile(video.ID)
 
 	process := ffmpegProcess{
-		Info:       video,
-		OutputPath: destination,
-		process:    exec.Command("ffmpeg", "-i", video.SourceURL, "-vf", generateFfmpegFilter(16, 4, 2), "-y", "-f", "mp4", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "0", destination),
-		progress:   make(chan string),
+		Info: video,
+		process: exec.Command("ffmpeg",
+			"-i", video.SourceURL,
+
+			"-vf", generateFfmpegFilter(16, 4, 2),
+			"-an",
+			"-profile:v", "main",
+			"-crf", "20",
+			"-g", "48", "-keyint_min", "8",
+			"-sc_threshold", "0",
+			"-b:v", "2500k", "-maxrate", "2675k", "-bufsize", "3750k",
+			"-hls_time", "4",
+			"-hls_playlist_type", "vod",
+			"-hls_segment_filename", fmt.Sprintf("%s/%%03d.ts", dir), playlist,
+
+			"-vf", generateFfmpegFilter(16, 4, 2),
+			"-an",
+			"-profile:v", "main",
+			"-crf", "20",
+			"-f", "mp4",
+			"-c:v", "libx264",
+			file,
+		),
+		progress: make(chan string),
+		err:      os.Mkdir(dir, 0777),
 	}
-	video.Format = "video/mp4"
 
 	go process.start(process.getDownloadProgress)
 

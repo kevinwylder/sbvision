@@ -119,7 +119,6 @@ func (p *ffmpegProcess) readInfo() {
 			}
 			return
 		}
-		fmt.Println(string(line))
 
 		matches := hooks[i].matcher.FindSubmatch(line)
 		if len(matches) != 0 {

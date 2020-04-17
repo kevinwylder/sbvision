@@ -13,7 +13,6 @@ type User struct {
 type Video struct {
 	ID         int64     `json:"id"`
 	Title      string    `json:"title"`
-	Format     string    `json:"format"`
 	Width      int64     `json:"width"`
 	Height     int64     `json:"height"`
 	FPS        float64   `json:"fps"`

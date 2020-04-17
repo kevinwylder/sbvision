@@ -1,6 +1,9 @@
 package video
 
 import (
+	"io"
+	"os"
+
 	"github.com/kevinwylder/sbvision"
 	"github.com/kevinwylder/sbvision/media"
 )
@@ -68,7 +71,7 @@ func (q *ProcessQueue) processRequest(request *ProcessRequest) {
 		return
 	}
 
-	//request.setStatus("Getting Thumbnail")
+	request.setStatus("Getting Thumbnail")
 	if err := request.getThumbnail(); err != nil {
 		request.setStatus("Failed to get thumbnail - " + err.Error())
 		return
@@ -111,7 +114,12 @@ func (r *ProcessRequest) getThumbnail() error {
 	if err != nil {
 		return err
 	}
-	return r.q.assets.PutThumbnail(r.Info.ID, data)
+	file, err := os.Create(r.q.assets.Thumbnail(r.Info.ID))
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(file, data)
+	return err
 }
 
 func (r *ProcessRequest) processVideo() error {
