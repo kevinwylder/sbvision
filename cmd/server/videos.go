@@ -75,7 +75,9 @@ func (ctx *serverContext) handleVideoDiscovery(w http.ResponseWriter, r *http.Re
 			return
 		}
 		ticket, err = ctx.discoveryQueue.Enqueue(user, func() (sbvision.VideoSource, error) {
-			return sources.VideoFileSource(file, title)
+			return sources.VideoFileSource(file, title, func() {
+				r.MultipartForm.RemoveAll()
+			})
 		})
 
 	}
@@ -83,6 +85,7 @@ func (ctx *serverContext) handleVideoDiscovery(w http.ResponseWriter, r *http.Re
 		http.Error(w, err.Error(), 400)
 		return
 	}
+	fmt.Println("Added request for user", user.ID)
 
 	json.NewEncoder(w).Encode(ticket)
 }
@@ -102,6 +105,7 @@ func (ctx *serverContext) handleVideoStatus(w http.ResponseWriter, r *http.Reque
 
 	request, exists := ctx.discoveryQueue.Find(user)
 	if !exists {
+		fmt.Println("couldnt find request for user", user.ID)
 		socket.Close()
 		return
 	}

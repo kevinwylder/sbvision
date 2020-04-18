@@ -74,4 +74,5 @@ const (
 type VideoSource interface {
 	GetVideo() Video
 	GetThumbnail() (io.ReadCloser, error)
+	Cleanup()
 }

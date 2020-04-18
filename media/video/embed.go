@@ -2,8 +2,9 @@ package video
 
 import (
 	"fmt"
-	"os"
+	"io/ioutil"
 	"os/exec"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -14,12 +15,14 @@ import (
 // startDownload downloads and embeds a frame counter into the video
 func (q *ProcessQueue) startDownload(video *sbvision.Video) *ffmpegProcess {
 
-	dir := q.assets.VideoPath(video.ID)
-	playlist := q.assets.VideoPlaylist(video.ID)
-	file := q.assets.VideoFile(video.ID)
+	dir, err := ioutil.TempDir("", "ffmpeg")
+	playlist := path.Join(dir, "playlist.m3u8")
+	file := path.Join(dir, "video.mp4")
 
 	process := ffmpegProcess{
-		Info: video,
+		Info:      video,
+		OutputDir: dir,
+
 		process: exec.Command("ffmpeg",
 			"-i", video.SourceURL,
 
@@ -31,7 +34,6 @@ func (q *ProcessQueue) startDownload(video *sbvision.Video) *ffmpegProcess {
 			"-sc_threshold", "0",
 			"-b:v", "2500k", "-maxrate", "2675k", "-bufsize", "3750k",
 			"-hls_time", "4",
-			"-hls_playlist_type", "vod",
 			"-hls_segment_filename", fmt.Sprintf("%s/%%03d.ts", dir), playlist,
 
 			"-vf", generateFfmpegFilter(16, 4, 2),
@@ -43,10 +45,16 @@ func (q *ProcessQueue) startDownload(video *sbvision.Video) *ffmpegProcess {
 			file,
 		),
 		progress: make(chan string),
-		err:      os.Mkdir(dir, 0777),
+		err:      err,
 	}
 
-	go process.start(process.getDownloadProgress)
+	if err == nil {
+		go process.start(process.getDownloadProgress)
+	} else {
+		defer func() {
+			close(process.progress)
+		}()
+	}
 
 	return &process
 }
@@ -57,7 +65,7 @@ func (p *ffmpegProcess) getDownloadProgress() {
 		line, err := p.reader.ReadBytes('\r')
 		if err != nil {
 			p.err = err
-			return
+			break
 		}
 
 		matches := scrapeTime.FindSubmatch(line)

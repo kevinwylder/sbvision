@@ -127,5 +127,13 @@ func (r *ProcessRequest) processVideo() error {
 	for status := range process.Progress() {
 		r.setStatus(status)
 	}
-	return process.Error()
+	if err := process.Error(); err != nil {
+		return err
+	}
+	r.setStatus("Storing video")
+	err := os.Rename(process.OutputDir, r.q.assets.VideoPath(r.Info.ID))
+	if err != nil {
+		os.Remove(process.OutputDir)
+	}
+	return err
 }

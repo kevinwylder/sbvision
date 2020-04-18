@@ -13,14 +13,13 @@ import (
 
 // ffmpegProcess is a struct containing information about the process embedding a frame counter in the video
 type ffmpegProcess struct {
-	OutputPath string
-	Info       *sbvision.Video
+	Info      *sbvision.Video
+	OutputDir string
 
-	afterFunc func()
-	process   *exec.Cmd
-	reader    *bufio.Reader
-	progress  chan string
-	err       error
+	process  *exec.Cmd
+	reader   *bufio.Reader
+	progress chan string
+	err      error
 }
 
 func (p *ffmpegProcess) start(parser func()) {
@@ -61,8 +60,11 @@ func (p *ffmpegProcess) Progress() <-chan string {
 
 // Cancel stops the process of embedding and removes the video
 func (p *ffmpegProcess) Cancel() error {
-	p.process.Process.Kill()
-	return os.Remove(p.OutputPath)
+	err := p.process.Process.Kill()
+	if p.OutputDir != "" {
+		err = os.RemoveAll(p.OutputDir)
+	}
+	return err
 }
 
 type hook struct {

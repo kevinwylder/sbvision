@@ -108,24 +108,8 @@ func (info *RedditPost) GetVideo() sbvision.Video {
 	}
 }
 
-// Title gets the post title
-func (info *RedditPost) Title() string {
-	return info.PostTitle
-}
-
-// Type is the type of the source
-func (info *RedditPost) Type() sbvision.VideoType {
-	return sbvision.RedditVideo
-}
-
-// SourceURL returns the url of the video
-func (info *RedditPost) SourceURL() string {
-	return info.Media.RedditVideo.URL
-}
-
-// ShareURL is the coments url that this post came from
-func (info *RedditPost) ShareURL() string {
-	return info.url
+// Cleanup does nothing
+func (info *RedditPost) Cleanup() {
 }
 
 // GetThumbnail gets the thumbnail from this posts and stores it in the key value store

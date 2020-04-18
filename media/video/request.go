@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/kevinwylder/sbvision"
@@ -63,6 +64,7 @@ func (q *ProcessQueue) Find(user *sbvision.User) (*ProcessRequest, bool) {
 }
 
 func (r *ProcessRequest) finish(q *ProcessQueue) {
+	r.source.Cleanup()
 	r.IsComplete = true
 	tmp := r.onEvent
 	r.onEvent = make(chan struct{})
@@ -76,6 +78,7 @@ func (r *ProcessRequest) finish(q *ProcessQueue) {
 }
 
 func (r *ProcessRequest) setStatus(status string) {
+	log.Println(r.user.Username + " - " + status)
 	r.Status = status
 	tmp := r.onEvent
 	r.onEvent = make(chan struct{})

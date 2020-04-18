@@ -93,6 +93,10 @@ func (info *YoutubeDl) GetVideo() sbvision.Video {
 	}
 }
 
+// Cleanup does nothing
+func (info *YoutubeDl) Cleanup() {
+}
+
 // GetThumbnail downloads the thumbnail for the video
 func (info *YoutubeDl) GetThumbnail() (io.ReadCloser, error) {
 	res, err := http.Get(info.Thumbnail)

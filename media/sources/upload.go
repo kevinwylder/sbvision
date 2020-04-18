@@ -9,12 +9,13 @@ import (
 )
 
 type videoSource struct {
-	path  string
-	title string
+	path    string
+	title   string
+	cleanup func()
 }
 
 // VideoFileSource is a source from a video file
-func VideoFileSource(data io.ReadCloser, title string) (sbvision.VideoSource, error) {
+func VideoFileSource(data io.ReadCloser, title string, cleanup func()) (sbvision.VideoSource, error) {
 	file, err := ioutil.TempFile("", "")
 	if err != nil {
 		return nil, err
@@ -28,9 +29,14 @@ func VideoFileSource(data io.ReadCloser, title string) (sbvision.VideoSource, er
 		return nil, err
 	}
 	return &videoSource{
-		path:  file.Name(),
-		title: title,
+		path:    file.Name(),
+		title:   title,
+		cleanup: cleanup,
 	}, nil
+}
+
+func (s *videoSource) Cleanup() {
+	s.cleanup()
 }
 
 func (s *videoSource) GetVideo() sbvision.Video {
