@@ -1,4 +1,4 @@
-package sources
+package video
 
 import (
 	"encoding/json"
@@ -10,8 +10,6 @@ import (
 	"os/exec"
 	"path"
 	"strings"
-
-	"github.com/kevinwylder/sbvision"
 )
 
 // YoutubeDl is the information youtube-dl 's .info.json file structure
@@ -74,8 +72,8 @@ func GetYoutubeDl(url string) (*YoutubeDl, error) {
 	return &info, nil
 }
 
-// GetVideo is a constructor for Video
-func (info *YoutubeDl) GetVideo() sbvision.Video {
+// URL returns the largest format video url
+func (info *YoutubeDl) URL() string {
 	var largestFormat int64
 	var url string
 	for _, format := range info.Formats {
@@ -85,12 +83,7 @@ func (info *YoutubeDl) GetVideo() sbvision.Video {
 		largestFormat = format.Filesize
 		url = format.URL
 	}
-	return sbvision.Video{
-		Title:     info.PostTitle,
-		Type:      sbvision.YoutubeVideo,
-		SourceURL: url,
-		ShareURL:  info.url,
-	}
+	return url
 }
 
 // Cleanup does nothing

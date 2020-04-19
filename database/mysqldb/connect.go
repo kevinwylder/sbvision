@@ -1,4 +1,4 @@
-package database
+package mysqldb
 
 import (
 	// this package only supports mysql
@@ -16,16 +16,6 @@ type SBDatabase struct {
 
 	// in search.go
 	dataNearestRotation *sql.Stmt
-
-	// in user.go
-	addUser *sql.Stmt
-	getUser *sql.Stmt
-
-	// in video.go
-	addVideo     *sql.Stmt
-	getVideos    *sql.Stmt
-	getVideoByID *sql.Stmt
-	removeVideo  *sql.Stmt
 }
 
 // ConnectToDatabase waits for a sql connection then prepares queries for runtime
@@ -46,16 +36,6 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 	var prepFunctions = [](func() error){
 		// in search.go
 		sb.prepareDataNearestRotation,
-
-		// in user.go
-		sb.prepareAddUser,
-		sb.prepareGetUser,
-
-		// in video.go
-		sb.prepareAddVideo,
-		sb.prepareGetVideos,
-		sb.prepareGetVideoByID,
-		sb.prepareRemoveVideo,
 	}
 
 	for _, f := range prepFunctions {
@@ -65,9 +45,4 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 		}
 	}
 	return sb, nil
-}
-
-// this interface is used to scan more generic built queries
-type scannable interface {
-	Scan(to ...interface{}) error
 }

@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"sync"
 
 	"github.com/kevinwylder/sbvision"
-	"github.com/kevinwylder/sbvision/database"
-	"github.com/kevinwylder/sbvision/media"
+	"github.com/kevinwylder/sbvision/cdn"
+	"github.com/kevinwylder/sbvision/database/mysqldb"
 
 	"github.com/gorilla/websocket"
 )
@@ -18,8 +17,7 @@ import (
 type visualizor struct {
 	stopped bool
 	conn    *websocket.Conn
-	assets  *media.AssetDirectory
-	db      *database.SBDatabase
+	db      *mysqldb.SBDatabase
 	cache   databaseCache
 
 	ingoing sbvision.Rotation
@@ -39,9 +37,8 @@ func (ctx *serverContext) handleVisualizationSocket(w http.ResponseWriter, r *ht
 	}
 
 	v := &visualizor{
-		conn:   conn,
-		db:     ctx.db,
-		assets: ctx.assets,
+		conn: conn,
+		db:   ctx.mdb,
 	}
 
 	go v.read()
@@ -143,20 +140,20 @@ func (v *visualizor) write() {
 		rotation = v.outgoing
 		v.outmutex.Unlock()
 
-		reader, err := os.Open(v.assets.Bound(rotation.BoundID))
+		reader, err := http.Get("https://skateboardvision.net" + cdn.Bound(rotation.BoundID))
 		if err != nil {
 			fmt.Println("Asset error", err)
 			continue
 		}
 
 		if v.stopped {
-			reader.Close()
+			reader.Body.Close()
 			return
 		}
 		writer, err := v.conn.NextWriter(websocket.TextMessage)
 		if err != nil {
 			v.stopped = true
-			reader.Close()
+			reader.Body.Close()
 			v.conn.Close()
 			return
 		}
@@ -164,15 +161,15 @@ func (v *visualizor) write() {
 		_, err = writer.Write([]byte(fmt.Sprintf(`{"r":[%f,%f,%f,%f],"s":"data:image/png;base64,`, rotation.R, rotation.I, rotation.J, rotation.K)))
 		if err != nil {
 			fmt.Println("Write err", err)
-			reader.Close()
+			reader.Body.Close()
 			writer.Close()
 			continue
 		}
 
 		b64writer := base64.NewEncoder(base64.StdEncoding, writer)
-		_, err = io.Copy(b64writer, reader)
+		_, err = io.Copy(b64writer, reader.Body)
 		b64writer.Close()
-		reader.Close()
+		reader.Body.Close()
 		if err != nil {
 			fmt.Println("Write error", err)
 			writer.Close()
@@ -197,7 +194,7 @@ func dot(a, b *sbvision.Rotation) float64 {
 	return a.R*b.R + a.I*b.I + a.J*b.J + a.K*b.K
 }
 
-func (cache *databaseCache) load(db *database.SBDatabase, rotation *sbvision.Rotation) error {
+func (cache *databaseCache) load(db *mysqldb.SBDatabase, rotation *sbvision.Rotation) error {
 	err := db.DataNearestRotation(rotation, cache.rotations[:])
 	if err != nil {
 		return err
