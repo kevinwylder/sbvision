@@ -4,22 +4,24 @@ import "io"
 
 // User comes from the cognito user pool
 type User struct {
-	ID       int64
-	Email    string `json:"email"`
-	Username string `json:"username"`
+	ID       int64   `dynamodbav:"-"`
+	Email    string  `json:"email"`
+	Username string  `json:"username"`
+	Videos   []int64 `json:"videos"`
 }
 
 // Video is a generic video source
 type Video struct {
-	ID         int64     `json:"id"`
-	Title      string    `json:"title"`
-	Width      int64     `json:"width"`
-	Height     int64     `json:"height"`
-	FPS        float64   `json:"fps"`
-	Duration   string    `json:"duration"`
-	Type       VideoType `json:"type"`
-	UploadedAt string    `json:"uploaded_at"`
-	UploadedBy string    `json:"uploaded_by"`
+	ID            int64     `json:"id"`
+	Title         string    `json:"title"`
+	Width         int64     `json:"width"`
+	Height        int64     `json:"height"`
+	FPS           float64   `json:"fps"`
+	Duration      string    `json:"duration"`
+	Type          VideoType `json:"type"`
+	UploadedAt    string    `json:"uploaded_at"`
+	UploadedBy    string    `json:"uploaded_by"`
+	UploaderEmail string    `json:"-" dynamodbav:"uploader_email,string"`
 	// SourceURL is the url that the video was downloaded from, or a path if the file was uploaded
 	SourceURL string `json:"-"`
 	// ShareURL is an optional url that describes where to find the video in a web browser

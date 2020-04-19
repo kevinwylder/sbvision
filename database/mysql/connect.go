@@ -1,4 +1,4 @@
-package database
+package mysqldb
 
 import (
 	// this package only supports mysql
@@ -65,9 +65,4 @@ func ConnectToDatabase(creds string) (*SBDatabase, error) {
 		}
 	}
 	return sb, nil
-}
-
-// this interface is used to scan more generic built queries
-type scannable interface {
-	Scan(to ...interface{}) error
 }
