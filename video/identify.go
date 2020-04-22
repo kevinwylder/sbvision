@@ -81,5 +81,6 @@ func download(url string) (*os.File, error) {
 		return nil, err
 	}
 	fmt.Println("Downloaded", n, "bytes from", url)
+	file.Seek(0, 0)
 	return file, nil
 }
