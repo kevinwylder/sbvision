@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/batch"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
 	"github.com/kevinwylder/sbvision"
@@ -126,7 +127,7 @@ func (r *videoRequest) uploadVideoToBucket() error {
 }
 
 func (r *videoRequest) startBatchProcess() error {
-	/*output, err := r.m.batch.SubmitJob(&batch.SubmitJobInput{
+	output, err := r.m.batch.SubmitJob(&batch.SubmitJobInput{
 		JobDefinition: aws.String("sbgetvid"),
 		JobQueue:      aws.String(video.BatchQueueName),
 		JobName:       aws.String(r.ID),
@@ -146,6 +147,5 @@ func (r *videoRequest) startBatchProcess() error {
 		return err
 	}
 	r.setStatus("Created Job " + *output.JobId + ". Waiting for worker to run job")
-	*/
 	return nil
 }
