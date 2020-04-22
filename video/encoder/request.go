@@ -46,7 +46,7 @@ func (u *UserRequests) NewRequest(url, title string, file *os.File) {
 		title: title,
 		url:   url,
 	}
-	u.requests = append(u.requests, r)
+	u.requests[r.ID] = r
 	go r.process()
 	u.m.requestVideo[randID] = r
 }
@@ -130,8 +130,6 @@ func (r *videoRequest) uploadVideoToBucket() error {
 
 func (r *videoRequest) startBatchProcess() error {
 	if r.TopicARN == "" || r.ID == "" || r.title == "" || r.video == -1 || r.u.user.Email == "" {
-		fmt.Println(r)
-		fmt.Println(r.u.user)
 		return fmt.Errorf("Missing request data")
 	}
 

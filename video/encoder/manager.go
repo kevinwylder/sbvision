@@ -103,4 +103,5 @@ func (m *VideoRequestManager) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 func (m *VideoRequestManager) endRequest(request *videoRequest) {
 	fmt.Println("Ending request", request.ID, "as", request.Status)
 	delete(m.requestVideo, request.ID)
+	delete(request.u.requests, request.ID)
 }

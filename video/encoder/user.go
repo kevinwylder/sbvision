@@ -14,7 +14,7 @@ type UserCallback func(*video.Status)
 type UserRequests struct {
 	user      *sbvision.User
 	m         *VideoRequestManager
-	requests  []*videoRequest
+	requests  map[string]*videoRequest
 	callbacks map[int64]UserCallback
 }
 
@@ -24,6 +24,7 @@ func (m *VideoRequestManager) GetUserRequests(user *sbvision.User) *UserRequests
 		m.userRequests[user.Email] = &UserRequests{
 			m:         m,
 			user:      user,
+			requests:  make(map[string]*videoRequest),
 			callbacks: make(map[int64]UserCallback),
 		}
 	}

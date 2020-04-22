@@ -73,7 +73,7 @@ func (sb *SBDatabase) GetVideos(user *sbvision.User) ([]sbvision.Video, error) {
 		}, "GetVideos user id"))
 	}
 
-	for tableKeys := keys[videoTableName]; tableKeys != nil && len(tableKeys.Keys) > 0; {
+	for keys[videoTableName] != nil && len(keys[videoTableName].Keys) > 0 {
 		result, err := sb.db.BatchGetItem(&dynamodb.BatchGetItemInput{
 			RequestItems: keys,
 		})

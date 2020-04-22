@@ -6,10 +6,7 @@ RUN apt-get update && \
 RUN go get github.com/aws/aws-sdk-go/aws
 RUN go get github.com/jmespath/go-jmespath
 
-RUN pwd
 RUN go get github.com/kevinwylder/sbvision
-WORKDIR /go/src/github.com/kevinwylder/sbvision
-RUN git checkout dev
 RUN go install github.com/kevinwylder/sbvision/cmd/sbgetvid
 
 
