@@ -74,11 +74,12 @@ func download(url string) (*os.File, error) {
 		return nil, err
 	}
 
-	_, err = io.Copy(file, resp.Body)
+	n, err := io.Copy(file, resp.Body)
 	if err != nil {
 		file.Close()
 		os.Remove(file.Name())
 		return nil, err
 	}
+	fmt.Println("Downloaded", n, "bytes from", url)
 	return file, nil
 }

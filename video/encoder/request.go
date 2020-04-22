@@ -140,7 +140,7 @@ func (r *videoRequest) startBatchProcess() error {
 	if err != nil {
 		return err
 	}
-	r.setStatus("Added Created Job " + *output.JobId + " to process video")
+	r.setStatus("Created Job " + *output.JobId + ". Waiting for worker to run job")
 
 	return nil
 }
