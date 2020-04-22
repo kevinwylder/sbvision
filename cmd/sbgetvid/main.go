@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -36,6 +37,21 @@ type runtime struct {
 	cdn *cdn.Uploader
 }
 
+func cleanupError(sess *session.Session, topic, requestID *string) {
+	ns := sns.New(sess)
+	var status video.Status
+	status.Message = "An Error Occurred!"
+	status.RequestID = *requestID
+	data, _ := json.Marshal(&status)
+	ns.Publish(&sns.PublishInput{
+		Message:  aws.String(string(data)),
+		TopicArn: topic,
+	})
+	ns.DeleteTopic(&sns.DeleteTopicInput{
+		TopicArn: topic,
+	})
+}
+
 // sbgetvid gets a video from the internet and encodes it to mobile friendly formats
 // there is at least 1 HLS format, and an mp4 complete file
 // the video will have a frame counter embedded in the top 2 pixels of the video
@@ -50,16 +66,6 @@ func main() {
 	)
 	flag.Parse()
 
-	if *snsTopic == "" || *requestID == "" || *title == "" || *videoType == -1 || *userEmail == "" {
-		flag.PrintDefaults()
-		log.Fatal()
-	}
-
-	dir, err := ioutil.TempDir("", "ffmpeg")
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("us-west-1"),
 	})
@@ -67,13 +73,27 @@ func main() {
 		log.Fatal(err)
 	}
 
+	if *snsTopic == "" || *requestID == "" || *title == "" || *videoType == -1 || *userEmail == "" {
+		flag.PrintDefaults()
+		fmt.Println("bad inputs, closing topic")
+		cleanupError(sess, snsTopic, requestID)
+	}
+
+	dir, err := ioutil.TempDir("", "ffmpeg")
+	if err != nil {
+		cleanupError(sess, snsTopic, requestID)
+		log.Fatal(err)
+	}
+
 	ddb, err := dynamo.FindTables(sess)
 	if err != nil {
+		cleanupError(sess, snsTopic, requestID)
 		log.Fatal(err)
 	}
 
 	user, err := ddb.GetUser(*userEmail)
 	if err != nil {
+		cleanupError(sess, snsTopic, requestID)
 		log.Fatal(err)
 	}
 
@@ -168,8 +188,8 @@ func (rt *runtime) embed() {
 }
 
 func (rt *runtime) cleanup(s3sess *s3.S3) {
-	//os.Remove(rt.file.Name())
-	//os.RemoveAll(rt.tmpdir)
+	os.Remove(rt.file.Name())
+	os.RemoveAll(rt.tmpdir)
 	s3sess.DeleteObject(&s3.DeleteObjectInput{
 		Bucket: aws.String(video.QueueBucket),
 		Key:    aws.String(rt.request),

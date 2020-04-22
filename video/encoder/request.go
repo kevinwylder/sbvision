@@ -129,6 +129,12 @@ func (r *videoRequest) uploadVideoToBucket() error {
 }
 
 func (r *videoRequest) startBatchProcess() error {
+	if r.TopicARN == "" || r.ID == "" || r.title == "" || r.video == -1 || r.u.user.Email == "" {
+		fmt.Println(r)
+		fmt.Println(r.u.user)
+		return fmt.Errorf("Missing request data")
+	}
+
 	_, err := r.m.batch.SubmitJob(&batch.SubmitJobInput{
 		JobDefinition: aws.String("sbgetvid"),
 		JobQueue:      aws.String(video.BatchQueueName),
