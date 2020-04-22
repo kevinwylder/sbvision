@@ -31,7 +31,7 @@ func FindTables(session *session.Session) (*SBDatabase, error) {
 	}
 
 	// look for video table
-	err := sb.ensureTable(videoTableName, aws.String("id"), aws.String("N"), nil, nil)
+	err := sb.ensureTable(videoTableName, aws.String("id"), aws.String("S"), nil, nil)
 	if err != nil {
 		return nil, err
 	}
