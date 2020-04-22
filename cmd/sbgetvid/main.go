@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -116,6 +117,7 @@ func (rt *runtime) downloadVideo(manager *s3manager.Downloader) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println("Downloaded file to", f.Name())
 }
 
 func (rt *runtime) embed() {
@@ -158,8 +160,8 @@ func (rt *runtime) embed() {
 }
 
 func (rt *runtime) cleanup(s3sess *s3.S3) {
-	os.Remove(rt.file.Name())
-	os.RemoveAll(rt.tmpdir)
+	//os.Remove(rt.file.Name())
+	//os.RemoveAll(rt.tmpdir)
 	s3sess.DeleteObject(&s3.DeleteObjectInput{
 		Bucket: aws.String(video.QueueBucket),
 		Key:    aws.String(rt.request),

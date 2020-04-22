@@ -84,6 +84,8 @@ func (rt *runtime) getInfo() *ffmpegProcess {
 		progress: make(chan string),
 	}
 
+	fmt.Println(strings.Join(process.process.Args, " "))
+
 	go process.start(process.readInfo)
 
 	return &process
@@ -168,6 +170,8 @@ func (rt *runtime) embedFrameCounterAndDownsample() *ffmpegProcess {
 		),
 		progress: make(chan string),
 	}
+
+	fmt.Println(strings.Join(process.process.Args, " "))
 
 	go process.start(process.getDownloadProgress)
 

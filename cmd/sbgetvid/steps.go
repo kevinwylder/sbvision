@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 
 	"github.com/kevinwylder/sbvision/cdn"
 )
@@ -26,6 +28,7 @@ func (rt *runtime) getThumbnail() error {
 		file.Close()
 	}()
 	command := exec.Command("ffmpeg", "-i", rt.file.Name(), "-ss", "00:00:02.000", "-vframes", "1", "-f", "image2pipe", "-")
+	fmt.Println(strings.Join(command.Args, " "))
 	pipe, err := command.StdoutPipe()
 	if err != nil {
 		return err
