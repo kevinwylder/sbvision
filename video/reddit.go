@@ -1,12 +1,12 @@
-package sources
+package video
 
 import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
-
-	"github.com/kevinwylder/sbvision"
+	"os"
 )
 
 type redditPage struct {
@@ -98,29 +98,24 @@ func GetRedditPost(url string) (*RedditPost, error) {
 	return &data[0].Data.Children[0].Data, nil
 }
 
-// GetVideo is a constructor for the video type
-func (info *RedditPost) GetVideo() sbvision.Video {
-	return sbvision.Video{
-		Title:     info.PostTitle,
-		Type:      sbvision.RedditVideo,
-		SourceURL: info.Media.RedditVideo.URL,
-		ShareURL:  info.url,
-	}
-}
-
-// Cleanup does nothing
-func (info *RedditPost) Cleanup() {
-}
-
-// GetThumbnail gets the thumbnail from this posts and stores it in the key value store
-func (info *RedditPost) GetThumbnail() (io.ReadCloser, error) {
-	req, err := http.NewRequest("GET", info.Thumbnail, nil)
+// Download downloads the file and returns the open handle
+func (info *RedditPost) Download() (*os.File, error) {
+	resp, err := http.Get(info.Media.RedditVideo.URL)
 	if err != nil {
-		return nil, fmt.Errorf("\n\tError getting thumbnail: %s", err.Error())
+		return nil, err
 	}
-	res, err := http.DefaultClient.Do(req)
+	defer resp.Body.Close()
+
+	file, err := ioutil.TempFile("", "")
 	if err != nil {
-		return nil, fmt.Errorf("\n\tError doing thumbnail request: %s", err.Error())
+		return nil, err
 	}
-	return res.Body, nil
+
+	_, err = io.Copy(file, resp.Body)
+	if err != nil {
+		file.Close()
+		os.Remove(file.Name())
+		return nil, err
+	}
+	return file, nil
 }

@@ -29,10 +29,6 @@ func NewAssetDirectory(dir string) (*AssetDirectory, error) {
 	} else if !stat.IsDir() {
 		return nil, fmt.Errorf("\n\tGiven path (%s) is a file", dir)
 	}
-	err = os.MkdirAll(path.Join(dir, "thumbnail"), 0755)
-	if err != nil {
-		return nil, fmt.Errorf("\n\tCannot create thumbnail directory: %s", err.Error())
-	}
 	err = os.MkdirAll(path.Join(dir, "bound"), 0755)
 	if err != nil {
 		return nil, fmt.Errorf("\n\tCannot create bound directory: %s", err.Error())

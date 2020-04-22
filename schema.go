@@ -1,7 +1,5 @@
 package sbvision
 
-import "io"
-
 // User comes from the cognito user pool
 type User struct {
 	ID       int64   `dynamodbav:"-"`
@@ -9,6 +7,18 @@ type User struct {
 	Username string  `json:"username"`
 	Videos   []int64 `json:"videos"`
 }
+
+// VideoType is an enum of subclasses of the video abstraction
+type VideoType int64
+
+const (
+	// YoutubeVideo type means that this video has a record in the youtube_videos table
+	YoutubeVideo VideoType = 1
+	// RedditVideo type means that this video has a record in the reddit_videos table
+	RedditVideo VideoType = 2
+	// UploadedVideo type means this video was uploaded
+	UploadedVideo VideoType = 3
+)
 
 // Video is a generic video source
 type Video struct {
@@ -22,10 +32,7 @@ type Video struct {
 	UploadedAt    string    `json:"uploaded_at"`
 	UploadedBy    string    `json:"uploaded_by"`
 	UploaderEmail string    `json:"-" dynamodbav:"uploader_email,string"`
-	// SourceURL is the url that the video was downloaded from, or a path if the file was uploaded
-	SourceURL string `json:"-"`
-	// ShareURL is an optional url that describes where to find the video in a web browser
-	ShareURL string `json:"-"`
+	SourceURL     string    `json:"-" dynamodbav:"source_url,string"`
 }
 
 // Clip is part of a video that has a trick
@@ -58,23 +65,4 @@ type Rotation struct {
 	I       float64 `json:"i"`
 	J       float64 `json:"j"`
 	K       float64 `json:"k"`
-}
-
-// VideoType is an enum of subclasses of the video abstraction
-type VideoType int64
-
-const (
-	// YoutubeVideo type means that this video has a record in the youtube_videos table
-	YoutubeVideo VideoType = 1
-	// RedditVideo type means that this video has a record in the reddit_videos table
-	RedditVideo VideoType = 2
-	// UploadedVideo type means this video was uploaded
-	UploadedVideo VideoType = 3
-)
-
-// VideoSource is an interface that wraps all video sources (youtube, reddit, file upload...)
-type VideoSource interface {
-	GetVideo() Video
-	GetThumbnail() (io.ReadCloser, error)
-	Cleanup()
 }

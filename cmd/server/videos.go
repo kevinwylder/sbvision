@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/kevinwylder/sbvision"
-	"github.com/kevinwylder/sbvision/media/video"
 
 	"github.com/kevinwylder/sbvision/media/sources"
 )
@@ -51,14 +50,13 @@ func (ctx *serverContext) handleVideoDiscovery(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	err = r.ParseMultipartForm(1024 * 5)
+	err = r.ParseMultipartForm(2048)
 	if err != nil {
 		http.Error(w, "could not parse multipart form", 400)
 		return
 	}
 
 	url := r.Form.Get("url")
-	var ticket *video.ProcessRequest
 	if url != "" {
 		ticket, err = ctx.discoveryQueue.Enqueue(user, func() (sbvision.VideoSource, error) {
 			return sources.FindVideoSource(url)
@@ -81,13 +79,6 @@ func (ctx *serverContext) handleVideoDiscovery(w http.ResponseWriter, r *http.Re
 		})
 
 	}
-	if err != nil {
-		http.Error(w, err.Error(), 400)
-		return
-	}
-	fmt.Println("Added request for user", user.ID)
-
-	json.NewEncoder(w).Encode(ticket)
 }
 
 func (ctx *serverContext) handleVideoStatus(w http.ResponseWriter, r *http.Request) {
@@ -105,7 +96,6 @@ func (ctx *serverContext) handleVideoStatus(w http.ResponseWriter, r *http.Reque
 
 	request, exists := ctx.discoveryQueue.Find(user)
 	if !exists {
-		fmt.Println("couldnt find request for user", user.ID)
 		socket.Close()
 		return
 	}

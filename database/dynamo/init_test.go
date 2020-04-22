@@ -42,7 +42,7 @@ func TestTableInit(t *testing.T) {
 		Title:      "This is not a real video",
 		Type:       sbvision.RedditVideo,
 		UploadedAt: "2020-04-20 04:20:69",
-		ShareURL:   "reddit.com/r/skateboarding",
+		SourceURL:  "reddit.com/r/skateboarding",
 	}
 	for i := 0; i < 3; i++ {
 		err = db.AddVideo(video, user)

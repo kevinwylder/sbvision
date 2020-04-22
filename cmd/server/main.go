@@ -5,7 +5,10 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/kevinwylder/sbvision/database/dynamo"
 
 	"github.com/kevinwylder/sbvision"
 	"github.com/kevinwylder/sbvision/auth"
@@ -22,20 +25,19 @@ type serverContext struct {
 	auth           *auth.JWTVerifier
 	discoveryQueue *video.ProcessQueue
 	videoCache     map[int64]*sbvision.Video
-	db             *database.SBDatabase
+	db             database.SBDatabase
 }
 
 func main() {
-	db, err := database.ConnectToDatabase(os.Getenv("DB_CREDS"))
-	counter := 0
-	for err != nil {
-		log.Print(err)
-		time.Sleep(time.Second)
-		db, err = database.ConnectToDatabase(os.Getenv("DB_CREDS"))
-		counter++
-		if counter > 30 {
-			log.Fatal("Could not connect to the database :(")
-		}
+	session, err := session.NewSession(&aws.Config{
+		Region: aws.String("us-west-1"),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	db, err := dynamo.FindTables(session)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	server := &serverContext{
@@ -45,8 +47,7 @@ func main() {
 			WriteBufferSize: 20 * 1024,
 			CheckOrigin:     func(r *http.Request) bool { return true },
 		},
-		auth:       auth.NewJWTVerifier(db, "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_dHWlJDm4T/.well-known/jwks.json"),
-		videoCache: make(map[int64]*sbvision.Video),
+		auth: auth.NewJWTVerifier(db, "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_dHWlJDm4T/.well-known/jwks.json"),
 	}
 
 	if server.assets, err = media.NewAssetDirectory(os.Getenv("ASSET_DIR")); err != nil {
