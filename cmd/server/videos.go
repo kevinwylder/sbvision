@@ -10,12 +10,12 @@ import (
 )
 
 func (ctx *serverContext) handleGetVideo(w http.ResponseWriter, r *http.Request) {
-	ids, err := getIDs(r, []string{"id"})
-	if err != nil {
-		http.Error(w, err.Error(), 400)
+	if r.Form.Get("id") == "" {
+		http.Error(w, "?id= query param string required", 400)
 		return
 	}
-	video, err := ctx.ddb.GetVideoByID(ids[0])
+
+	video, err := ctx.ddb.GetVideoByID(r.Form.Get("id"))
 	if err != nil {
 		http.Error(w, "Could not get video", 500)
 		return

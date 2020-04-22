@@ -98,6 +98,7 @@ func main() {
 	}
 
 	v := sbvision.Video{
+		ID:            *requestID,
 		Title:         *title,
 		Type:          sbvision.VideoType(*videoType),
 		SourceURL:     *sourceURL,
@@ -173,6 +174,7 @@ func (rt *runtime) embed() {
 
 	rt.setStatus("Adding to the database")
 	if err := rt.addToDatabase(); err != nil {
+		fmt.Println(rt.video)
 		rt.setStatus("Failed to add to the database - " + err.Error())
 		return
 	}

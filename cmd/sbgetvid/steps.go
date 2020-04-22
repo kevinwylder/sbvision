@@ -47,7 +47,7 @@ func (rt *runtime) getThumbnail() error {
 func (rt *runtime) processVideo() error {
 	process := rt.embedFrameCounterAndDownsample()
 	for status := range process.Progress() {
-		rt.setStatus(status)
+		rt.setStatus("Encoding video. Progress " + status + " of " + rt.video.Duration)
 	}
 	if err := process.Error(); err != nil {
 		return err

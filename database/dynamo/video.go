@@ -26,10 +26,8 @@ func (sb *SBDatabase) AddVideo(video *sbvision.Video, user *sbvision.User) error
 		}, "AddVideo update user key"),
 		TableName:        aws.String(userTableName),
 		UpdateExpression: aws.String("SET videos = list_append(videos, :newid)"),
-		ExpressionAttributeValues: mustMarshalMap(map[string][]*string{
-			":newid": []*string{
-				aws.String(video.ID),
-			},
+		ExpressionAttributeValues: mustMarshalMap(map[string][]string{
+			":newid": []string{video.ID},
 		}, "AddVideo update user id list expression"),
 	})
 	user.Videos = append(user.Videos, video.ID)
@@ -37,9 +35,9 @@ func (sb *SBDatabase) AddVideo(video *sbvision.Video, user *sbvision.User) error
 }
 
 // GetVideoByID will lookup the video with the given id
-func (sb *SBDatabase) GetVideoByID(id int64) (*sbvision.Video, error) {
+func (sb *SBDatabase) GetVideoByID(id string) (*sbvision.Video, error) {
 	data, err := sb.db.GetItem(&dynamodb.GetItemInput{
-		Key: mustMarshalMap(map[string]int64{
+		Key: mustMarshalMap(map[string]string{
 			"video": id,
 		}, "GetVideoById"),
 		TableName: aws.String(videoTableName),
@@ -70,8 +68,8 @@ func (sb *SBDatabase) GetVideos(user *sbvision.User) ([]sbvision.Video, error) {
 	var videos []sbvision.Video
 
 	for _, id := range user.Videos {
-		keys[videoTableName].Keys = append(keys[videoTableName].Keys, mustMarshalMap(map[string]*string{
-			"id": aws.String(id),
+		keys[videoTableName].Keys = append(keys[videoTableName].Keys, mustMarshalMap(map[string]string{
+			"id": id,
 		}, "GetVideos user id"))
 	}
 
@@ -99,8 +97,8 @@ func (sb *SBDatabase) GetVideos(user *sbvision.User) ([]sbvision.Video, error) {
 func (sb *SBDatabase) RemoveVideo(video *sbvision.Video) error {
 	_, err := sb.db.DeleteItem(&dynamodb.DeleteItemInput{
 		TableName: aws.String(videoTableName),
-		Key: mustMarshalMap(map[string]*string{
-			"id": aws.String(video.ID),
+		Key: mustMarshalMap(map[string]string{
+			"id": video.ID,
 		}, "RemoveVideo DeleteItem"),
 	})
 	if err != nil {
