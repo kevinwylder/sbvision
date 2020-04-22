@@ -2,10 +2,10 @@ package sbvision
 
 // User comes from the cognito user pool
 type User struct {
-	ID       int64   `dynamodbav:"-"`
-	Email    string  `json:"email"`
-	Username string  `json:"username"`
-	Videos   []int64 `json:"videos"`
+	ID       int64    `dynamodbav:"-"`
+	Email    string   `json:"email"`
+	Username string   `json:"username"`
+	Videos   []string `json:"videos"`
 }
 
 // VideoType is an enum of subclasses of the video abstraction
@@ -22,7 +22,7 @@ const (
 
 // Video is a generic video source
 type Video struct {
-	ID            int64     `json:"id"`
+	ID            string    `json:"id"`
 	Title         string    `json:"title"`
 	Width         int64     `json:"width"`
 	Height        int64     `json:"height"`

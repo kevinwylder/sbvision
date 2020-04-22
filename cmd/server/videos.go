@@ -62,12 +62,12 @@ func (ctx *serverContext) handleVideoDiscovery(w http.ResponseWriter, r *http.Re
 	} else {
 		title := r.Form.Get("title")
 		if title == "" {
-			http.Error(w, "either (url) or (title, video) required in form data", 400)
+			http.Error(w, "url is missing", 400)
 			return
 		}
 		file, _, err := r.FormFile("video")
 		if err != nil {
-			http.Error(w, "video missing from form", 400)
+			http.Error(w, "video is missing", 400)
 			return
 		}
 		requests.NewRequest("", title, file.(*os.File))

@@ -2,7 +2,6 @@ package dynamo
 
 import (
 	"fmt"
-	"math/rand"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -14,7 +13,6 @@ import (
 func (sb *SBDatabase) AddVideo(video *sbvision.Video, user *sbvision.User) error {
 	video.UploadedBy = user.Username
 	video.UploaderEmail = user.Email
-	video.ID = rand.Int63()
 	_, err := sb.db.PutItem(&dynamodb.PutItemInput{
 		TableName: aws.String(videoTableName),
 		Item:      mustMarshalMap(video, "AddVideo put video"),
@@ -28,9 +26,9 @@ func (sb *SBDatabase) AddVideo(video *sbvision.Video, user *sbvision.User) error
 		}, "AddVideo update user key"),
 		TableName:        aws.String(userTableName),
 		UpdateExpression: aws.String("SET videos = list_append(videos, :newid)"),
-		ExpressionAttributeValues: mustMarshalMap(map[string][]int64{
-			":newid": []int64{
-				video.ID,
+		ExpressionAttributeValues: mustMarshalMap(map[string][]*string{
+			":newid": []*string{
+				aws.String(video.ID),
 			},
 		}, "AddVideo update user id list expression"),
 	})
@@ -72,8 +70,8 @@ func (sb *SBDatabase) GetVideos(user *sbvision.User) ([]sbvision.Video, error) {
 	var videos []sbvision.Video
 
 	for _, id := range user.Videos {
-		keys[videoTableName].Keys = append(keys[videoTableName].Keys, mustMarshalMap(map[string]int64{
-			"id": id,
+		keys[videoTableName].Keys = append(keys[videoTableName].Keys, mustMarshalMap(map[string]*string{
+			"id": aws.String(id),
 		}, "GetVideos user id"))
 	}
 
@@ -101,8 +99,8 @@ func (sb *SBDatabase) GetVideos(user *sbvision.User) ([]sbvision.Video, error) {
 func (sb *SBDatabase) RemoveVideo(video *sbvision.Video) error {
 	_, err := sb.db.DeleteItem(&dynamodb.DeleteItemInput{
 		TableName: aws.String(videoTableName),
-		Key: mustMarshalMap(map[string]int64{
-			"id": video.ID,
+		Key: mustMarshalMap(map[string]*string{
+			"id": aws.String(video.ID),
 		}, "RemoveVideo DeleteItem"),
 	})
 	if err != nil {
