@@ -117,7 +117,15 @@ func (rt *runtime) downloadVideo(manager *s3manager.Downloader) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Downloaded file to", f.Name())
+	err = f.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	stat, err := os.Stat(f.Name())
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Downloaded", stat.Size(), "bytes to", f.Name())
 }
 
 func (rt *runtime) embed() {
