@@ -3,10 +3,9 @@ package encoder
 import (
 	"encoding/base64"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
-
-	"github.com/aws/aws-sdk-go/service/batch"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -109,7 +108,13 @@ func (r *videoRequest) downloadVideoFromInternet() error {
 }
 
 func (r *videoRequest) uploadVideoToBucket() error {
-	_, err := r.u.m.uploader.Upload(&s3manager.UploadInput{
+	fmt.Println(r.file)
+	info, err := os.Stat(r.file.Name())
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(info.Size(), "bytes about to be uploaded")
+	_, err = r.u.m.uploader.Upload(&s3manager.UploadInput{
 		Body:   r.file,
 		Key:    aws.String(r.ID),
 		Bucket: aws.String(video.QueueBucket),
@@ -121,7 +126,7 @@ func (r *videoRequest) uploadVideoToBucket() error {
 }
 
 func (r *videoRequest) startBatchProcess() error {
-	output, err := r.m.batch.SubmitJob(&batch.SubmitJobInput{
+	/*output, err := r.m.batch.SubmitJob(&batch.SubmitJobInput{
 		JobDefinition: aws.String("sbgetvid"),
 		JobQueue:      aws.String(video.BatchQueueName),
 		JobName:       aws.String(r.ID),
@@ -141,6 +146,6 @@ func (r *videoRequest) startBatchProcess() error {
 		return err
 	}
 	r.setStatus("Created Job " + *output.JobId + ". Waiting for worker to run job")
-
+	*/
 	return nil
 }
