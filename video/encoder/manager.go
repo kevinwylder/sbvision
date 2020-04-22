@@ -1,7 +1,8 @@
-package sourceutil
+package encoder
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"path"
@@ -39,10 +40,11 @@ func (m *VideoRequestManager) createTopicAndSubscribe(request *videoRequest) err
 		Name: aws.String(request.ID),
 	})
 	if err != nil {
+		fmt.Println("Error creating topic for request", request)
 		return err
 	}
 	request.TopicARN = *topic.TopicArn
-	output, err := m.ns.Subscribe(&sns.SubscribeInput{
+	_, err = m.ns.Subscribe(&sns.SubscribeInput{
 		Protocol: aws.String("https"),
 		Endpoint: aws.String("https://api.skateboardvision.net/sns/" + request.ID),
 		TopicArn: topic.TopicArn,
@@ -50,7 +52,7 @@ func (m *VideoRequestManager) createTopicAndSubscribe(request *videoRequest) err
 	return err
 }
 
-func (m *VideoRequestManager) handleSNSEvent(w http.ResponseWriter, r *http.Request) {
+func (m *VideoRequestManager) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ID := path.Base(r.URL.Path)
 	request, exists := m.requestVideo[ID]
 	if !exists {
@@ -82,6 +84,7 @@ func (m *VideoRequestManager) handleSNSEvent(w http.ResponseWriter, r *http.Requ
 		Message string `json:"Message"`
 	}
 	if err := decoder.Decode(&body); err != nil {
+		fmt.Println("Could not decode body in request to", r.URL.String())
 		http.Error(w, "bad request body", 400)
 		return
 	}
@@ -98,5 +101,6 @@ func (m *VideoRequestManager) handleSNSEvent(w http.ResponseWriter, r *http.Requ
 }
 
 func (m *VideoRequestManager) endRequest(request *videoRequest) {
+	fmt.Println("Ending request", request.ID, "as", request.Status)
 	delete(m.requestVideo, request.ID)
 }

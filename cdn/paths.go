@@ -24,3 +24,8 @@ func VideoPlaylist(id int64) string {
 func VideoMP4(id int64) string {
 	return path.Join(VideoDirectory(id), "video.mp4")
 }
+
+// Bound is a path to the image represented by this bound
+func Bound(id int64) string {
+	return fmt.Sprintf("/bound/%d.png", id)
+}

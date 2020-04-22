@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"strings"
 )
 
 func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +43,12 @@ func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ctx.handleVisualizationSocket(w, r)
 
 	default:
-		ctx.assets.ServeHTTP(w, r)
+		if strings.HasPrefix(r.URL.Path, "/sns") {
+			ctx.processes.ServeHTTP(w, r)
+			return
+		}
+
+		http.Error(w, "Not Found", 404)
 
 	}
 

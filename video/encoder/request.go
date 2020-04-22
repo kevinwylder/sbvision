@@ -1,11 +1,9 @@
-package sourceutil
+package encoder
 
 import (
 	"encoding/base64"
-	"io"
-	"io/ioutil"
+	"fmt"
 	"math/rand"
-	"net/http"
 	"os"
 
 	"github.com/aws/aws-sdk-go/service/batch"
@@ -33,12 +31,9 @@ type videoRequest struct {
 }
 
 // NewRequest adds a new request to the manager and user
-func (u *UserRequests) NewRequest(url, title string, file *os.File) error {
+func (u *UserRequests) NewRequest(url, title string, file *os.File) {
 	data := make([]byte, 18)
-	_, err := rand.Read(data)
-	if err != nil {
-		return err
-	}
+	rand.Read(data)
 	randID := base64.URLEncoding.EncodeToString(data)
 	r := &videoRequest{
 		u:  u,
@@ -53,7 +48,6 @@ func (u *UserRequests) NewRequest(url, title string, file *os.File) error {
 	}
 	go r.process()
 	u.m.requestVideo[randID] = r
-	return nil
 }
 
 func (r *videoRequest) sendStatus() {
@@ -62,11 +56,18 @@ func (r *videoRequest) sendStatus() {
 	}
 }
 
+func (r *videoRequest) setStatus(status string) {
+	fmt.Println(r.ID, "status", status)
+	r.Status.Message = status
+	r.sendStatus()
+}
+
 func (r *videoRequest) process() {
 	var err error
 
 	defer func() {
 		if err != nil {
+			fmt.Println("Process function for reqest", r.ID, "exited with error", err.Error())
 			r.Status.Message = err.Error()
 			r.Status.IsComplete = true
 			r.u.m.endRequest(r)
@@ -75,22 +76,26 @@ func (r *videoRequest) process() {
 	}()
 
 	if r.file == nil {
+		r.setStatus("Getting Video from Internet Source")
 		err = r.downloadVideoFromInternet()
 		if err != nil {
 			return
 		}
 	}
 
+	r.setStatus("Storing Unprocessed Video")
 	err = r.uploadVideoToBucket()
 	if err != nil {
 		return
 	}
 
+	r.setStatus("Setting up communication channel for Video Processor")
 	err = r.u.m.createTopicAndSubscribe(r)
 	if err != nil {
 		return
 	}
 
+	r.setStatus("Sending Request to Process Video")
 	err = r.startBatchProcess()
 	if err != nil {
 		return
@@ -98,18 +103,8 @@ func (r *videoRequest) process() {
 }
 
 func (r *videoRequest) downloadVideoFromInternet() error {
-	resp, err := http.Get(r.url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	r.file, err = ioutil.TempFile("", "")
-	if err != nil {
-		return err
-	}
-
-	_, err = io.Copy(r.file, resp.Body)
+	var err error
+	r.file, r.title, r.video, err = video.FindVideoSource(r.url)
 	return err
 }
 
@@ -126,8 +121,26 @@ func (r *videoRequest) uploadVideoToBucket() error {
 }
 
 func (r *videoRequest) startBatchProcess() error {
-	r.u.user.Email
-	r.m.batch.SubmitJob(&batch.SubmitJobInput{})
+	output, err := r.m.batch.SubmitJob(&batch.SubmitJobInput{
+		JobDefinition: aws.String("sbgetvid"),
+		JobQueue:      aws.String(video.BatchQueueName),
+		JobName:       aws.String(r.ID),
+		ContainerOverrides: &batch.ContainerOverrides{
+			Command: []*string{
+				aws.String("sbgetvid"),
+				aws.String("-email=" + r.u.user.Email),
+				aws.String("-request=" + r.ID),
+				aws.String("-source=" + r.url),
+				aws.String("-title=" + r.title),
+				aws.String("-topic=" + r.TopicARN),
+				aws.String(fmt.Sprintf("-type=%d", r.video)),
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	r.setStatus("Added Created Job " + *output.JobId + " to process video")
 
 	return nil
 }

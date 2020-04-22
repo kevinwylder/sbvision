@@ -1,4 +1,4 @@
-package sourceutil
+package encoder
 
 import (
 	"math/rand"
@@ -27,7 +27,6 @@ func (m *VideoRequestManager) GetUserRequests(user *sbvision.User) *UserRequests
 		}
 	}
 	return m.userRequests[user.Email]
-
 }
 
 // AddListener adds the callback function to the list of user callbacks

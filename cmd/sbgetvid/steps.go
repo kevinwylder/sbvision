@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"path"
 
-	"github.com/kevinwylder/sbvision/media/cdn"
+	"github.com/kevinwylder/sbvision/cdn"
 )
 
 func (rt *runtime) getVideoInformation() error {

@@ -4,11 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
+	"os"
 
-	"github.com/kevinwylder/sbvision"
-
-	"github.com/kevinwylder/sbvision/media/sources"
+	"github.com/kevinwylder/sbvision/video"
 )
 
 func (ctx *serverContext) handleGetVideo(w http.ResponseWriter, r *http.Request) {
@@ -17,7 +15,7 @@ func (ctx *serverContext) handleGetVideo(w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), 400)
 		return
 	}
-	video, err := ctx.db.GetVideoByID(ids[0])
+	video, err := ctx.ddb.GetVideoByID(ids[0])
 	if err != nil {
 		http.Error(w, "Could not get video", 500)
 		return
@@ -32,7 +30,7 @@ func (ctx *serverContext) handleVideoPage(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	videos, err := ctx.db.GetVideos(user)
+	videos, err := ctx.ddb.GetVideos(user)
 	if err != nil {
 		http.Error(w, "An error occured", 500)
 		return
@@ -56,11 +54,11 @@ func (ctx *serverContext) handleVideoDiscovery(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	requests := ctx.processes.GetUserRequests(user)
+
 	url := r.Form.Get("url")
 	if url != "" {
-		ticket, err = ctx.discoveryQueue.Enqueue(user, func() (sbvision.VideoSource, error) {
-			return sources.FindVideoSource(url)
-		})
+		requests.NewRequest(url, "", nil)
 	} else {
 		title := r.Form.Get("title")
 		if title == "" {
@@ -72,12 +70,7 @@ func (ctx *serverContext) handleVideoDiscovery(w http.ResponseWriter, r *http.Re
 			http.Error(w, "video missing from form", 400)
 			return
 		}
-		ticket, err = ctx.discoveryQueue.Enqueue(user, func() (sbvision.VideoSource, error) {
-			return sources.VideoFileSource(file, title, func() {
-				r.MultipartForm.RemoveAll()
-			})
-		})
-
+		requests.NewRequest("", title, file.(*os.File))
 	}
 }
 
@@ -88,32 +81,21 @@ func (ctx *serverContext) handleVideoStatus(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	requests := ctx.processes.GetUserRequests(user)
+
 	socket, err := ctx.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		http.Error(w, "Could not open socket", 500)
 		return
 	}
 
-	request, exists := ctx.discoveryQueue.Find(user)
-	if !exists {
-		socket.Close()
-		return
-	}
-
-	events, done := request.Subscribe()
-	defer done()
-
-	ticker := time.NewTicker(time.Second * 5)
-	for {
-		var err error
-		select {
-		case <-events:
-			err = socket.WriteJSON(request)
-		case <-ticker.C:
-			err = socket.WriteJSON(request)
-		}
+	var callbackID int64
+	callbackID = requests.AddListener(func(status *video.Status) {
+		err := socket.WriteJSON(status)
 		if err != nil {
+			requests.RemoveListener(callbackID)
 			socket.Close()
 		}
-	}
+
+	})
 }

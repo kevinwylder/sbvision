@@ -8,24 +8,22 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/kevinwylder/sbvision/database/dynamo"
-
 	"github.com/kevinwylder/sbvision"
 	"github.com/kevinwylder/sbvision/auth"
-	"github.com/kevinwylder/sbvision/database"
-	"github.com/kevinwylder/sbvision/media"
-	"github.com/kevinwylder/sbvision/media/video"
+	"github.com/kevinwylder/sbvision/database/dynamo"
+	"github.com/kevinwylder/sbvision/database/mysqldb"
+	"github.com/kevinwylder/sbvision/video/encoder"
 
 	"github.com/gorilla/websocket"
 )
 
 type serverContext struct {
-	assets         *media.AssetDirectory
-	upgrader       websocket.Upgrader
-	auth           *auth.JWTVerifier
-	discoveryQueue *video.ProcessQueue
-	videoCache     map[int64]*sbvision.Video
-	db             database.SBDatabase
+	upgrader   websocket.Upgrader
+	auth       *auth.JWTVerifier
+	videoCache map[int64]*sbvision.Video
+	processes  *encoder.VideoRequestManager
+	ddb        *dynamo.SBDatabase
+	mdb        *mysqldb.SBDatabase
 }
 
 func main() {
@@ -35,25 +33,28 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	db, err := dynamo.FindTables(session)
+
+	ddb, err := dynamo.FindTables(session)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	mdb, err := mysqldb.ConnectToDatabase(os.Getenv("DB_CREDS"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	server := &serverContext{
-		db: db,
+		ddb: ddb,
+		mdb: mdb,
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 20 * 1024,
 			CheckOrigin:     func(r *http.Request) bool { return true },
 		},
-		auth: auth.NewJWTVerifier(db, "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_dHWlJDm4T/.well-known/jwks.json"),
+		auth:      auth.NewJWTVerifier(ddb, "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_dHWlJDm4T/.well-known/jwks.json"),
+		processes: encoder.NewVideoRequestManager(session),
 	}
-
-	if server.assets, err = media.NewAssetDirectory(os.Getenv("ASSET_DIR")); err != nil {
-		log.Fatal(err)
-	}
-	server.discoveryQueue = video.NewProcessQueue(server.assets, db)
 
 	fmt.Println("Starting server")
 	err = http.ListenAndServe(":"+os.Getenv("PORT"), server)

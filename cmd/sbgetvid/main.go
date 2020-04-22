@@ -8,8 +8,8 @@ import (
 
 	"github.com/kevinwylder/sbvision"
 
+	"github.com/kevinwylder/sbvision/cdn"
 	"github.com/kevinwylder/sbvision/database/dynamo"
-	"github.com/kevinwylder/sbvision/media/cdn"
 	"github.com/kevinwylder/sbvision/video"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -77,9 +77,10 @@ func main() {
 	}
 
 	v := sbvision.Video{
-		Title:     *title,
-		Type:      sbvision.VideoType(*videoType),
-		SourceURL: *sourceURL,
+		Title:         *title,
+		Type:          sbvision.VideoType(*videoType),
+		SourceURL:     *sourceURL,
+		UploaderEmail: user.Email,
 	}
 
 	rt := &runtime{

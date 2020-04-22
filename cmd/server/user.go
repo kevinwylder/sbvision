@@ -29,14 +29,14 @@ func (ctx *serverContext) handleGetUserInfo(w http.ResponseWriter, r *http.Reque
 			http.Error(w, "Missing email object in body", 400)
 			return
 		}
-		err = ctx.db.AddUser(user)
+		err = ctx.ddb.AddUser(user)
 		if err != nil {
 			http.Error(w, "Could not add user to database", 500)
 			return
 		}
 
 	case http.MethodGet:
-		user, err = ctx.db.GetUser(email)
+		user, err = ctx.ddb.GetUser(email)
 
 	}
 
