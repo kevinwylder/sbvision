@@ -59,6 +59,11 @@ func (sb *SBDatabase) GetVideoByID(id int64) (*sbvision.Video, error) {
 
 // GetVideos gets a list of all the videos for that user
 func (sb *SBDatabase) GetVideos(user *sbvision.User) ([]sbvision.Video, error) {
+	var err error
+	user, err = sb.GetUser(user.Email)
+	if err != nil {
+		return nil, err
+	}
 	keys := map[string]*dynamodb.KeysAndAttributes{
 		videoTableName: &dynamodb.KeysAndAttributes{
 			Keys: []map[string]*dynamodb.AttributeValue{},

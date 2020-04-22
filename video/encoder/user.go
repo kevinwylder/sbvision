@@ -14,6 +14,7 @@ type UserCallback func(*video.Status)
 type UserRequests struct {
 	user      *sbvision.User
 	m         *VideoRequestManager
+	requests  []*videoRequest
 	callbacks map[int64]UserCallback
 }
 
@@ -33,6 +34,9 @@ func (m *VideoRequestManager) GetUserRequests(user *sbvision.User) *UserRequests
 func (u *UserRequests) AddListener(callback UserCallback) int64 {
 	id := rand.Int63()
 	u.callbacks[id] = callback
+	for _, request := range u.requests {
+		callback(&request.Status)
+	}
 	return id
 }
 

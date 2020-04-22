@@ -46,6 +46,7 @@ func (u *UserRequests) NewRequest(url, title string, file *os.File) {
 		title: title,
 		url:   url,
 	}
+	u.requests = append(u.requests, r)
 	go r.process()
 	u.m.requestVideo[randID] = r
 }
@@ -57,7 +58,6 @@ func (r *videoRequest) sendStatus() {
 }
 
 func (r *videoRequest) setStatus(status string) {
-	fmt.Println(r.ID, "status", status)
 	r.Status.Message = status
 	r.sendStatus()
 }
@@ -100,6 +100,8 @@ func (r *videoRequest) process() {
 	if err != nil {
 		return
 	}
+
+	r.setStatus("Waiting for worker to run job")
 }
 
 func (r *videoRequest) downloadVideoFromInternet() error {
@@ -127,7 +129,7 @@ func (r *videoRequest) uploadVideoToBucket() error {
 }
 
 func (r *videoRequest) startBatchProcess() error {
-	output, err := r.m.batch.SubmitJob(&batch.SubmitJobInput{
+	_, err := r.m.batch.SubmitJob(&batch.SubmitJobInput{
 		JobDefinition: aws.String("sbgetvid"),
 		JobQueue:      aws.String(video.BatchQueueName),
 		JobName:       aws.String(r.ID),
@@ -146,6 +148,5 @@ func (r *videoRequest) startBatchProcess() error {
 	if err != nil {
 		return err
 	}
-	r.setStatus("Created Job " + *output.JobId + ". Waiting for worker to run job")
 	return nil
 }
