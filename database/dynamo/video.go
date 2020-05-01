@@ -27,7 +27,7 @@ func (sb *SBDatabase) AddVideo(video *sbvision.Video, user *sbvision.User) error
 		TableName:        aws.String(userTableName),
 		UpdateExpression: aws.String("SET videos = list_append(videos, :newid)"),
 		ExpressionAttributeValues: mustMarshalMap(map[string][]string{
-			":newid": []string{video.ID},
+			":newid": {video.ID},
 		}, "AddVideo update user id list expression"),
 	})
 	user.Videos = append(user.Videos, video.ID)
@@ -38,7 +38,7 @@ func (sb *SBDatabase) AddVideo(video *sbvision.Video, user *sbvision.User) error
 func (sb *SBDatabase) GetVideoByID(id string) (*sbvision.Video, error) {
 	data, err := sb.db.GetItem(&dynamodb.GetItemInput{
 		Key: mustMarshalMap(map[string]string{
-			"video": id,
+			"id": id,
 		}, "GetVideoById"),
 		TableName: aws.String(videoTableName),
 	})
@@ -61,11 +61,10 @@ func (sb *SBDatabase) GetVideos(user *sbvision.User) ([]sbvision.Video, error) {
 		return nil, err
 	}
 	keys := map[string]*dynamodb.KeysAndAttributes{
-		videoTableName: &dynamodb.KeysAndAttributes{
+		videoTableName: {
 			Keys: []map[string]*dynamodb.AttributeValue{},
 		},
 	}
-	var videos []sbvision.Video
 
 	for _, id := range user.Videos {
 		keys[videoTableName].Keys = append(keys[videoTableName].Keys, mustMarshalMap(map[string]string{
@@ -73,23 +72,23 @@ func (sb *SBDatabase) GetVideos(user *sbvision.User) ([]sbvision.Video, error) {
 		}, "GetVideos user id"))
 	}
 
-	for keys[videoTableName] != nil && len(keys[videoTableName].Keys) > 0 {
-		result, err := sb.db.BatchGetItem(&dynamodb.BatchGetItemInput{
-			RequestItems: keys,
-		})
-		if err != nil {
-			return nil, err
-		}
-		for _, response := range result.Responses[videoTableName] {
+	var videos []sbvision.Video
+	err = sb.db.BatchGetItemPages(&dynamodb.BatchGetItemInput{
+		RequestItems: keys,
+	}, func(page *dynamodb.BatchGetItemOutput, isDone bool) bool {
+		for _, response := range page.Responses[videoTableName] {
 			var video sbvision.Video
 			err = dynamodbattribute.UnmarshalMap(response, &video)
 			if err != nil {
-				return nil, err
+				return false
 			}
 			videos = append(videos, video)
 		}
-		keys = result.UnprocessedKeys
+		return true
+	})
 
+	if err != nil {
+		return nil, err
 	}
 	return videos, nil
 }

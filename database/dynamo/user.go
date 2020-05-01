@@ -31,13 +31,16 @@ func (sb *SBDatabase) AddUser(user *sbvision.User) error {
 	_, err := sb.db.PutItem(&dynamodb.PutItemInput{
 		TableName: aws.String(userTableName),
 		Item: map[string]*dynamodb.AttributeValue{
-			"email": &dynamodb.AttributeValue{
+			"email": {
 				S: aws.String(user.Email),
 			},
-			"username": &dynamodb.AttributeValue{
+			"username": {
 				S: aws.String(user.Username),
 			},
-			"videos": &dynamodb.AttributeValue{
+			"videos": {
+				L: []*dynamodb.AttributeValue{},
+			},
+			"clips": {
 				L: []*dynamodb.AttributeValue{},
 			},
 		},

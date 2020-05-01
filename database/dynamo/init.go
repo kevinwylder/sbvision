@@ -20,6 +20,7 @@ type SBDatabase struct {
 
 const videoTableName = "Videos"
 const userTableName = "Users"
+const clipTableName = "Clips"
 
 // FindTables will find the tables DynamoDB tables for the amazon account
 func FindTables(session *session.Session) (*SBDatabase, error) {
@@ -30,14 +31,17 @@ func FindTables(session *session.Session) (*SBDatabase, error) {
 		db: dynamodb.New(session),
 	}
 
-	// look for video table
 	err := sb.ensureTable(videoTableName, aws.String("id"), aws.String("S"), nil, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	// look for the users table
 	err = sb.ensureTable(userTableName, aws.String("email"), aws.String("S"), nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	err = sb.ensureTable(clipTableName, aws.String("id"), aws.String("S"), nil, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -5,6 +5,7 @@ type User struct {
 	Email    string   `json:"email"`
 	Username string   `json:"username"`
 	Videos   []string `json:"videos"`
+	Clips    []string `json:"clips"`
 }
 
 // VideoType is an enum of subclasses of the video abstraction
@@ -36,24 +37,23 @@ type Video struct {
 
 // Clip is part of a video that has a trick
 type Clip struct {
-	ID       int64    `json:"id"`
-	VideoID  int64    `json:"video"`
-	Start    int64    `json:"start"`
-	End      int64    `json:"end"`
-	Username string   `json:"clipped_by"`
-	Tricks   []string `json:"tricks"`
-	Bounds   []Bound  `json:"bounds"`
+	ID         string               `json:"id"`
+	VideoID    string               `json:"videoId"`
+	Username   string               `json:"clipped_by"`
+	Trick      string               `json:"trick"`
+	UploadedAt string               `json:"uploaded_at"`
+	Start      int64                `json:"startFrame"`
+	End        int64                `json:"endFrame"`
+	Bounds     map[int64]Bound      `json:"boxes"`
+	Rotations  map[int64][4]float64 `json:"rotations"`
 }
 
 // Bound is an area on a frame
 type Bound struct {
-	ID        int64      `json:"id"`
-	Frame     int64      `json:"frame"`
-	Width     int64      `json:"width"`
-	Height    int64      `json:"height"`
-	X         int64      `json:"x"`
-	Y         int64      `json:"y"`
-	Rotations []Rotation `json:"rotations"`
+	Width  int64 `json:"w"`
+	Height int64 `json:"h"`
+	X      int64 `json:"x"`
+	Y      int64 `json:"y"`
 }
 
 // Rotation is the angle that a user has voted for a bound

@@ -39,14 +39,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	mdb, err := mysqldb.ConnectToDatabase(os.Getenv("DB_CREDS"))
-	if err != nil {
-		log.Fatal(err)
-	}
+	//mdb, err := mysqldb.ConnectToDatabase(os.Getenv("DB_CREDS"))
+	//if err != nil {
+	//log.Fatal(err)
+	//}
 
 	server := &serverContext{
 		ddb: ddb,
-		mdb: mdb,
+		//mdb: mdb,
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 20 * 1024,

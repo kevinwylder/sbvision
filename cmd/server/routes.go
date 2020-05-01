@@ -36,11 +36,20 @@ func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/video/status":
 		ctx.handleVideoStatus(w, r)
 
+	case "/clip/list":
+		ctx.handleGetClips(w, r)
+
+	case "/clip/info":
+		ctx.handleGetClip(w, r)
+
+	case "/clip/upload":
+		ctx.handleAddClip(w, r)
+
 	case "/user":
 		ctx.handleGetUserInfo(w, r)
 
 	case "/visualization":
-		ctx.handleVisualizationSocket(w, r)
+		//ctx.handleVisualizationSocket(w, r)
 
 	default:
 		if strings.HasPrefix(r.URL.Path, "/sns") {
