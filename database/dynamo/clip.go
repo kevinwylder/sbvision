@@ -3,6 +3,7 @@ package dynamo
 import (
 	"encoding/base64"
 	"math/rand"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -60,7 +61,7 @@ func (sb *SBDatabase) GetClips(trickName string) ([]sbvision.Clip, error) {
 	}, func(page *dynamodb.ScanOutput, isDone bool) bool {
 		for _, item := range page.Items {
 			var clip sbvision.Clip
-			err = dynamodbattribute.UnmarshalMap(item, &clip)
+			err = unmarshalClip(&clip, item)
 			if err != nil {
 				return false
 			}
@@ -86,9 +87,65 @@ func (sb *SBDatabase) GetClipByID(id string) (*sbvision.Clip, error) {
 		return nil, err
 	}
 	var clip sbvision.Clip
-	err = dynamodbattribute.UnmarshalMap(data.Item, &clip)
+	err = unmarshalClip(&clip, data.Item)
 	if err != nil {
 		return nil, err
 	}
 	return &clip, nil
+}
+
+func unmarshalClip(clip *sbvision.Clip, data map[string]*dynamodb.AttributeValue) error {
+	var err error
+	var frame int64
+	for key, attribute := range data {
+		switch key {
+		case "boxes":
+			clip.Bounds = make(map[int64]sbvision.Bound)
+			for t, v := range attribute.M {
+				var bound sbvision.Bound
+				err = dynamodbattribute.Unmarshal(v, &bound)
+				if err != nil {
+					return err
+				}
+				frame, err = strconv.ParseInt(t, 10, 64)
+				if err != nil {
+					return err
+				}
+				clip.Bounds[frame] = bound
+			}
+		case "rotations":
+			clip.Rotations = make(map[int64][4]float64)
+			for t, v := range attribute.M {
+				var rotation [4]float64
+				err = dynamodbattribute.Unmarshal(v, &rotation)
+				if err != nil {
+					return err
+				}
+				frame, err = strconv.ParseInt(t, 10, 64)
+				if err != nil {
+					return err
+				}
+				clip.Rotations[frame] = rotation
+			}
+
+		case "id":
+			err = dynamodbattribute.Unmarshal(attribute, &clip.ID)
+		case "videoId":
+			err = dynamodbattribute.Unmarshal(attribute, &clip.VideoID)
+		case "clipped_by":
+			err = dynamodbattribute.Unmarshal(attribute, &clip.Username)
+		case "trick":
+			err = dynamodbattribute.Unmarshal(attribute, &clip.Trick)
+		case "uploaded_at":
+			err = dynamodbattribute.Unmarshal(attribute, &clip.UploadedAt)
+		case "startFrame":
+			err = dynamodbattribute.Unmarshal(attribute, &clip.Start)
+		case "endFrame":
+			err = dynamodbattribute.Unmarshal(attribute, &clip.End)
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
