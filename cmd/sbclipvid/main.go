@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/kevinwylder/sbvision"
 	"github.com/kevinwylder/sbvision/database/dynamo"
+	"github.com/kevinwylder/sbvision/video/skateboard"
 )
 
 type runtime struct {
@@ -18,7 +19,7 @@ type runtime struct {
 	video      *sbvision.Video
 	workdir    string
 	output     string
-	skateboard *skateboard
+	skateboard *skateboard.Renderer
 	ddb        *dynamo.SBDatabase
 }
 
@@ -63,7 +64,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	sb, err := newSkateboard()
+	sb, err := skateboard.NewRenderer()
 	if err != nil {
 		log.Fatal(err)
 	}

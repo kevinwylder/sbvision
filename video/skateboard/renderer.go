@@ -1,4 +1,4 @@
-package main
+package skateboard
 
 import (
 	"encoding/json"
@@ -7,20 +7,21 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	goruntime "runtime"
+	"runtime"
 	"time"
-	"unsafe"
 
-	"github.com/go-gl/gl/v3.3-core/gl"
-	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/go-gl/gl/v4.2-core/gl"
+	"github.com/go-gl/glfw/v3.2/glfw"
 )
 
-type skateboard struct {
-	input  chan quaternion
+type Quaternion [4]float64
+
+type Renderer struct {
+	input  chan Quaternion
 	output chan []byte
 	finish chan struct{}
+	x      *exec.Cmd
 
-	window       *glfw.Window
 	program      uint32
 	materialType int32
 	rotation     int32
@@ -38,27 +39,31 @@ type skateboard struct {
 	capCount       int32
 }
 
-func newSkateboard() (*skateboard, error) {
-	sb := &skateboard{
+func NewRenderer() (*Renderer, error) {
+	sb := &Renderer{
 		output: make(chan []byte),
-		input:  make(chan quaternion),
+		input:  make(chan Quaternion),
 		finish: make(chan struct{}),
 	}
 	errors := make(chan error)
-	go func() {
-		goruntime.LockOSThread()
-
-		// start a virtual server
-		x := exec.Command("Xvfb", ":99", "-screen", "0", "1024x768x16")
+	if _, exists := os.LookupEnv("DISPLAY"); !exists {
+		// start a virtual display
+		sb.x = exec.Command("Xvfb", ":99", "-screen", "0", "1024x768x16")
+		sb.x.Start()
 		go func() {
-			x.Wait()
+			err := sb.x.Wait()
+			if err != nil {
+				fmt.Println(err)
+			}
 		}()
-		x.Start()
 		os.Setenv("DISPLAY", ":99.0")
 		time.Sleep(time.Second)
+	}
+
+	go func() {
+		runtime.LockOSThread()
 
 		if err := glfw.Init(); err != nil {
-			fmt.Println(err)
 			errors <- err
 			return
 		}
@@ -67,23 +72,11 @@ func newSkateboard() (*skateboard, error) {
 			errors <- err
 			return
 		}
-		sb.window = window
 		window.MakeContextCurrent()
 		if err := gl.Init(); err != nil {
 			errors <- err
 			return
 		}
-		gl.DebugMessageCallback(func(
-			source uint32,
-			gltype uint32,
-			id uint32,
-			severity uint32,
-			length int32,
-			message string,
-			param unsafe.Pointer,
-		) {
-			fmt.Println(message, source, gltype, severity)
-		}, gl.Ptr(nil))
 		if err := sb.setup(); err != nil {
 			errors <- err
 			return
@@ -91,24 +84,43 @@ func newSkateboard() (*skateboard, error) {
 		close(errors)
 		sb.worker()
 	}()
-	return sb, <-errors
+	err := <-errors
+	if err != nil {
+		fmt.Println(err)
+		sb.Destroy()
+		return nil, err
+	}
+	return sb, nil
 }
 
-func (sb *skateboard) Render(rotation quaternion) []byte {
+func (sb *Renderer) Render(rotation Quaternion) []byte {
 	sb.input <- rotation
 	return <-sb.output
 }
 
-func (sb *skateboard) setup() error {
+func (sb *Renderer) Destroy() {
+	close(sb.input)
+	glfw.Terminate()
+	if sb.x != nil {
+		sb.x.Process.Kill()
+	}
+}
+
+func (sb *Renderer) setup() error {
+
+	fmt.Println(gl.GoStr(gl.GetString(gl.VERSION)))
+	fmt.Println(gl.GoStr(gl.GetString(gl.VENDOR)))
+	fmt.Println(gl.GoStr(gl.GetString(gl.SHADING_LANGUAGE_VERSION)))
+	fmt.Println(gl.GoStr(gl.GetString(gl.RENDERER)))
 
 	gl.Enable(gl.DEPTH_TEST)
 	gl.Enable(gl.DITHER)
-	gl.ClearColor(1, 1, 1, 0)
+	gl.ClearColor(1, 1, 1, 1)
 	gl.DepthMask(true)
 	gl.DepthFunc(gl.LEQUAL)
 	gl.DepthRangef(0.0, 1.0)
 
-	vertex, err := downloadShader("https://skateboardvisision.net/skateboard/vertex.glsl", gl.VERTEX_SHADER)
+	vertex, err := downloadShader("https://skateboardvision.net/skateboard/vertex.glsl", gl.VERTEX_SHADER)
 	if err != nil {
 		return err
 	}
@@ -158,7 +170,7 @@ func (sb *skateboard) setup() error {
 	return nil
 }
 
-func (sb *skateboard) worker() {
+func (sb *Renderer) worker() {
 	var wheelX float32 = 0.52
 	var wheelY float32 = 0.21
 	var wheelZ float32 = -0.12
@@ -166,7 +178,10 @@ func (sb *skateboard) worker() {
 	var inner float32 = 0.17
 
 	for {
-		rotation := <-sb.input
+		rotation, more := <-sb.input
+		if !more {
+			return
+		}
 
 		gl.Viewport(0, 0, 500, 500)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -225,15 +240,27 @@ func (sb *skateboard) worker() {
 	}
 }
 
-func (sb *skateboard) bindBuffer(verts, elems uint32) {
+func (sb *Renderer) bindBuffer(verts, elems uint32) {
 	gl.BindBuffer(gl.ARRAY_BUFFER, verts)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, elems)
 	pos := uint32(gl.GetAttribLocation(sb.program, gl.Str("vertPos\000")))
 	gl.VertexAttribPointer(pos, 3, gl.FLOAT, false, 6*4, gl.PtrOffset(0))
 	gl.EnableVertexAttribArray(pos)
 	norm := uint32(gl.GetAttribLocation(sb.program, gl.Str("vertNorm\000")))
-	gl.VertexAttribPointer(norm, 3, gl.FLOAT, false, 6*4, gl.PtrOffset(3*4))
+	gl.VertexAttribPointer(norm, 3, gl.FLOAT, true, 6*4, gl.PtrOffset(3*4))
 	gl.EnableVertexAttribArray(norm)
+}
+
+func checkError(call string) error {
+	if err := gl.GetError(); err != gl.NO_ERROR {
+		switch err {
+		case gl.INVALID_OPERATION:
+			return fmt.Errorf("%s INVALID_OPERATION", call)
+		default:
+			return fmt.Errorf("%s error 0x%04X\n", call, err)
+		}
+	}
+	return nil
 }
 
 func downloadShader(url string, ty uint32) (uint32, error) {
@@ -251,8 +278,17 @@ func downloadShader(url string, ty uint32) (uint32, error) {
 	program, free := gl.Strs(sourceCode)
 	size := int32(len(data))
 	shader := gl.CreateShader(ty)
+	if err := checkError("createShader"); err != nil {
+		return 0, err
+	}
 	gl.ShaderSource(shader, 1, program, &size)
+	if err := checkError("shaderSource"); err != nil {
+		return 0, err
+	}
 	gl.CompileShader(shader)
+	if err := checkError("compileShader"); err != nil {
+		return 0, err
+	}
 	free()
 	var success int32
 	gl.GetShaderiv(shader, gl.COMPILE_STATUS, &success)
@@ -282,14 +318,14 @@ func downloadBuffer(url string) (uint32, uint32, int32, error) {
 	}
 	var vertBuffer, elementBuffer uint32
 	var size int32
-	gl.CreateBuffers(1, &vertBuffer)
+	gl.GenBuffers(1, &vertBuffer)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vertBuffer)
 	gl.BufferData(gl.ARRAY_BUFFER, 4*len(data.Points), gl.Ptr(data.Points), gl.STATIC_DRAW)
 	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 	size = int32(len(data.Points))
 
 	if len(data.Elements) > 0 {
-		gl.CreateBuffers(1, &elementBuffer)
+		gl.GenBuffers(1, &elementBuffer)
 		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer)
 		gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, 2*len(data.Elements), gl.Ptr(data.Elements), gl.STATIC_DRAW)
 		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
