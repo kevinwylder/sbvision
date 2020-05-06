@@ -108,7 +108,7 @@ func (sb *skateboard) setup() error {
 	gl.DepthFunc(gl.LEQUAL)
 	gl.DepthRangef(0.0, 1.0)
 
-	vertex, err := downloadShader("https://skateboardvisision.net/skateboard/vertex.glsl", gl.VERTEX_SHADER)
+	vertex, err := downloadShader("https://skateboardvision.net/skateboard/vertex.glsl", gl.VERTEX_SHADER)
 	if err != nil {
 		return err
 	}
