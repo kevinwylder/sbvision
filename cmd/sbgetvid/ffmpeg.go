@@ -94,13 +94,13 @@ func (rt *runtime) getInfo() *ffmpegProcess {
 func (p *ffmpegProcess) readInfo() {
 
 	hooks := []hook{
-		hook{
+		{
 			matcher: regexp.MustCompile(`Duration: (\d+:\d+:\d+\.\d+),`),
 			handler: func(data [][]byte) {
 				p.Info.Duration = string(data[1])
 			},
 		},
-		hook{
+		{
 			matcher: regexp.MustCompile(`Stream #\d+:.*: Video:.*, (\d+)x(\d+).*, (\d+.?\d*) fps`),
 			handler: func(data [][]byte) {
 				p.Info.Width, p.err = strconv.ParseInt(string(data[1]), 10, 64)
