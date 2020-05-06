@@ -3,12 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -104,19 +101,5 @@ func (rt *runtime) Begin() error {
 }
 
 func (rt *runtime) Cleanup() {
-	defer os.RemoveAll(rt.workdir)
-	files, err := ioutil.ReadDir(rt.workdir)
-	if err != nil {
-		return
-	}
-	dst := path.Dir(rt.output)
-	for _, f := range files {
-		if strings.Contains(f.Name(), "output") {
-			in, _ := os.Open(path.Join(rt.workdir, f.Name()))
-			out, _ := os.OpenFile(path.Join(dst, f.Name()), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
-			io.Copy(out, in)
-			in.Close()
-			out.Close()
-		}
-	}
+	os.RemoveAll(rt.workdir)
 }
