@@ -18,7 +18,7 @@ type Quaternion [4]float64
 
 type Renderer struct {
 	input  chan Quaternion
-	output chan []byte
+	output chan Image
 	finish chan struct{}
 	x      *exec.Cmd
 
@@ -41,7 +41,7 @@ type Renderer struct {
 
 func NewRenderer() (*Renderer, error) {
 	sb := &Renderer{
-		output: make(chan []byte),
+		output: make(chan Image),
 		input:  make(chan Quaternion),
 		finish: make(chan struct{}),
 	}
@@ -51,10 +51,7 @@ func NewRenderer() (*Renderer, error) {
 		sb.x = exec.Command("Xvfb", ":99", "-screen", "0", "1024x768x16")
 		sb.x.Start()
 		go func() {
-			err := sb.x.Wait()
-			if err != nil {
-				fmt.Println(err)
-			}
+			sb.x.Wait()
 		}()
 		os.Setenv("DISPLAY", ":99.0")
 		time.Sleep(time.Second)
@@ -93,7 +90,7 @@ func NewRenderer() (*Renderer, error) {
 	return sb, nil
 }
 
-func (sb *Renderer) Render(rotation Quaternion) []byte {
+func (sb *Renderer) Render(rotation Quaternion) Image {
 	sb.input <- rotation
 	return <-sb.output
 }
