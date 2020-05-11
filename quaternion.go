@@ -6,15 +6,12 @@ func NewQuaternion(r, i, j, k float64) Quaternion {
 	return [4]float64{r, i, j, k}
 }
 
-func (q Quaternion) Scale(b float64) {
-	q[0] /= b
-	q[1] /= b
-	q[2] /= b
-	q[3] /= b
+func (q Quaternion) Scale(b float64) Quaternion {
+	return NewQuaternion(q[0]/b, q[1]/b, q[2]/b, q[3]/b)
 }
 
-func (q Quaternion) Normalize() {
-	q.Scale(math.Sqrt(q.Dot(q)))
+func (q Quaternion) Normalize() Quaternion {
+	return q.Scale(math.Sqrt(q.Dot(q)))
 }
 
 func (q Quaternion) Dot(b Quaternion) float64 {

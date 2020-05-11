@@ -10,8 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/kevinwylder/sbvision"
 	"github.com/kevinwylder/sbvision/auth"
-	"github.com/kevinwylder/sbvision/database/dynamo"
-	"github.com/kevinwylder/sbvision/database/mysqldb"
+	"github.com/kevinwylder/sbvision/dynamo"
 	"github.com/kevinwylder/sbvision/video/encoder"
 
 	"github.com/gorilla/websocket"
@@ -23,7 +22,6 @@ type serverContext struct {
 	videoCache map[int64]*sbvision.Video
 	processes  *encoder.VideoRequestManager
 	ddb        *dynamo.SBDatabase
-	mdb        *mysqldb.SBDatabase
 }
 
 func main() {
@@ -39,14 +37,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	//mdb, err := mysqldb.ConnectToDatabase(os.Getenv("DB_CREDS"))
-	//if err != nil {
-	//log.Fatal(err)
-	//}
-
 	server := &serverContext{
 		ddb: ddb,
-		//mdb: mdb,
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 20 * 1024,

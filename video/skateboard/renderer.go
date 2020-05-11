@@ -8,18 +8,17 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/go-gl/gl/v4.2-core/gl"
 	"github.com/go-gl/glfw/v3.2/glfw"
+	"github.com/kevinwylder/sbvision"
 )
 
-type Quaternion [4]float64
-
 type Renderer struct {
-	input  chan Quaternion
+	input  chan sbvision.Quaternion
 	output chan Image
-	finish chan struct{}
 	x      *exec.Cmd
 
 	program      uint32
@@ -42,8 +41,7 @@ type Renderer struct {
 func NewRenderer() (*Renderer, error) {
 	sb := &Renderer{
 		output: make(chan Image),
-		input:  make(chan Quaternion),
-		finish: make(chan struct{}),
+		input:  make(chan sbvision.Quaternion),
 	}
 	errors := make(chan error)
 	if _, exists := os.LookupEnv("DISPLAY"); !exists {
@@ -51,7 +49,13 @@ func NewRenderer() (*Renderer, error) {
 		sb.x = exec.Command("Xvfb", ":99", "-screen", "0", "1024x768x16")
 		sb.x.Start()
 		go func() {
-			sb.x.Wait()
+			err := sb.x.Wait()
+			if !strings.Contains(err.Error(), "killed") {
+				fmt.Println(err)
+			}
+			if exitErr, ok := err.(*exec.ExitError); ok {
+				fmt.Println(string(exitErr.Stderr))
+			}
 		}()
 		os.Setenv("DISPLAY", ":99.0")
 		time.Sleep(time.Second)
@@ -90,7 +94,7 @@ func NewRenderer() (*Renderer, error) {
 	return sb, nil
 }
 
-func (sb *Renderer) Render(rotation Quaternion) Image {
+func (sb *Renderer) Render(rotation sbvision.Quaternion) Image {
 	sb.input <- rotation
 	return <-sb.output
 }
@@ -99,7 +103,7 @@ func (sb *Renderer) Destroy() {
 	close(sb.input)
 	glfw.Terminate()
 	if sb.x != nil {
-		sb.x.Process.Kill()
+		sb.x.Process.Signal(os.Interrupt)
 	}
 }
 
@@ -112,7 +116,7 @@ func (sb *Renderer) setup() error {
 
 	gl.Enable(gl.DEPTH_TEST)
 	gl.Enable(gl.DITHER)
-	gl.ClearColor(1, 1, 1, 1)
+	gl.ClearColor(1, 1, 1, 0)
 	gl.DepthMask(true)
 	gl.DepthFunc(gl.LEQUAL)
 	gl.DepthRangef(0.0, 1.0)

@@ -11,7 +11,7 @@ import (
 	"github.com/kevinwylder/sbvision"
 
 	"github.com/kevinwylder/sbvision/cdn"
-	"github.com/kevinwylder/sbvision/database/dynamo"
+	"github.com/kevinwylder/sbvision/dynamo"
 	"github.com/kevinwylder/sbvision/video"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -170,13 +170,6 @@ func (rt *runtime) embed() {
 	rt.setStatus("Processing Video")
 	if err := rt.processVideo(); err != nil {
 		rt.setStatus("Error processing video - " + err.Error())
-	}
-
-	rt.setStatus("Adding to the database")
-	if err := rt.addToDatabase(); err != nil {
-		fmt.Println(rt.video)
-		rt.setStatus("Failed to add to the database - " + err.Error())
-		return
 	}
 
 	rt.setStatus("Uploading video to skateboardvision.net")

@@ -9,4 +9,7 @@ RUN go get github.com/aws/aws-sdk-go/aws
 RUN go get github.com/go-gl/gl/v3.3-core/gl
 RUN go get github.com/go-gl/glfw/v3.1/glfw
 RUN go get golang.org/x/image/bmp
+RUN go install github.com/kevinwylder/sbvision/cmd/sbclipvid
+
+ENTRYPOINT [ "go", "run", "github.com/kevinwylder/sbvision/cmd/sbclipvid" ]
 

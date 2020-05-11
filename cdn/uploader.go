@@ -2,6 +2,9 @@ package cdn
 
 import (
 	"io"
+	"io/ioutil"
+	"os"
+	"path"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -35,6 +38,25 @@ func (u *Uploader) Add(data io.Reader, path string) error {
 		Key:    aws.String(path),
 	})
 	return err
+}
+
+func (u *Uploader) AddDir(src, dst string) error {
+	files, err := ioutil.ReadDir(src)
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		f, err := os.Open(path.Join(src, file.Name()))
+		if err != nil {
+			return err
+		}
+		err = u.Add(f, path.Join(dst, file.Name()))
+		if err != nil {
+			return err
+		}
+		f.Close()
+	}
+	return nil
 }
 
 // Invalidate makes the changes made by Add live

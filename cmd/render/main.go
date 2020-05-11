@@ -2,9 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
-	"image"
-	"image/color"
 	"io/ioutil"
 	"log"
 	"os"
@@ -19,23 +18,39 @@ import (
 )
 
 func main() {
+
+	var (
+		video = flag.Bool("video", false, "if true, creates a video of the frames")
+		fps   = flag.Float64("fps", 30.0, "if video is set, use this framerate")
+		name  = flag.String("name", "out", "the name of the asset(s) to generate")
+	)
+	flag.Parse()
+
 	sb, err := skateboard.NewRenderer()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	dir, err := ioutil.TempDir("", "frames")
+	dir := "."
+	if *video {
+		dir, err = ioutil.TempDir("", "")
+		if err != nil {
+			sb.Destroy()
+			log.Fatal(err)
+		}
+	}
 
 	s := make(chan os.Signal)
 	signal.Notify(s, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-s
-		os.RemoveAll(dir)
 		sb.Destroy()
+		if *video {
+			os.RemoveAll(dir)
+		}
 	}()
 
-	fmt.Println("rendering at", dir)
-	for i, arg := range os.Args[1:] {
+	for i, arg := range flag.Args() {
 		var rotation [4]float64
 		err = json.Unmarshal([]byte(arg), &rotation)
 		if err != nil {
@@ -43,25 +58,11 @@ func main() {
 			break
 		}
 
-		image := image.NewRGBA(image.Rect(0, 0, 500, 500))
-		data := sb.Render(rotation)
-		for x := 0; x < 500; x++ {
-			for y := 0; y < 500; y++ {
-				i := 4 * (((499 - y) * 500) + x)
-				if data[i+3] != 0 {
-					image.SetRGBA(x, y, color.RGBA{
-						R: data[i],
-						G: data[i+1],
-						B: data[i+2],
-						A: 255,
-					})
-				} else {
-					image.Set(x, y, color.White)
-				}
-			}
-		}
+		image := sb.Render(rotation)
 
-		file, err := os.Create(path.Join(dir, fmt.Sprintf("frame%03d.bmp", i)))
+		fileName := path.Join(dir, fmt.Sprintf("%s%03d.bmp", *name, i))
+		fmt.Println(fileName)
+		file, err := os.Create(fileName)
 		if err != nil {
 			fmt.Println("Could not create file")
 			break
@@ -75,18 +76,23 @@ func main() {
 
 	}
 
-	fmt.Println("Encoding video")
-	os.Remove("out.mp4")
-	data, err := exec.Command(
-		"ffmpeg",
-		"-framerate", "1",
-		"-i", path.Join(dir, "frame%03d.bmp"),
-		"-c:v", "libx264",
-		"out.mp4",
-	).CombinedOutput()
-	if err != nil {
-		fmt.Println(string(data))
-	}
-	os.RemoveAll(dir)
 	sb.Destroy()
+
+	if *video {
+		videoName := *name + ".mp4"
+		fmt.Println("Encoding ", videoName)
+		os.Remove(videoName)
+		data, err := exec.Command(
+			"ffmpeg",
+			"-framerate", fmt.Sprint(*fps),
+			"-i", path.Join(dir, *name+"%03d.bmp"),
+			"-c:v", "libx264",
+			videoName,
+		).CombinedOutput()
+		if err != nil {
+			fmt.Println(string(data))
+		}
+
+		os.RemoveAll(dir)
+	}
 }
