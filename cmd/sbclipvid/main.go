@@ -117,18 +117,18 @@ func (rt *runtime) Begin() error {
 	if err != nil {
 		return err
 	}
-	/*	dst := cdn.ClipDirectory(rt.clip.ID)
-		err = rt.cdn.AddDir(rt.output, dst)
-		if err != nil {
-			return err
-		}
-		err = rt.cdn.Invalidate(path.Join(dst, "*"))
-		if err != nil {
-			return err
-		}*/
+	dst := cdn.ClipDirectory(rt.clip.ID)
+	err = rt.cdn.AddDir(rt.output, dst)
+	if err != nil {
+		return err
+	}
+	err = rt.cdn.Invalidate(path.Join(dst, "*"))
+	if err != nil {
+		return err
+	}
 	return err
 }
 
 func (rt *runtime) Cleanup() {
-	//os.RemoveAll(rt.workdir)
+	os.RemoveAll(rt.workdir)
 }

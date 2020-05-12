@@ -32,7 +32,7 @@ type Video struct {
 	UploadedAt    string    `json:"uploaded_at"`
 	UploadedBy    string    `json:"uploaded_by"`
 	UploaderEmail string    `json:"-" dynamodbav:"uploader_email,string"`
-	SourceURL     string    `json:"-" dynamodbav:"source_url,string"`
+	SourceURL     string    `json:"source" dynamodbav:"source_url,string"`
 }
 
 // Clip is part of a video that has a trick
