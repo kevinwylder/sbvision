@@ -114,9 +114,9 @@ func unmarshalClip(clip *sbvision.Clip, data map[string]*dynamodb.AttributeValue
 				clip.Bounds[frame] = bound
 			}
 		case "rotations":
-			clip.Rotations = make(map[int64][4]float64)
+			clip.Rotations = make(map[int64]sbvision.Quaternion)
 			for t, v := range attribute.M {
-				var rotation [4]float64
+				var rotation sbvision.Quaternion
 				err = dynamodbattribute.Unmarshal(v, &rotation)
 				if err != nil {
 					return err

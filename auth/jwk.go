@@ -11,6 +11,10 @@ import (
 
 func (j *JWTVerifier) getKey(token *jwt.Token) (interface{}, error) {
 
+	if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+		return nil, fmt.Errorf("Invalid signing method")
+	}
+
 	keyID, ok := token.Header["kid"].(string)
 	if !ok {
 		return nil, errors.New("expecting JWT header to have string kid")
@@ -24,11 +28,13 @@ func (j *JWTVerifier) getKey(token *jwt.Token) (interface{}, error) {
 		j.keyset = keyset
 	}
 
-	if key := j.keyset.LookupKeyID(keyID); len(key) == 1 {
-		return key[0].Materialize()
+	key := j.keyset.LookupKeyID(keyID)
+	if len(key) == 0 {
+		return nil, fmt.Errorf("Could not find that key type")
 	}
 
-	return nil, fmt.Errorf("unable to find key %q", keyID)
+	var raw interface{}
+	return raw, key[0].Raw(&raw)
 }
 
 // Verify gets the email from the given key

@@ -32,7 +32,7 @@ type Video struct {
 	UploadedAt    string    `json:"uploaded_at"`
 	UploadedBy    string    `json:"uploaded_by"`
 	UploaderEmail string    `json:"-" dynamodbav:"uploader_email,string"`
-	SourceURL     string    `json:"-" dynamodbav:"source_url,string"`
+	SourceURL     string    `json:"source" dynamodbav:"source_url,string"`
 }
 
 // Clip is part of a video that has a trick
@@ -45,7 +45,14 @@ type Clip struct {
 	Start      int64                `json:"startFrame"`
 	End        int64                `json:"endFrame"`
 	Bounds     map[int64]Bound      `json:"boxes"`
-	Rotations  map[int64][4]float64 `json:"rotations"`
+	Rotations  map[int64]Quaternion `json:"rotations"`
+}
+
+// Frame is one annotated frame of data
+type Frame struct {
+	Image    string     `json:"image"`
+	Bound    Bound      `json:"bound"`
+	Rotation Quaternion `json:"rotation"`
 }
 
 // Bound is an area on a frame
@@ -56,12 +63,4 @@ type Bound struct {
 	Y      int64 `json:"y"`
 }
 
-// Rotation is the angle that a user has voted for a bound
-type Rotation struct {
-	ID      int64   `json:"-"`
-	BoundID int64   `json:"-"`
-	R       float64 `json:"r"`
-	I       float64 `json:"i"`
-	J       float64 `json:"j"`
-	K       float64 `json:"k"`
-}
+type Quaternion [4]float64

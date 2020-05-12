@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"image/png"
 	"os"
 	"os/exec"
 	"path"
@@ -14,11 +15,11 @@ func (rt *runtime) getVideoFrames() error {
 		"ffmpeg",
 		"-i", fmt.Sprintf("https://skateboardvision.net/video/%s/video.mp4", rt.clip.VideoID),
 		"-vf", fmt.Sprintf("trim=start_frame=%d:end_frame=%d", rt.clip.Start, rt.clip.End+1),
-		path.Join(rt.workdir, "input_%03d.bmp"),
+		path.Join(rt.output, "frame%03d.png"),
 	).Run()
 }
 
-func (rt *runtime) transformFrames() error {
+func (rt *runtime) computeInterpolation() error {
 	var frame int64
 	var maxDimension int64
 	for _, bound := range rt.clip.Bounds {
@@ -30,31 +31,33 @@ func (rt *runtime) transformFrames() error {
 		}
 	}
 	for frame = 0; frame <= rt.clip.End-rt.clip.Start; frame++ {
-		err := rt.createFrames(frame, maxDimension)
+		err := rt.createSubFrames(frame, maxDimension)
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
 const subframeCount int64 = 16
 
-func (rt *runtime) createFrames(frame int64, maxDimension int64) error {
-	in, err := os.Open(path.Join(rt.workdir, fmt.Sprintf("input_%03d.bmp", frame+1)))
+func (rt *runtime) createSubFrames(frame int64, maxDimension int64) error {
+	in, err := os.Open(path.Join(rt.output, fmt.Sprintf("frame%03d.png", frame+1)))
 	if err != nil {
 		return err
 	}
 	defer in.Close()
-	inBmp, err := bmp.Decode(in)
+	inBmp, err := png.Decode(in)
 	if err != nil {
 		return err
 	}
 	bound := rt.clip.Bounds[rt.clip.Start+frame]
 	var subframe int64
 	for subframe = 0; subframe < subframeCount; subframe++ {
-		time := float64(frame+rt.clip.Start) + float64(subframe)/float64(subframeCount)
-		image := rt.drawImageV1(inBmp, bound, maxDimension, interpolateRotation(rt.clip, time))
+		time := float64(frame) + float64(subframe)/float64(subframeCount)
+		percent := time / float64(rt.clip.End-rt.clip.Start+1)
+		image := rt.drawImageV1(inBmp, bound, maxDimension, rt.function.At(percent*rt.function.Duration()))
 		if err != nil {
 			return err
 		}
@@ -72,12 +75,11 @@ func (rt *runtime) createFrames(frame int64, maxDimension int64) error {
 }
 
 func (rt *runtime) encodeVideoFrames() error {
-	os.Remove(rt.output)
 	return exec.Command(
 		"ffmpeg",
-		"-framerate", fmt.Sprint(rt.video.FPS*2),
+		"-framerate", fmt.Sprint(60),
 		"-i", path.Join(rt.workdir, "output_%03d.bmp"),
 		"-c:v", "libx264",
-		rt.output,
+		path.Join(rt.output, "clip.mp4"),
 	).Run()
 }

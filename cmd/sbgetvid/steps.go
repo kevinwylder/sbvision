@@ -1,9 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -61,21 +61,20 @@ func (rt *runtime) addToDatabase() error {
 }
 
 func (rt *runtime) uploadVideo() error {
-	files, err := ioutil.ReadDir(rt.tmpdir)
+	dst := cdn.VideoDirectory(rt.video.ID)
+	data, err := os.Create(path.Join(rt.tmpdir, "data.json"))
 	if err != nil {
 		return err
 	}
-	for _, file := range files {
-		f, err := os.Open(path.Join(rt.tmpdir, file.Name()))
-		if err != nil {
-			return err
-		}
-		err = rt.cdn.Add(f, path.Join(cdn.VideoDirectory(rt.video.ID), file.Name()))
-		if err != nil {
-			return err
-		}
-		f.Close()
-		os.Remove(f.Name())
+	err = json.NewEncoder(data).Encode(rt.video)
+	if err != nil {
+		return err
 	}
-	return rt.cdn.Invalidate(path.Join(cdn.VideoDirectory(rt.video.ID), "*"))
+	data.Close()
+	err = rt.cdn.AddDir(rt.tmpdir, dst)
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(rt.tmpdir)
+	return rt.cdn.Invalidate(path.Join(dst, "*"))
 }

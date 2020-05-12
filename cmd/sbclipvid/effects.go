@@ -7,7 +7,7 @@ import (
 	"github.com/kevinwylder/sbvision"
 )
 
-func (rt *runtime) drawImageV1(in image.Image, box sbvision.Bound, maxDimension int64, rotation [4]float64) image.Image {
+func (rt *runtime) drawImageV1(in image.Image, box sbvision.Bound, maxDimension int64, rotation sbvision.Quaternion) image.Image {
 	var (
 		width  = 1000
 		height = 500
