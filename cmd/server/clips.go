@@ -46,6 +46,7 @@ func (ctx *serverContext) handleAddClip(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Unauthorized", 401)
 		return
 	}
+
 	var clip sbvision.Clip
 	err = json.NewDecoder(r.Body).Decode(&clip)
 	if err != nil {

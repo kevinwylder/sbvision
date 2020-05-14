@@ -6,6 +6,15 @@ import (
 	"github.com/kevinwylder/sbvision"
 )
 
+func ReflectionsOf(b sbvision.Quaternion) []sbvision.Quaternion {
+	return []sbvision.Quaternion{
+		{b[0], b[1], b[2], b[3]},
+		{b[3], -b[2], b[1], -b[0]},
+		{-b[3], b[2], -b[1], b[0]},
+		{-b[0], -b[1], -b[2], -b[3]},
+	}
+}
+
 // QuaternionFunction is a map from R to to the unit quaternions
 type QuaternionFunction interface {
 	At(t float64) sbvision.Quaternion
@@ -21,15 +30,7 @@ func Linear(clip *sbvision.Clip) QuaternionFunction {
 	for i := clip.Start; i <= clip.End; i++ {
 		a := points[len(points)-1]
 		b := clip.Rotations[i]
-		if i == clip.Start {
-			b = clip.Rotations[clip.End]
-		}
-		var options = []sbvision.Quaternion{
-			{b[0], b[1], b[2], b[3]},
-			{b[3], -b[2], b[2], -b[0]},
-			{-b[0], b[1], -b[2], b[3]},
-			{-b[0], -b[1], -b[2], -b[3]},
-		}
+		options := ReflectionsOf(b)
 		var largestDot = -2.
 		var bestIdx = 0
 		for i, o := range options {

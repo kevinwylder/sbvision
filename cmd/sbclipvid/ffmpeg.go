@@ -80,6 +80,8 @@ func (rt *runtime) encodeVideoFrames() error {
 		"-framerate", fmt.Sprint(60),
 		"-i", path.Join(rt.workdir, "output_%03d.bmp"),
 		"-c:v", "libx264",
+		"-vprofile", "main",
+		"-pix_fmt", "yuv420p",
 		path.Join(rt.output, "clip.mp4"),
 	).Run()
 }

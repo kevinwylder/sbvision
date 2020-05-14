@@ -50,6 +50,9 @@ func NewRenderer() (*Renderer, error) {
 		sb.x.Start()
 		go func() {
 			err := sb.x.Wait()
+			if err == nil {
+				return
+			}
 			if !strings.Contains(err.Error(), "killed") {
 				fmt.Println(err)
 			}
