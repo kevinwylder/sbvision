@@ -2,6 +2,7 @@ package dynamo
 
 import (
 	"encoding/base64"
+	"fmt"
 	"math/rand"
 	"strconv"
 	"time"
@@ -14,12 +15,17 @@ import (
 
 // AddClip adds the given clip to the clips table, and updates the user record to have it's clip id
 func (sb *SBDatabase) AddClip(clip *sbvision.Clip, user *sbvision.User) error {
+	video, err := sb.GetVideoByID(clip.VideoID)
+	if err != nil {
+		return err
+	}
 	var id [12]byte
 	rand.Read(id[:])
 	clip.ID = base64.URLEncoding.EncodeToString(id[:])
 	clip.Username = user.Username
 	clip.UploadedAt = time.Now().Format("2006-01-02 15:04:05")
-	_, err := sb.db.PutItem(&dynamodb.PutItemInput{
+	clip.OriginalSource = video.SourceURL
+	_, err = sb.db.PutItem(&dynamodb.PutItemInput{
 		TableName: aws.String(clipTableName),
 		Item:      mustMarshalMap(clip, "AddClip put clip"),
 	})
@@ -84,6 +90,7 @@ func (sb *SBDatabase) GetClipByID(id string) (*sbvision.Clip, error) {
 		TableName: aws.String(clipTableName),
 	})
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	var clip sbvision.Clip

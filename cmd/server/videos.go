@@ -24,13 +24,13 @@ func (ctx *serverContext) handleGetVideo(w http.ResponseWriter, r *http.Request)
 }
 
 func (ctx *serverContext) handleVideoPage(w http.ResponseWriter, r *http.Request) {
-	user, err := ctx.auth.User(r.Header.Get("Identity"))
+	_, err := ctx.auth.User(r.Header.Get("Identity"))
 	if err != nil {
 		http.Error(w, "Unauthorized", 401)
 		return
 	}
 
-	videos, err := ctx.ddb.GetVideos(user)
+	videos, err := ctx.ddb.GetAllVideos()
 	if err != nil {
 		http.Error(w, "An error occured", 500)
 		return

@@ -53,6 +53,28 @@ func (sb *SBDatabase) GetVideoByID(id string) (*sbvision.Video, error) {
 	return &video, nil
 }
 
+// GetAllVideos returns all the videos uploaded
+func (sb *SBDatabase) GetAllVideos() ([]sbvision.Video, error) {
+	var videos []sbvision.Video
+	err := sb.db.ScanPages(&dynamodb.ScanInput{
+		TableName: aws.String(videoTableName),
+	}, func(page *dynamodb.ScanOutput, isDone bool) bool {
+		for _, item := range page.Items {
+			var video sbvision.Video
+			err := dynamodbattribute.UnmarshalMap(item, &video)
+			if err != nil {
+				return false
+			}
+			videos = append(videos, video)
+		}
+		return true
+	})
+	if err != nil {
+		return nil, err
+	}
+	return videos, nil
+}
+
 // GetVideos gets a list of all the videos for that user
 func (sb *SBDatabase) GetVideos(user *sbvision.User) ([]sbvision.Video, error) {
 	var err error

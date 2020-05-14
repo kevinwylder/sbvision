@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/batch"
 	"github.com/kevinwylder/sbvision"
 	"github.com/kevinwylder/sbvision/auth"
 	"github.com/kevinwylder/sbvision/dynamo"
@@ -22,6 +23,7 @@ type serverContext struct {
 	videoCache map[int64]*sbvision.Video
 	processes  *encoder.VideoRequestManager
 	ddb        *dynamo.SBDatabase
+	batch      *batch.Batch
 }
 
 func main() {
@@ -38,7 +40,8 @@ func main() {
 	}
 
 	server := &serverContext{
-		ddb: ddb,
+		ddb:   ddb,
+		batch: batch.New(session),
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 20 * 1024,

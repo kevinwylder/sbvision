@@ -37,15 +37,16 @@ type Video struct {
 
 // Clip is part of a video that has a trick
 type Clip struct {
-	ID         string               `json:"id"`
-	VideoID    string               `json:"videoId"`
-	Username   string               `json:"clipped_by"`
-	Trick      string               `json:"trick"`
-	UploadedAt string               `json:"uploaded_at"`
-	Start      int64                `json:"startFrame"`
-	End        int64                `json:"endFrame"`
-	Bounds     map[int64]Bound      `json:"boxes"`
-	Rotations  map[int64]Quaternion `json:"rotations"`
+	ID             string               `json:"id"`
+	VideoID        string               `json:"videoId"`
+	Username       string               `json:"clipped_by"`
+	Trick          string               `json:"trick"`
+	UploadedAt     string               `json:"uploaded_at"`
+	OriginalSource string               `json:"source"`
+	Start          int64                `json:"startFrame"`
+	End            int64                `json:"endFrame"`
+	Bounds         map[int64]Bound      `json:"boxes"`
+	Rotations      map[int64]Quaternion `json:"rotations"`
 }
 
 // Frame is one annotated frame of data

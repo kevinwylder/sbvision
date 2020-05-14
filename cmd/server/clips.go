@@ -1,11 +1,15 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/batch"
 	"github.com/kevinwylder/sbvision"
+	"github.com/kevinwylder/sbvision/video"
 )
 
 func (ctx *serverContext) handleGetClip(w http.ResponseWriter, r *http.Request) {
@@ -50,6 +54,8 @@ func (ctx *serverContext) handleAddClip(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	go ctx.startBatchProcess(&clip)
+
 	err = ctx.ddb.AddClip(&clip, user)
 	if err != nil {
 		fmt.Println(err)
@@ -57,4 +63,20 @@ func (ctx *serverContext) handleAddClip(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	json.NewEncoder(w).Encode(&clip)
+}
+
+func (ctx *serverContext) startBatchProcess(clip *sbvision.Clip) {
+	data, _ := json.Marshal(clip)
+	ctx.batch.SubmitJob(&batch.SubmitJobInput{
+		JobDefinition: aws.String("sbclipvid"),
+		JobQueue:      aws.String(video.BatchQueueName),
+		JobName:       aws.String(clip.ID),
+		ContainerOverrides: &batch.ContainerOverrides{
+			Command: []*string{
+				aws.String("sbclipvid"),
+				aws.String(base64.URLEncoding.EncodeToString(data)),
+			},
+		},
+	})
 }
