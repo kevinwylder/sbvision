@@ -20,6 +20,7 @@ type serverContext struct {
 	upgrader   websocket.Upgrader
 	auth       *auth.JWTVerifier
 	videoCache map[int64]*sbvision.Video
+	remotes    map[string]*remoteSession
 	processes  *encoder.VideoRequestManager
 	ddb        *dynamo.SBDatabase
 }
@@ -44,6 +45,7 @@ func main() {
 			WriteBufferSize: 20 * 1024,
 			CheckOrigin:     func(r *http.Request) bool { return true },
 		},
+		remotes:   make(map[string]*remoteSession),
 		auth:      auth.NewJWTVerifier(ddb, "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_dHWlJDm4T/.well-known/jwks.json"),
 		processes: encoder.NewVideoRequestManager(session),
 	}
