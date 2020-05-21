@@ -88,7 +88,7 @@ func (ctx *serverContext) handlePhoneConnection(w http.ResponseWriter, r *http.R
 
 func (s *remoteSession) connectPhone(socket *websocket.Conn) {
 	s.mutex.Lock()
-	if s.phone != socket {
+	if s.phone != socket && s.phone != nil {
 		s.phone.Close()
 	}
 	s.phone = socket
@@ -158,7 +158,7 @@ func (ctx *serverContext) handleDesktopConnection(w http.ResponseWriter, r *http
 
 func (s *remoteSession) connectDesktop(socket *websocket.Conn) {
 	s.mutex.Lock()
-	if s.desktop != socket {
+	if s.desktop != socket && s.desktop != nil {
 		s.desktop.Close()
 	}
 	s.desktop = socket
