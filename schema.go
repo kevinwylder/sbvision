@@ -41,6 +41,7 @@ type Clip struct {
 	VideoID    string               `json:"videoId"`
 	Username   string               `json:"clipped_by"`
 	Trick      string               `json:"trick"`
+	Source     string               `json:"source"`
 	UploadedAt string               `json:"uploaded_at"`
 	Start      int64                `json:"startFrame"`
 	End        int64                `json:"endFrame"`

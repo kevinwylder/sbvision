@@ -52,7 +52,7 @@ func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ctx.handleDesktopConnection(w, r)
 
 	case "/remote/phone":
-		ctx.handleRemoteConnection(w, r)
+		ctx.handlePhoneConnection(w, r)
 
 	default:
 		if strings.HasPrefix(r.URL.Path, "/sns") {

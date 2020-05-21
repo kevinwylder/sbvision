@@ -18,16 +18,17 @@ type message struct {
 
 type remoteSession struct {
 	mutex   sync.Mutex
-	remote  *websocket.Conn
+	phone   *websocket.Conn
 	desktop *websocket.Conn
 
-	Active   bool                `json:"active"`
-	Locked   bool                `json:"locked"`
-	LockedOn sbvision.Quaternion `json:"lockedOn"`
+	Active     bool                `json:"active"`
+	Locked     bool                `json:"locked"`
+	LockedOn   sbvision.Quaternion `json:"lockedOn"`
+	Correction sbvision.Quaternion `json:"correction"`
 }
 
-// route to forward readings from remote to desktop
-func (ctx *serverContext) handleRemoteConnection(w http.ResponseWriter, r *http.Request) {
+// route to forward readings from phone to desktop
+func (ctx *serverContext) handlePhoneConnection(w http.ResponseWriter, r *http.Request) {
 	// login
 	user, err := ctx.auth.User(r.Form.Get("identity"))
 	if err != nil {
@@ -38,29 +39,26 @@ func (ctx *serverContext) handleRemoteConnection(w http.ResponseWriter, r *http.
 	// connect
 	socket, err := ctx.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Println("remote connect", err)
+		fmt.Println("phone connect", err)
 		return
 	}
 
 	// construct
 	session := ctx.remotes[user.Email]
 	if session == nil {
-		session = &remoteSession{
-			remote: socket,
-		}
+		session = &remoteSession{}
 		ctx.remotes[user.Email] = session
-	} else {
-		session.connectRemote(socket)
 	}
+	session.connectPhone(socket)
 
 	// forwarding
 	errCounter := 0
 	for {
-		// read from remote
+		// read from phone
 		var reading message
 		err := socket.ReadJSON(&reading)
 		if err != nil {
-			fmt.Println("remote read", err)
+			fmt.Println("phone read", err)
 			break
 		}
 
@@ -72,7 +70,7 @@ func (ctx *serverContext) handleRemoteConnection(w http.ResponseWriter, r *http.
 		if session.Active && (!session.Locked || reading.Command != "") {
 			err = session.desktop.WriteJSON(&reading)
 			if err != nil {
-				fmt.Println("remote write", err)
+				fmt.Println("phone write", err)
 				errCounter++
 				if errCounter > 10 {
 					fmt.Println("10th error, exiting")
@@ -85,26 +83,26 @@ func (ctx *serverContext) handleRemoteConnection(w http.ResponseWriter, r *http.
 		}
 		session.mutex.Unlock()
 	}
-	session.disconnectRemote(socket)
+	session.disconnectPhone(socket)
 }
 
-func (s *remoteSession) connectRemote(socket *websocket.Conn) {
+func (s *remoteSession) connectPhone(socket *websocket.Conn) {
 	s.mutex.Lock()
-	if s.remote != nil {
-		s.remote.Close()
+	if s.phone != socket {
+		s.phone.Close()
 	}
-	s.remote = socket
+	s.phone = socket
 	s.sync()
 	s.mutex.Unlock()
 }
 
-func (s *remoteSession) disconnectRemote(socket *websocket.Conn) {
-	if s.remote != socket {
+func (s *remoteSession) disconnectPhone(socket *websocket.Conn) {
+	if s.phone != socket {
 		return
 	}
 	s.mutex.Lock()
-	s.remote.Close()
-	s.remote = nil
+	s.phone.Close()
+	s.phone = nil
 	s.sync()
 	s.mutex.Unlock()
 }
@@ -127,13 +125,10 @@ func (ctx *serverContext) handleDesktopConnection(w http.ResponseWriter, r *http
 	// construct
 	session := ctx.remotes[user.Email]
 	if session == nil {
-		session = &remoteSession{
-			desktop: socket,
-		}
+		session = &remoteSession{}
 		ctx.remotes[user.Email] = session
-	} else {
-		session.connectDesktop(socket)
 	}
+	session.connectDesktop(socket)
 
 	// forwarding
 	for {
@@ -145,11 +140,14 @@ func (ctx *serverContext) handleDesktopConnection(w http.ResponseWriter, r *http
 			break
 		}
 
-		// write to remote
+		// write to phone
 		session.mutex.Lock()
-		if read.Command == "" {
+		switch read.Command {
+		case "lock":
 			session.Locked = true
 			session.LockedOn = read.Quaternion
+		case "correct":
+			session.Correction = read.Quaternion
 		}
 		session.sync()
 		session.mutex.Unlock()
@@ -160,7 +158,7 @@ func (ctx *serverContext) handleDesktopConnection(w http.ResponseWriter, r *http
 
 func (s *remoteSession) connectDesktop(socket *websocket.Conn) {
 	s.mutex.Lock()
-	if s.desktop != nil {
+	if s.desktop != socket {
 		s.desktop.Close()
 	}
 	s.desktop = socket
@@ -180,13 +178,13 @@ func (s *remoteSession) disconnectDesktop(socket *websocket.Conn) {
 }
 
 func (s *remoteSession) sync() error {
-	s.Active = (s.remote != nil) && (s.desktop != nil)
+	s.Active = (s.phone != nil) && (s.desktop != nil)
 	fmt.Println("sync")
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "    ")
 	encoder.Encode(s)
-	if s.remote != nil {
-		err := s.remote.WriteJSON(s)
+	if s.phone != nil {
+		err := s.phone.WriteJSON(s)
 		if err != nil {
 			return err
 		}
