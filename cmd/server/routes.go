@@ -48,8 +48,11 @@ func (ctx *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/user":
 		ctx.handleGetUserInfo(w, r)
 
-	case "/visualization":
-		//ctx.handleVisualizationSocket(w, r)
+	case "/remote/desktop":
+		ctx.handleDesktopConnection(w, r)
+
+	case "/remote/phone":
+		ctx.handlePhoneConnection(w, r)
 
 	default:
 		if strings.HasPrefix(r.URL.Path, "/sns") {
