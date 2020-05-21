@@ -150,7 +150,7 @@ func unmarshalClip(clip *sbvision.Clip, data map[string]*dynamodb.AttributeValue
 		case "endFrame":
 			err = dynamodbattribute.Unmarshal(attribute, &clip.End)
 		case "source":
-			err = dynamodbattribute.Unmarshal(attribute, &clip.Source)
+			err = dynamodbattribute.Unmarshal(attribute, &clip.OriginalSource)
 		}
 		if err != nil {
 			return err
